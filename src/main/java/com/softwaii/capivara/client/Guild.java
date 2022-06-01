@@ -3,6 +3,7 @@ package com.softwaii.capivara.client;
 import com.softwaii.capivara.exceptions.PackageAlreadyExistsException;
 import com.softwaii.capivara.exceptions.PackageDoesNotExistException;
 import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
+import com.softwaii.capivara.exceptions.RoleNotFoundException;
 import net.dv8tion.jda.api.entities.Role;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.Map;
 public class Guild {
 
     public static class Package {
-        private Map<String, Role> roles;
+        private final Map<String, Role> roles;
 
         public Package() {
             this.roles = new HashMap<>();
@@ -28,6 +29,11 @@ public class Guild {
             roles.put(name, role);
         }
 
+        public void removeRole(String name) throws RoleNotFoundException {
+            if (!roles.containsKey(name)) throw new RoleNotFoundException("Role with name " + name + " does not exist");
+            roles.remove(name);
+        }
+
         public Role getRole(String name) {
             return roles.get(name);
         }
@@ -37,11 +43,9 @@ public class Guild {
 
     public Guild() {
         packages = new HashMap<>();
+        // TODO: DB Query
     }
 
-    public Guild(Map<String, Package> packages) {
-        this.packages = packages;
-    }
 
     public void addPackage(String name) throws PackageAlreadyExistsException {
         if(packages.containsKey(name)) throw new PackageAlreadyExistsException("Package with name " + name + " already exists");
@@ -53,9 +57,14 @@ public class Guild {
         packages.remove(name);
     }
 
-    public void addRole(String packageName, String roleName, Role role) throws RoleAlreadyAddedException {
-        if(!packages.containsKey(packageName)) throw new RoleAlreadyAddedException("Package with name " + packageName + " does not exist");
+    public void addRole(String packageName, String roleName, Role role) throws PackageDoesNotExistException, RoleAlreadyAddedException {
+        if(!packages.containsKey(packageName)) throw new PackageDoesNotExistException("Package with name " + packageName + " does not exist");
         packages.get(packageName).addRole(roleName, role);
+    }
+
+    public void removeRole(String packageName, String roleName) throws PackageDoesNotExistException, RoleNotFoundException {
+        if(!packages.containsKey(packageName)) throw new PackageDoesNotExistException("Package with name " + packageName + " does not exist");
+        packages.get(packageName).removeRole(roleName);
     }
 
     public List<String> getPackageNames() {
