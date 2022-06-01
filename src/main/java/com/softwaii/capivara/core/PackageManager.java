@@ -22,9 +22,9 @@ public class PackageManager {
         this.capivara = Capivara.getInstance();
     }
 
-    public void createPackage(String guildID, String packageName) throws PackageAlreadyExistsException, GuildNotFoundException {
+    public void createPackage(String guildID, String packageName, boolean unique) throws PackageAlreadyExistsException {
         Guild guild = this.capivara.getOrCreateGuild(guildID);
-        guild.addPackage(packageName);
+        guild.addPackage(packageName, unique);
     }
 
     public void destroyPackage(String guildID, String packageName) throws PackageDoesNotExistException, GuildNotFoundException {

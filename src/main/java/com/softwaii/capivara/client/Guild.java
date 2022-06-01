@@ -16,32 +16,6 @@ import java.util.Map;
 
 public class Guild {
 
-    public static class Package {
-        private final Map<String, Role> roles;
-
-        public Package() {
-            this.roles = new HashMap<>();
-        }
-
-        public void addRole(String name, Role role) throws RoleAlreadyAddedException {
-            if (roles.containsKey(name)) throw new RoleAlreadyAddedException("Role with name " + name + " already exists");
-            roles.put(name, role);
-
-            // TODO: DB save
-        }
-
-        public void removeRole(String name) throws RoleNotFoundException {
-            if (!roles.containsKey(name)) throw new RoleNotFoundException("Role with name " + name + " does not exist");
-            roles.remove(name);
-
-            // TODO: DB save
-        }
-
-        public Role getRole(String name) {
-            return roles.get(name);
-        }
-    }
-
     private Map<String, Package> packages;
 
     public Guild() {
@@ -50,9 +24,9 @@ public class Guild {
     }
 
 
-    public void addPackage(String name) throws PackageAlreadyExistsException {
+    public void addPackage(String name, boolean unique) throws PackageAlreadyExistsException {
         if(packages.containsKey(name)) throw new PackageAlreadyExistsException("Package with name " + name + " already exists");
-        packages.put(name, new Package());
+        packages.put(name, new Package(unique));
 
         // TODO: DB save
     }
@@ -79,7 +53,7 @@ public class Guild {
     }
 
     public Map<String, Role> getRoles(String packageName) {
-        return packages.get(packageName).roles;
+        return packages.get(packageName).getRoles();
     }
 
     public SelectMenu createRoleMenu(Member member, String pkg_name, String id) {
@@ -91,7 +65,7 @@ public class Guild {
                 .setRequiredRange(0, 25);
         List<SelectOption> optionList = new ArrayList<>();
         for(Map.Entry<String, Role> entry : roles.entrySet()) {
-            SelectOption option = SelectOption.of(entry.getKey(), entry.getKey()).withDefault(member.getRoles().contains(entry.getValue()));
+            SelectOption option = SelectOption.of(entry.getKey(), entry.getKey()).withDefault(member.getRoles().contains(entry.getValue())).withDescription("Cornos");
             builder.addOptions(option);
         };
 

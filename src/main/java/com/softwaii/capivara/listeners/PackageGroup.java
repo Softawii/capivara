@@ -33,19 +33,19 @@ public class PackageGroup {
 
     @ICommand(name = "package-create", description = "Create a package to get roles", permissions = {Permission.ADMINISTRATOR})
     @IArgument(name="name", description = "The package to add the role to", required = true, type= OptionType.STRING)
+    @IArgument(name="unique", description = "If the package is unique or not", required = false, type= OptionType.BOOLEAN)
     public static void create(SlashCommandInteractionEvent event) {
         System.out.println("create");
 
-        String name = event.getOption("name").getAsString();
+        String name    = event.getOption("name").getAsString();
+        boolean unique  = event.getOption("unique") != null && event.getOption("unique").getAsBoolean();
         String guildId = event.getGuild().getId();
 
         try {
-            packageManager.createPackage(guildId, name);
+            packageManager.createPackage(guildId, name, unique);
             event.reply("Package with name '" + name + "' created").queue();
         } catch (PackageAlreadyExistsException e) {
             event.reply("Package already exists").queue();
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
         }
     }
 
@@ -215,6 +215,7 @@ public class PackageGroup {
 
         event.getInteraction().getSelectMenu().getOptions().forEach(opt -> {
             String key = opt.getValue();
+
 
             if(roles.containsKey(key)) {
                 Role role = roles.get(key);

@@ -39,6 +39,7 @@ public class Capivara {
 
     public Guild getOrCreateGuild(String name) {
         if (guilds.containsKey(name)) return guilds.get(name);
+        // TODO: DB Query
         Guild guild = new Guild();
         guilds.put(name, guild);
 
