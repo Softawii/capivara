@@ -6,22 +6,20 @@ import com.softwaii.capivara.core.Capivara;
 import com.softwaii.capivara.core.PackageManager;
 import com.softwaii.capivara.exceptions.*;
 import com.softwaii.capivara.utils.Utils;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @IGroup(name= "Getter Manager", description = "Group to manage roles")
 public class PackageGroup {
@@ -127,35 +125,54 @@ public class PackageGroup {
         }
     }
 
-    @ICommand(name = "gen", description = "Generate a message with a button to packages")
-    public static void newMessage(SlashCommandInteractionEvent event) {
-        System.out.println("generate");
-        String guild_id = event.getGuild().getId();
-        if(guilds.containsKey(guild_id)) {
-            Guild guild = guilds.get(guild_id);
+    @ICommand(name = "package-message", description = "Generate a message with a button to packages")
+    @IArgument(name="title", description = "Title of the message", required = true, type= OptionType.STRING)
+    @IArgument(name="description", description = "Description of the message", required = true, type= OptionType.STRING)
+    @IRange(value=@IArgument(name="package", description = "The package", required = false, type= OptionType.STRING), min = 0, max = 22)
+    public static void message(SlashCommandInteractionEvent event) {
+        System.out.println("message");
+        String guildId        = event.getGuild().getId();
+        String title          = event.getOption("title").getAsString();
+        String description    = event.getOption("description").getAsString();
+        List<String> packages = new ArrayList<>();
 
-            // Creating the message
-            MessageEmbed embed = Utils.createEmbed("Packages", "Get your role", "008000");
-
-            // Button
-            Button button = Button.success(packageButton, "Get your role");
-
-            event.replyEmbeds(embed).addActionRow(button).queue();
+        for(int i = 0; i <= 25; i++) {
+            String packageName = event.getOption("package" + i) != null ? event.getOption("package" + i).getAsString() : null;
+            if(packageName != null) packages.add(packageName);
         }
-        else {
-            event.reply("No packages created").setEphemeral(true).queue();
+
+        try {
+            MessageEmbed embed = packageManager.packageGetRoleMessage(guildId, packages, title, description);
+            Button button = Button.success(packageButton + ":" + String.join(":", packages), "Click to get roles");
+            event.replyEmbeds(embed).addActionRow(button).queue();
+        } catch (GuildNotFoundException e) {
+            event.reply("Guild not found").queue();
+        } catch (PackageDoesNotExistException e) {
+            event.reply("Package does not exist").queue();
         }
     }
 
     @IButton(id=packageButton)
-    public static void package_getter(ButtonInteractionEvent event) {
-        String guild_id = event.getGuild().getId();
-        Guild guild = guilds.get(guild_id);
+    public static void packageGetter(ButtonInteractionEvent event) {
+        System.out.println("packageGetter");
 
-        // Package
-        SelectMenu _packageMenu = Utils.createPackageMenu(guild.getPackageNames(), packageMenu);
+        String guildId = event.getGuild().getId();
+        String[] packages = event.getInteraction().getId().split(":");
 
-        event.reply("Please select your package").addActionRow(_packageMenu).setEphemeral(true).queue();
+        List<String> packageList;
+        if(packages.length > 1) {
+            packages = Arrays.copyOfRange(packages, 1, packages.length);
+            packageList = Arrays.stream(packages).collect(Collectors.toList());
+        } else {
+            packageList = new ArrayList<>();
+        }
+
+        try {
+            SelectMenu menu = packageManager.createPackageMenu(guildId, packageMenu, packageList);
+            event.reply("Please select a package").addActionRow(menu).queue();
+        } catch (GuildNotFoundException e) {
+            event.reply("Guild not found").queue();
+        }
     }
 
     @IMenu(id=packageMenu)
@@ -165,28 +182,34 @@ public class PackageGroup {
         Optional<SelectOption> option = event.getInteraction().getSelectedOptions().stream().findFirst();
 
         option.ifPresentOrElse(opt -> {
+                String _package  = opt.getValue();
+                String custom_id = roleMenu + ":" + _package;
+                String guildId   = event.getGuild().getId();
 
-                    String guild_id  = event.getGuild().getId();
-                    Guild guild      = guilds.get(guild_id);
-
-                    String _package  = opt.getValue();
-                    String custom_id = roleMenu + ":" + _package;
-                    SelectMenu menu  = Utils.createRoleMenu(event.getMember(), guild, _package, custom_id);
-
-                    event.editMessage("Please select your role").setActionRow(menu).queue();
-                }, () -> event.editMessage("No package selected").setActionRow().queue()
+            try {
+                SelectMenu menu = packageManager.getSelectMenu(guildId, event.getMember(), _package, custom_id);
+                event.editMessage("Please select your role").setActionRow(menu).queue();
+            } catch (GuildNotFoundException e) {
+                event.reply("Guild not found").queue();
+            }
+            }, () -> event.editMessage("No package selected").setActionRow().queue()
         );
     }
 
     @IMenu(id=roleMenu)
     public static void getting_role(SelectMenuInteractionEvent event) {
-        String guild_id = event.getGuild().getId();
-        Guild guild = guilds.get(guild_id);
+        String guildId = event.getGuild().getId();
 
         System.out.println(event.getInteraction().getId());
 
         String _package = event.getInteraction().getSelectMenu().getId().split(":")[1];
-        Map<String, Role> roles = guild.getRoles(_package);
+        Map<String, Role> roles;
+        try {
+            roles = packageManager.getRoles(guildId, _package);
+        } catch (GuildNotFoundException e) {
+            event.reply("Guild not found").queue();
+            return;
+        }
 
         List<SelectOption> selectOptions = event.getSelectedOptions();
 
@@ -206,5 +229,4 @@ public class PackageGroup {
 
         event.reply("Your roles have been updated").setEphemeral(true).queue();
     }
-
 }

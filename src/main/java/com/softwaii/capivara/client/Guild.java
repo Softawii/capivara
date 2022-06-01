@@ -4,7 +4,10 @@ import com.softwaii.capivara.exceptions.PackageAlreadyExistsException;
 import com.softwaii.capivara.exceptions.PackageDoesNotExistException;
 import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
 import com.softwaii.capivara.exceptions.RoleNotFoundException;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,18 +23,18 @@ public class Guild {
             this.roles = new HashMap<>();
         }
 
-        public Package(Map<String, Role> roles) {
-            this.roles = roles;
-        }
-
         public void addRole(String name, Role role) throws RoleAlreadyAddedException {
             if (roles.containsKey(name)) throw new RoleAlreadyAddedException("Role with name " + name + " already exists");
             roles.put(name, role);
+
+            // TODO: DB save
         }
 
         public void removeRole(String name) throws RoleNotFoundException {
             if (!roles.containsKey(name)) throw new RoleNotFoundException("Role with name " + name + " does not exist");
             roles.remove(name);
+
+            // TODO: DB save
         }
 
         public Role getRole(String name) {
@@ -50,11 +53,15 @@ public class Guild {
     public void addPackage(String name) throws PackageAlreadyExistsException {
         if(packages.containsKey(name)) throw new PackageAlreadyExistsException("Package with name " + name + " already exists");
         packages.put(name, new Package());
+
+        // TODO: DB save
     }
 
     public void removePackage(String name) throws PackageDoesNotExistException {
         if(!packages.containsKey(name)) throw new PackageDoesNotExistException("Package with name " + name + " does not already exists");
         packages.remove(name);
+
+        // TODO: DB save
     }
 
     public void addRole(String packageName, String roleName, Role role) throws PackageDoesNotExistException, RoleAlreadyAddedException {
@@ -75,4 +82,19 @@ public class Guild {
         return packages.get(packageName).roles;
     }
 
+    public SelectMenu createRoleMenu(Member member, String pkg_name, String id) {
+        // Getting the roles
+        Map<String, Role> roles = getRoles(pkg_name);
+
+        SelectMenu.Builder builder = SelectMenu.create(id)
+                .setPlaceholder("Select your roles")
+                .setRequiredRange(0, 25);
+        List<SelectOption> optionList = new ArrayList<>();
+        for(Map.Entry<String, Role> entry : roles.entrySet()) {
+            SelectOption option = SelectOption.of(entry.getKey(), entry.getKey()).withDefault(member.getRoles().contains(entry.getValue()));
+            builder.addOptions(option);
+        };
+
+        return builder.build();
+    }
 }

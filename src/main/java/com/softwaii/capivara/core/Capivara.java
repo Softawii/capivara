@@ -2,6 +2,8 @@ package com.softwaii.capivara.core;
 
 import com.softwaii.capivara.client.Guild;
 import com.softwaii.capivara.exceptions.GuildNotFoundException;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 
 import java.util.HashMap;
 import java.util.Map;
