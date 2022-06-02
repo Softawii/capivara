@@ -5,7 +5,6 @@ import com.softwaii.capivara.client.Guild;
 import com.softwaii.capivara.core.Capivara;
 import com.softwaii.capivara.core.PackageManager;
 import com.softwaii.capivara.exceptions.*;
-import com.softwaii.capivara.utils.Utils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
@@ -18,14 +17,13 @@ import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @IGroup(name= "Getter Manager", description = "Group to manage roles")
 public class PackageGroup {
 
-    public static Capivara capivara = Capivara.getInstance();
-    public static PackageManager packageManager = capivara.getPackageManager();
+    public static Capivara capivara;
+    public static PackageManager packageManager;
     public static Map<String, Guild> guilds = new HashMap<>();
     private static final String packageMenu   = "package-menu";
     private static final String packageButton = "package-button";

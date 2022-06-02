@@ -1,25 +1,36 @@
 package com.softwaii.capivara;
 
 import com.softawii.curupira.core.Curupira;
+import com.softwaii.capivara.core.Capivara;
+import com.softwaii.capivara.core.PackageManager;
+import com.softwaii.capivara.listeners.PackageGroup;
+import com.softwaii.capivara.repository.PackageRepository;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
-import javax.security.auth.login.LoginException;
+@SpringBootApplication
+public class Main implements CommandLineRunner {
 
-public class Main {
+    public static void main(String[] args) {
+        ConfigurableApplicationContext context = SpringApplication.run(Main.class, args);
+        JDA jda = context.getBean(JDA.class);
+        System.out.println("Bot is ready as " + jda.getSelfUser().getName());
+        Curupira curupira = context.getBean(Curupira.class);
+        Capivara capivara = context.getBean(Capivara.class);
+        PackageManager pm = context.getBean(PackageManager.class);
 
-    public static void main(String[] args) throws LoginException, InterruptedException {
-        String token = "OTM5OTcyODU1MDg3NjUyOTM0.G_6Z61.L1P-ugR8_yyr72LKUS3KUlW-VnYn_ovSyxuEhI";
-        String pkg   = "com.softwaii.capivara.listeners";
+        PackageGroup.capivara = capivara;
+        PackageGroup.packageManager = pm;
 
-        // Default Builder
-        // We Will Build with Listeners and Slash Commands
-        JDABuilder builder = JDABuilder.createDefault(token);
-        JDA JDA = builder.build();
+        PackageRepository repository = context.getBean(PackageRepository.class);
+//        repository.findAll();
+    }
 
-        Curupira curupira = new Curupira(JDA, pkg);
-
-        JDA.awaitReady();
-        System.out.println("Bot is ready as " + JDA.getSelfUser().getName());
+    @Override
+    public void run(String... args) {
+        System.out.println("Nada");
     }
 }

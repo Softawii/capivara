@@ -8,18 +8,20 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class PackageManager {
 
     private Capivara capivara;
 
-    public PackageManager() {
-        this.capivara = Capivara.getInstance();
+    public PackageManager(Capivara capivara) {
+        this.capivara = capivara;
     }
 
     public void createPackage(String guildID, String packageName, boolean unique) throws PackageAlreadyExistsException {
