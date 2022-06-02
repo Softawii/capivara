@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface PackageRepository extends JpaRepository<Package, Package.PackageKey> {
 
-    List<Package> findAllByGuildId(Long guildId);
+    List<Package> findAllByPackageKey(Package.PackageKey packageKey);
 }

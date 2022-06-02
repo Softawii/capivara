@@ -4,16 +4,15 @@ import com.softawii.curupira.annotations.*;
 import com.softwaii.capivara.client.Guild;
 import com.softwaii.capivara.core.Capivara;
 import com.softwaii.capivara.core.PackageManager;
-import com.softwaii.capivara.exceptions.*;
+import com.softwaii.capivara.exceptions.PackageAlreadyExistsException;
+import com.softwaii.capivara.exceptions.PackageDoesNotExistException;
+import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 
 import java.util.*;
@@ -69,7 +68,6 @@ public class PackageGroup {
     @IArgument(name="name", description = "The name to link to the role", required = false, type= OptionType.STRING)
     @IArgument(name="description", description = "The description to link to the role", required = false, type= OptionType.STRING)
     public static void add(SlashCommandInteractionEvent event) {
-
         Long   guildId = event.getGuild().getIdLong();
         String packageName = event.getOption("package").getAsString();
         Role   role = event.getOption("role").getAsRole();
@@ -86,19 +84,19 @@ public class PackageGroup {
         }
     }
 
-    @ICommand(name = "package-remove", description = "Remove a role from a package")
+//    @ICommand(name = "package-remove", description = "Remove a role from a package")
     @IArgument(name="package", description = "The package to add the role to", required = true, type= OptionType.STRING)
     @IArgument(name="role", description = "role to be added", required = true, type= OptionType.ROLE)
     public static void remove(SlashCommandInteractionEvent event) {
 
     }
 
-    @ICommand(name="package-list", description = "List all packages")
+//    @ICommand(name="package-list", description = "List all packages")
     public static void list(SlashCommandInteractionEvent event) {
 
     }
 
-    @ICommand(name = "package-message", description = "Generate a message with a button to packages")
+//    @ICommand(name = "package-message", description = "Generate a message with a button to packages")
     @IArgument(name="title", description = "Title of the message", required = true, type= OptionType.STRING)
     @IArgument(name="description", description = "Description of the message", required = true, type= OptionType.STRING)
     @IRange(value=@IArgument(name="package", description = "The package", required = false, type= OptionType.STRING), min = 0, max = 22)

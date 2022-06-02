@@ -5,7 +5,6 @@ import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @Entity
@@ -19,7 +18,7 @@ public class Package implements Serializable {
         @Column
         Long guildId;
 
-        @Column
+        @Column(name = "package_name")
         String name;
 
         public PackageKey() {
@@ -66,9 +65,7 @@ public class Package implements Serializable {
     @Column
     String description;
 
-    @OneToMany
-    @JoinTable(
-    )
+    @OneToMany(fetch = FetchType.EAGER)
     List<Role> roles;
 
     public Package() {
@@ -112,11 +109,10 @@ public class Package implements Serializable {
     }
 
     public void addRole(Role role) throws RoleAlreadyAddedException {
-
-        for(Role r : roles) {
-            if(r.getName().equals(role.getName())) throw new RoleAlreadyAddedException("Role " + role.getName() + " already added to package " + packageKey.getName());
-        }
-
+        System.out.println(this.getRoles());
+//        for(Role r : this.getRoles()) {
+//            if(r.getRoleKey().getName().equals(role.getRoleKey().getName())) throw new RoleAlreadyAddedException("Role " + role.getRoleKey().getName() + " already added to package " + packageKey.getName());
+//        }
         roles.add(role);
     }
 }

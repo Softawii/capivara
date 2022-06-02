@@ -4,6 +4,7 @@ import com.softwaii.capivara.entity.Package;
 import com.softwaii.capivara.exceptions.PackageAlreadyExistsException;
 import com.softwaii.capivara.exceptions.PackageDoesNotExistException;
 import com.softwaii.capivara.repository.PackageRepository;
+import com.softwaii.capivara.repository.RoleRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -12,34 +13,36 @@ import java.util.Optional;
 @Component
 public class PackageService {
 
-    private PackageRepository repository;
+    private PackageRepository packageRepository;
+    private RoleRepository roleRepository;
 
-    public PackageService(PackageRepository repository) {
-        this.repository = repository;
+    public PackageService(PackageRepository packageRepository, RoleRepository roleRepository) {
+        this.packageRepository = packageRepository;
+        this.roleRepository = roleRepository;
     }
 
-    public void create(Package pkg) throws PackageAlreadyExistsException {
-        if(repository.existsById(pkg.getPackageKey())) throw new PackageAlreadyExistsException("Package already exists");
-        repository.save(pkg);
+    public Package create(Package pkg) throws PackageAlreadyExistsException {
+        if(packageRepository.existsById(pkg.getPackageKey())) throw new PackageAlreadyExistsException("Package already exists");
+        return packageRepository.save(pkg);
     }
 
     public void destroy(Long guildId, String packageKey) throws PackageDoesNotExistException {
         Package.PackageKey key = new Package.PackageKey(guildId, packageKey);
-        if(!repository.existsById(key)) throw new PackageDoesNotExistException("Package does not exist");
-        repository.deleteById(key);
+        if(!packageRepository.existsById(key)) throw new PackageDoesNotExistException("Package does not exist");
+        packageRepository.deleteById(key);
     }
 
     public void update(Package pkg) throws PackageDoesNotExistException {
-        if(!repository.existsById(pkg.getPackageKey())) throw new PackageDoesNotExistException("Package does not exist");
-        repository.save(pkg);
+        if(!packageRepository.existsById(pkg.getPackageKey())) throw new PackageDoesNotExistException("Package does not exist");
+        packageRepository.save(pkg);
     }
 
     public List<Package> findAllByGuildId(Long guildId) {
-        return repository.findAllByGuildId(guildId);
+        return packageRepository.findAllByPackageKey(new Package.PackageKey(guildId, null));
     }
 
     public Package findByPackageId(Package.PackageKey key) throws PackageDoesNotExistException {
-        Optional<Package> optional = repository.findById(key);
+        Optional<Package> optional = packageRepository.findById(key);
 
         if(optional.isEmpty()) throw new PackageDoesNotExistException("Package does not exist");
         return optional.get();
