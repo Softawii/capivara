@@ -1,7 +1,10 @@
 package com.softwaii.capivara.entity;
 
+import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
+
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -12,7 +15,7 @@ public class Package implements Serializable {
     PackageKey packageKey;
 
     @Embeddable
-    public class PackageKey implements Serializable {
+    public static class PackageKey implements Serializable {
         @Column
         Long guildId;
 
@@ -20,6 +23,11 @@ public class Package implements Serializable {
         String name;
 
         public PackageKey() {
+        }
+
+        public PackageKey(Long guildId, String name) {
+            this.guildId = guildId;
+            this.name = name;
         }
 
         public Long getGuildId() {
@@ -55,10 +63,21 @@ public class Package implements Serializable {
     @Column
     boolean singleChoice;
 
-    @ElementCollection
-    @MapKeyColumn(name = "role_key")
-    @Column(name = "role_id")
-    Map<String, String> roles;
+    @Column
+    String description;
+
+    @OneToMany
+    @JoinTable(
+    )
+    List<Role> roles;
+
+    public Package() {
+    }
+
+    public Package(Long guildId, String name, boolean singleChoice) {
+        this.packageKey = new PackageKey(guildId, name);
+        this.singleChoice = singleChoice;
+    }
 
     public PackageKey getPackageKey() {
         return packageKey;
@@ -76,11 +95,28 @@ public class Package implements Serializable {
         this.singleChoice = singleChoice;
     }
 
-    public Map<String, String> getRoles() {
+    public List<Role> getRoles() {
         return roles;
     }
 
-    public void setRoles(Map<String, String> roles) {
+    public void setRoles(List<Role> roles) {
         this.roles = roles;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void addRole(Role role) throws RoleAlreadyAddedException {
+
+        for(Role r : roles) {
+            if(r.getName().equals(role.getName())) throw new RoleAlreadyAddedException("Role " + role.getName() + " already added to package " + packageKey.getName());
+        }
+
+        roles.add(role);
     }
 }

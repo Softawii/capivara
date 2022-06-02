@@ -39,7 +39,7 @@ public class SpringConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
-        em.setPackagesToScan("com.softwaii.capivara.entity","com.softwaii.capivara.repository");
+        em.setPackagesToScan("com.softwaii.capivara.entity","com.softwaii.capivara.repository", "com.softawii.capivara.services");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

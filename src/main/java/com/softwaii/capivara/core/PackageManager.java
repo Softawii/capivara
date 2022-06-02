@@ -1,7 +1,9 @@
 package com.softwaii.capivara.core;
 
 import com.softwaii.capivara.client.Guild;
+import com.softwaii.capivara.entity.Package;
 import com.softwaii.capivara.exceptions.*;
+import com.softwaii.capivara.services.PackageService;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -18,102 +20,29 @@ import java.util.Map;
 @Component
 public class PackageManager {
 
-    private Capivara capivara;
+    PackageService packageService;
 
-    public PackageManager(Capivara capivara) {
-        this.capivara = capivara;
+    public PackageManager(PackageService packageService) {
+        this.packageService = packageService;
     }
 
-    public void createPackage(String guildID, String packageName, boolean unique) throws PackageAlreadyExistsException {
-        Guild guild = this.capivara.getOrCreateGuild(guildID);
-        guild.addPackage(packageName, unique);
+    public void create(Long guildId, String packageName, boolean unique) throws PackageAlreadyExistsException {
+        Package pkg = new Package(guildId, packageName, unique);
+        this.packageService.create(pkg);
     }
 
-    public void destroyPackage(String guildID, String packageName) throws PackageDoesNotExistException, GuildNotFoundException {
-        Guild guild = this.capivara.getGuild(guildID);
-        guild.removePackage(packageName);
+    public void destroy(Long guildId, String packageName) throws PackageDoesNotExistException {
+        this.packageService.destroy(guildId, packageName);
     }
 
-    public void addRoleToPackage(String guildID, String packageName, String roleName, Role role) throws GuildNotFoundException, RoleAlreadyAddedException, PackageDoesNotExistException {
-        Guild guild = this.capivara.getGuild(guildID);
-        guild.addRole(packageName, roleName, role);
-    }
+    public void addRole(Long guildId, String packageName, Role role, String name, String description) throws PackageDoesNotExistException, RoleAlreadyAddedException {
 
-    public void removeRoleFromPackage(String guildID, String packageName, String roleName) throws GuildNotFoundException, PackageDoesNotExistException, RoleNotFoundException {
-        Guild guild = this.capivara.getGuild(guildID);
-        guild.removeRole(packageName, roleName);
-    }
+        Package.PackageKey key = new Package.PackageKey(guildId, packageName);
+        com.softwaii.capivara.entity.Role entity = new com.softwaii.capivara.entity.Role(key, name, description, role.getIdLong());
 
-    public MessageEmbed getGuildPackages(String guildID) throws GuildNotFoundException {
-        Guild guild = this.capivara.getGuild(guildID);
+        Package pkg = this.packageService.findByPackageId(key);
+        pkg.addRole(entity);
 
-        EmbedBuilder builder = new EmbedBuilder();
-        builder.setTitle("Packages");
-        builder.setDescription("List of packages in this guild");
-        builder.setColor(Color.GREEN);
-
-        for (String pkg_name : guild.getPackageNames()) {
-
-            Map<String, Role> map = guild.getRoles(pkg_name);
-            StringBuilder sb = new StringBuilder();
-
-            map.forEach((key, value) -> {
-                String line = key + ": " + value.getAsMention() + "\n";
-                sb.append(line);
-            });
-
-            builder.addField(pkg_name, sb.toString(), false);
-        }
-
-        return builder.build();
-    }
-
-    public MessageEmbed packageGetRoleMessage(String guildID, List<String> packages, String title, String description) throws GuildNotFoundException, PackageDoesNotExistException {
-
-        Guild guild = this.capivara.getGuild(guildID);
-
-        EmbedBuilder builder = new EmbedBuilder();
-
-        builder.setTitle(title);
-        builder.setDescription(description);
-
-        if(!packages.isEmpty()) {
-
-            for (String pkg_name : packages) {
-                if(!guild.getPackageNames().contains(pkg_name)) throw new PackageDoesNotExistException("Package " + pkg_name + " does not exist in guild " + guildID);
-            }
-
-            builder.addField("Packages", String.join("\n ", packages), false);
-        }
-
-        return builder.build();
-    }
-
-    public SelectMenu createPackageMenu(String guildID, String id, List<String> packages) throws GuildNotFoundException {
-        SelectMenu.Builder builder = SelectMenu.create(id)
-                .setPlaceholder("Select your package")
-                .setRequiredRange(1, 1);
-
-        if(packages.isEmpty()) {
-            packages = this.capivara.getGuild(guildID).getPackageNames();
-        }
-
-        List<SelectOption> optionList = new ArrayList<>();
-
-        for(String pkg : packages) {
-            builder.addOption(pkg, pkg);
-        }
-
-        return builder.build();
-    }
-
-    public SelectMenu getSelectMenu(String guildId, Member member, String pkg_name, String id) throws GuildNotFoundException {
-        Guild guild = this.capivara.getGuild(guildId);
-        return guild.createRoleMenu(member, pkg_name, id);
-    }
-
-    public Map<String, Role> getRoles(String guildID, String packageName) throws GuildNotFoundException {
-        Guild guild = this.capivara.getGuild(guildID);
-        return guild.getRoles(packageName);
+        this.packageService.update(pkg);
     }
 }

@@ -37,10 +37,10 @@ public class PackageGroup {
 
         String name    = event.getOption("name").getAsString();
         boolean unique  = event.getOption("unique") != null && event.getOption("unique").getAsBoolean();
-        String guildId = event.getGuild().getId();
+        Long guildId = event.getGuild().getIdLong();
 
         try {
-            packageManager.createPackage(guildId, name, unique);
+            packageManager.create(guildId, name, unique);
             event.reply("Package with name '" + name + "' created").queue();
         } catch (PackageAlreadyExistsException e) {
             event.reply("Package already exists").queue();
@@ -52,38 +52,37 @@ public class PackageGroup {
     public static void destroy(SlashCommandInteractionEvent event) {
         System.out.println("destroy");
 
-        String guildId = event.getGuild().getId();
-        String pkgName = event.getOption("name").getAsString();
+        Long guildId = event.getGuild().getIdLong();
+        String name = event.getOption("name").getAsString();
 
         try {
-            packageManager.destroyPackage(guildId, pkgName);
-            event.reply("Package with name '" + pkgName + "' destroyed").queue();
+            packageManager.destroy(guildId, name);
+            event.reply("Package with name '" + name + "' destroyed").queue();
         } catch (PackageDoesNotExistException e) {
             event.reply("Package does not exist").queue();
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
         }
     }
 
     @ICommand(name = "package-add", description = "Add a role to a package")
     @IArgument(name="package", description = "The package to add the role to", required = true, type= OptionType.STRING)
     @IArgument(name="role", description = "role to be added", required = true, type= OptionType.ROLE)
+    @IArgument(name="name", description = "The name to link to the role", required = false, type= OptionType.STRING)
+    @IArgument(name="description", description = "The description to link to the role", required = false, type= OptionType.STRING)
     public static void add(SlashCommandInteractionEvent event) {
-        System.out.println("add");
 
-        String guildId  = event.getGuild().getId();
-        String pkgName  = event.getOption("package").getAsString();
-        Role   role     = event.getOption("role").getAsRole();
+        Long   guildId = event.getGuild().getIdLong();
+        String packageName = event.getOption("package").getAsString();
+        Role   role = event.getOption("role").getAsRole();
+        String name = event.getOption("name") != null ? event.getOption("name").getAsString() : role.getName();
+        String description = event.getOption("description") != null ? event.getOption("description").getAsString() : "";
 
         try {
-            packageManager.addRoleToPackage(guildId, pkgName, role.getName(), role);
-            event.reply("Role '" + role.getName() + "' added to package '" + pkgName + "'").queue();
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
-        } catch (RoleAlreadyAddedException e) {
-            event.reply("Role already added").queue();
+            packageManager.addRole(guildId, packageName, role, name, description);
+            event.reply("Role '" + role.getName() + "' added to package '" + packageName + "'").queue();
         } catch (PackageDoesNotExistException e) {
             event.reply("Package does not exist").queue();
+        } catch (RoleAlreadyAddedException e) {
+            event.reply("Role already added to package").queue();
         }
     }
 
@@ -91,36 +90,12 @@ public class PackageGroup {
     @IArgument(name="package", description = "The package to add the role to", required = true, type= OptionType.STRING)
     @IArgument(name="role", description = "role to be added", required = true, type= OptionType.ROLE)
     public static void remove(SlashCommandInteractionEvent event) {
-        System.out.println("remove");
 
-        String guildId  = event.getGuild().getId();
-        String pkgName  = event.getOption("package").getAsString();
-        Role   role     = event.getOption("role").getAsRole();
-
-        try {
-            packageManager.removeRoleFromPackage(guildId, pkgName, role.getName());
-            event.reply("Role '" + role.getName() + "' removed from package '" + pkgName + "'").queue();
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
-        } catch (PackageDoesNotExistException e) {
-            event.reply("Package does not exist").queue();
-        } catch (RoleNotFoundException e) {
-            event.reply("Role not found").queue();
-        }
     }
 
     @ICommand(name="package-list", description = "List all packages")
     public static void list(SlashCommandInteractionEvent event) {
-        System.out.println("list");
 
-        String guildId = event.getGuild().getId();
-
-        try {
-            MessageEmbed embed = packageManager.getGuildPackages(guildId);
-            event.replyEmbeds(embed).queue();
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
-        }
     }
 
     @ICommand(name = "package-message", description = "Generate a message with a button to packages")
@@ -139,15 +114,15 @@ public class PackageGroup {
             if(packageName != null) packages.add(packageName);
         }
 
-        try {
-            MessageEmbed embed = packageManager.packageGetRoleMessage(guildId, packages, title, description);
-            Button button = Button.success(packageButton + ":" + String.join(":", packages), "Click to get roles");
-            event.replyEmbeds(embed).addActionRow(button).queue();
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
-        } catch (PackageDoesNotExistException e) {
-            event.reply("Package does not exist").queue();
-        }
+//        try {
+////            MessageEmbed embed = packageManager.packageGetRoleMessage(guildId, packages, title, description);
+////            Button button = Button.success(packageButton + ":" + String.join(":", packages), "Click to get roles");
+////            event.replyEmbeds(embed).addActionRow(button).queue();
+//        } catch (GuildNotFoundException e) {
+//            event.reply("Guild not found").queue();
+//        } catch (PackageDoesNotExistException e) {
+//            event.reply("Package does not exist").queue();
+//        }
     }
 
     @IButton(id=packageButton)
@@ -165,12 +140,12 @@ public class PackageGroup {
             packageList = new ArrayList<>();
         }
 
-        try {
-            SelectMenu menu = packageManager.createPackageMenu(guildId, packageMenu, packageList);
-            event.reply("Please select a package").addActionRow(menu).queue();
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
-        }
+//        try {
+//            SelectMenu menu = packageManager.createPackageMenu(guildId, packageMenu, packageList);
+//            event.reply("Please select a package").addActionRow(menu).queue();
+//        } catch (GuildNotFoundException e) {
+//            event.reply("Guild not found").queue();
+//        }
     }
 
     @IMenu(id=packageMenu)
@@ -184,12 +159,12 @@ public class PackageGroup {
                 String custom_id = roleMenu + ":" + _package;
                 String guildId   = event.getGuild().getId();
 
-            try {
-                SelectMenu menu = packageManager.getSelectMenu(guildId, event.getMember(), _package, custom_id);
-                event.editMessage("Please select your role").setActionRow(menu).queue();
-            } catch (GuildNotFoundException e) {
-                event.reply("Guild not found").queue();
-            }
+//            try {
+//                SelectMenu menu = packageManager.getSelectMenu(guildId, event.getMember(), _package, custom_id);
+//                event.editMessage("Please select your role").setActionRow(menu).queue();
+//            } catch (GuildNotFoundException e) {
+//                event.reply("Guild not found").queue();
+//            }
             }, () -> event.editMessage("No package selected").setActionRow().queue()
         );
     }
@@ -200,31 +175,31 @@ public class PackageGroup {
 
         System.out.println(event.getInteraction().getId());
 
-        String _package = event.getInteraction().getSelectMenu().getId().split(":")[1];
-        Map<String, Role> roles;
-        try {
-            roles = packageManager.getRoles(guildId, _package);
-        } catch (GuildNotFoundException e) {
-            event.reply("Guild not found").queue();
-            return;
-        }
-
-        List<SelectOption> selectOptions = event.getSelectedOptions();
-
-        event.getInteraction().getSelectMenu().getOptions().forEach(opt -> {
-            String key = opt.getValue();
-
-
-            if(roles.containsKey(key)) {
-                Role role = roles.get(key);
-
-                if(selectOptions.contains(opt)) {
-                    event.getGuild().addRoleToMember(event.getMember(), role).queue();
-                } else {
-                    event.getGuild().removeRoleFromMember(event.getMember(), role).queue();
-                }
-            }
-        });
+//        String _package = event.getInteraction().getSelectMenu().getId().split(":")[1];
+//        Map<String, Role> roles;
+////        try {
+////            roles = packageManager.getRoles(guildId, _package);
+////        } catch (GuildNotFoundException e) {
+////            event.reply("Guild not found").queue();
+////            return;
+////        }
+//
+//        List<SelectOption> selectOptions = event.getSelectedOptions();
+//
+//        event.getInteraction().getSelectMenu().getOptions().forEach(opt -> {
+//            String key = opt.getValue();
+//
+//
+//            if(roles.containsKey(key)) {
+//                Role role = roles.get(key);
+//
+//                if(selectOptions.contains(opt)) {
+//                    event.getGuild().addRoleToMember(event.getMember(), role).queue();
+//                } else {
+//                    event.getGuild().removeRoleFromMember(event.getMember(), role).queue();
+//                }
+//            }
+//        });
 
         event.reply("Your roles have been updated").setEphemeral(true).queue();
     }
