@@ -1,4 +1,4 @@
-package com.softwaii.laputa.exceptions;
+package com.softawii.capivara.exceptions;
 
 public class RoleAlreadyAddedException extends Exception {
     public RoleAlreadyAddedException() {
