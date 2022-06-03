@@ -2,10 +2,7 @@ package com.softwaii.capivara.listeners;
 
 import com.softawii.curupira.annotations.*;
 import com.softwaii.capivara.core.PackageManager;
-import com.softwaii.capivara.exceptions.PackageAlreadyExistsException;
-import com.softwaii.capivara.exceptions.PackageDoesNotExistException;
-import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
-import com.softwaii.capivara.exceptions.RoleDoesNotExistException;
+import com.softwaii.capivara.exceptions.*;
 import com.softwaii.capivara.utils.Utils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -93,7 +90,7 @@ public class PackageGroup {
     @ICommand(name = "package-remove", description = "Remove a role from a package")
     @IArgument(name="package", description = "The package to add the role to", required = true, type= OptionType.STRING)
     @IArgument(name="name", description = "role link to remove", required = true, type= OptionType.STRING)
-    public static void remove(SlashCommandInteractionEvent event)  {
+    public static void remove(SlashCommandInteractionEvent event) {
         Long   guildId = event.getGuild().getIdLong();
         String packageName = event.getOption("package").getAsString();
         String roleName = event.getOption("name").getAsString();
@@ -101,8 +98,10 @@ public class PackageGroup {
         try {
             packageManager.removeRole(guildId, packageName, roleName);
             event.reply(String.format("Role '%s' removed from '%s'", roleName, packageName)).queue();
-        } catch (RoleDoesNotExistException e) {
+        } catch (RoleDoesNotExistException | RoleNotFoundException e) {
             event.reply(String.format("Role '%s' does not exists in '%s'", roleName, packageName)).queue();
+        } catch (PackageDoesNotExistException e) {
+            event.reply("Package does not exist").queue();
         }
     }
 
@@ -127,7 +126,7 @@ public class PackageGroup {
         String buttonText     = event.getOption("button-text").getAsString();
         List<String> packages = new ArrayList<>();
 
-        for(int i = 0; i <= 25; i++) {
+        for(int i = 0; i <= 20; i++) {
             String packageName = event.getOption("package" + i) != null ? event.getOption("package" + i).getAsString() : null;
             if(packageName != null) packages.add(packageName);
         }

@@ -1,10 +1,7 @@
 package com.softwaii.capivara.core;
 
 import com.softwaii.capivara.entity.Package;
-import com.softwaii.capivara.exceptions.PackageAlreadyExistsException;
-import com.softwaii.capivara.exceptions.PackageDoesNotExistException;
-import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
-import com.softwaii.capivara.exceptions.RoleDoesNotExistException;
+import com.softwaii.capivara.exceptions.*;
 import com.softwaii.capivara.services.PackageService;
 import com.softwaii.capivara.services.RoleService;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -54,8 +51,21 @@ public class PackageManager {
         this.packageService.update(pkg);
     }
 
-    public void removeRole(Long guildId, String packageName, String roleName) throws RoleDoesNotExistException {
-        roleService.remove(new Package.PackageKey(guildId, packageName), roleName);
+    public void removeRole(Long guildId, String packageName, String roleName) throws RoleDoesNotExistException, PackageDoesNotExistException, RoleNotFoundException {
+        // roleService.remove(new Package.PackageKey(guildId, packageName), roleName);
+        Package.PackageKey key = new Package.PackageKey(guildId, packageName);
+        com.softwaii.capivara.entity.Role.RoleKey roleKey = new com.softwaii.capivara.entity.Role.RoleKey(key, roleName);
+
+        if (!roleService.exists(roleKey)) throw new RoleDoesNotExistException();
+
+        Package pkg = this.packageService.findByPackageId(key);
+        pkg.removeRole(roleKey);
+
+        this.packageService.update(pkg);
+
+        if(roleService.exists(roleKey)) {
+            roleService.remove(roleKey.getPackageKey(), roleKey.getName());
+        }
     }
 
     public MessageEmbed getGuildPackages(Long guildId, List<Role> roles) {

@@ -1,6 +1,7 @@
 package com.softwaii.capivara.entity;
 
 import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
+import com.softwaii.capivara.exceptions.RoleNotFoundException;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -111,5 +112,16 @@ public class Package implements Serializable {
 
     public void addRole(Role role) throws RoleAlreadyAddedException {
         roles.add(role);
+    }
+
+    public void removeRole(Role.RoleKey key) throws RoleNotFoundException {
+        for (Role role : roles) {
+            if (role.getRoleKey().equals(key)) {
+                roles.remove(role);
+                return;
+            }
+        }
+
+        throw new RoleNotFoundException();
     }
 }

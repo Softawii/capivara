@@ -3,10 +3,23 @@ plugins {
 }
 
 group 'com.softwaii.laputa'
-version '1.0.0.0'
+version '1.0.0.1'
 
 repositories {
     mavenCentral()
+}
+
+def urlFile = { url, name ->
+    File file = new File("$buildDir/download/${name}.jar")
+    file.parentFile.mkdirs()
+    if (!file.exists()) {
+        new URL(url).withInputStream { downloadStream ->
+            file.withOutputStream { fileOut ->
+                fileOut << downloadStream
+            }
+        }
+    }
+    files(file.absolutePath)
 }
 
 dependencies {
@@ -20,7 +33,8 @@ dependencies {
         exclude module: 'opus-java'
     }
 
-    implementation files('libs/curupira-0.1.1.jar')
+    // implementation files('libs/curupira-0.1.1.jar')
+    implementation urlFile('https://github.com/Softawii/curupira/releases/download/v0.1.2/curupira-0.1.2.jar', 'curupira-0.1.2')
 }
 
 test {

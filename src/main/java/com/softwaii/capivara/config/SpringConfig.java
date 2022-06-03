@@ -22,6 +22,8 @@ import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
 import java.util.Properties;
 
+import static java.lang.System.getProperty;
+
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories("com.softwaii.capivara.repository")
@@ -68,7 +70,7 @@ public class SpringConfig {
     public Curupira curupira() {
         JDA jda = jda();
         String pkg   = "com.softwaii.capivara.listeners";
-        Curupira curupira = new Curupira(jda, pkg);
+        Curupira curupira = new Curupira(jda, Boolean.parseBoolean(env.getProperty("curupira.reset")), pkg);
 
         return curupira;
     }
