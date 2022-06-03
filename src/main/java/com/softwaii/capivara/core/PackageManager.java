@@ -8,12 +8,19 @@ import com.softwaii.capivara.exceptions.RoleDoesNotExistException;
 import com.softwaii.capivara.services.PackageService;
 import com.softwaii.capivara.services.RoleService;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 @Component
 public class PackageManager {
@@ -26,8 +33,8 @@ public class PackageManager {
         this.roleService = roleService;
     }
 
-    public void create(Long guildId, String packageName, boolean unique) throws PackageAlreadyExistsException {
-        Package pkg = new Package(guildId, packageName, unique);
+    public void create(Long guildId, String packageName, boolean unique, String description) throws PackageAlreadyExistsException {
+        Package pkg = new Package(guildId, packageName, unique, description);
         this.packageService.create(pkg);
     }
 
@@ -51,10 +58,9 @@ public class PackageManager {
         roleService.remove(new Package.PackageKey(guildId, packageName), roleName);
     }
 
-
-
     public MessageEmbed getGuildPackages(Long guildId, List<Role> roles) {
         List<Package> packages = packageService.findAllByGuildId(guildId);
+        AtomicBoolean failed = new AtomicBoolean(false);
 
         EmbedBuilder builder = new EmbedBuilder();
         builder.setTitle("Packages");
@@ -68,17 +74,71 @@ public class PackageManager {
             String name = key.getName();
             String description = pkg.getDescription();
 
+            if(description != null)  sb.append("*").append(description).append("*\n");
+
             pkg.getRoles().forEach(role -> {
                 Long roleId = role.getRoleId();
 
-                // TODO check if present
-                Role roleJda = roles.stream().filter(r -> roleId == r.getIdLong()).findFirst().get();
+                Optional<Role> optional = roles.stream().filter(r -> roleId == r.getIdLong()).findFirst();
 
-                String line = role.getRoleKey().getName() + ": " + roleJda.getAsMention() + "\n";
-                sb.append(line);
+                if (optional.isEmpty()) failed.set(true);
+
+                if(optional.isPresent()) {
+                    Role roleJda = optional.get();
+                    String line = role.getRoleKey().getName() + ": " + roleJda.getAsMention() + "\n";
+
+                    if(!role.getDescription().isBlank()) {
+                        line += "*" + role.getDescription() + "*\n";
+                    }
+
+                    sb.append(line);
+                }
             });
 
             builder.addField(name, sb.toString(), false);
+        });
+
+        return builder.build();
+    }
+
+    public SelectMenu getGuildPackagesMenu(Long guildId, List<String> packages_ids, String customId) {
+        List<Package> packages = packageService.findAllByGuildId(guildId);
+        // TODO: If packages != null, check if package is in packages_ids
+        SelectMenu.Builder builder = SelectMenu.create(customId);
+
+        // Select Just one Package
+        builder.setRequiredRange(1, 1);
+        // TODO: Customize the message
+        builder.setPlaceholder("Select a package");
+
+        for(Package pkg : packages) {
+            SelectOption option = SelectOption.of(pkg.getPackageKey().getName(), pkg.getPackageKey().getName());
+            option = option.withDescription(pkg.getDescription());
+            builder.addOptions(option);
+        }
+
+        return builder.build();
+    }
+
+    public SelectMenu getGuildPackageRoleMenu(Long guildId, String packageName, String customId, Member member, List<Long> guildRoles) throws PackageDoesNotExistException {
+        Package pkg = packageService.findByPackageId(new Package.PackageKey(guildId, packageName));
+        SelectMenu.Builder builder = SelectMenu.create(customId);
+
+        // Select Just one Package
+        if(pkg.isSingleChoice())  builder.setRequiredRange(1, 1);
+        else                      builder.setRequiredRange(0, pkg.getRoles().size());
+
+        // TODO: Check if all ids in package are in guildRoles
+
+        // Getting user roles and checking if the role is in the package (comparing ids)
+        List<Long> roleIds = member.getRoles().stream().map(ISnowflake::getIdLong).collect(Collectors.toList());
+
+        pkg.getRoles().forEach(role -> {
+            SelectOption option = SelectOption.of(role.getRoleKey().getName(), role.getRoleId().toString());
+            option = option.withDescription(role.getDescription());
+
+            if(roleIds.contains(role.getRoleId())) option = option.withDefault(true);
+            builder.addOptions(option);
         });
 
         return builder.build();

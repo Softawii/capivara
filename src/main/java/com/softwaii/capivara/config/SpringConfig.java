@@ -1,7 +1,6 @@
 package com.softwaii.capivara.config;
 
 import com.softawii.curupira.core.Curupira;
-import com.softwaii.capivara.core.Capivara;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,12 +73,6 @@ public class SpringConfig {
         return curupira;
     }
 
-    @Bean
-    public Capivara capivara() {
-        Capivara capivara = new Capivara();
-
-        return capivara;
-    }
 
     Properties additionalProperties() {
         Properties properties = new Properties();

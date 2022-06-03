@@ -71,9 +71,10 @@ public class Package implements Serializable {
     public Package() {
     }
 
-    public Package(Long guildId, String name, boolean singleChoice) {
+    public Package(Long guildId, String name, boolean singleChoice, String description) {
         this.packageKey = new PackageKey(guildId, name);
         this.singleChoice = singleChoice;
+        this.description = description;
     }
 
     public PackageKey getPackageKey() {
