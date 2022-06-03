@@ -1,5 +1,6 @@
 package com.softwaii.capivara.entity;
 
+import com.softwaii.capivara.exceptions.KeyAlreadyInPackageException;
 import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
 import com.softwaii.capivara.exceptions.RoleNotFoundException;
 
@@ -110,7 +111,13 @@ public class Package implements Serializable {
         this.description = description;
     }
 
-    public void addRole(Role role) throws RoleAlreadyAddedException {
+    public void addRole(Role role) throws RoleAlreadyAddedException, KeyAlreadyInPackageException {
+        if(roles.stream().anyMatch(r -> r.getRoleKey().equals(role.getRoleKey())))
+            throw new KeyAlreadyInPackageException();
+
+        if(roles.stream().anyMatch(r -> r.getRoleId().equals(role.getRoleId())))
+            throw new RoleAlreadyAddedException();
+
         roles.add(role);
     }
 

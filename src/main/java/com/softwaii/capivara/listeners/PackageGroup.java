@@ -84,6 +84,8 @@ public class PackageGroup {
             event.reply("Package does not exist").queue();
         } catch (RoleAlreadyAddedException e) {
             event.reply("Role already added to package").queue();
+        } catch (KeyAlreadyInPackageException e) {
+            event.reply("Key '" + name + "' already linked to package").queue();
         }
     }
 
@@ -169,7 +171,7 @@ public class PackageGroup {
                     try {
                         menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds);
                     } catch (PackageDoesNotExistException e) {
-                        event.reply("Package does not exist").queue();
+                        event.editMessage("Package does not exist").setActionRow().queue();
                         return;
                     }
 
@@ -181,8 +183,6 @@ public class PackageGroup {
 
     @IMenu(id=roleMenu)
     public static void getting_role(SelectMenuInteractionEvent event) {
-        String guildId = event.getGuild().getId();
-
         System.out.println(event.getInteraction().getId());
 
         List<SelectOption> selectOptions = event.getSelectedOptions();
@@ -194,7 +194,7 @@ public class PackageGroup {
             Role role = event.getGuild().getRoleById(roleId);
 
             if(role == null) {
-                event.editMessage("Role " + opt.getValue() + " does not exist").queue();
+                event.editMessage(event.getMessage().getContentDisplay() + "\nRole " + opt.getLabel() +  " : " +  opt.getValue() + " does not exist").queue();
                 return;
             }
 
@@ -205,7 +205,7 @@ public class PackageGroup {
                     event.getGuild().removeRoleFromMember(event.getMember(), role).queue();
                 }
             } catch(HierarchyException e) {
-                event.editMessage("Bot cannot assignee the role " + opt.getValue() + " to you").queue();
+                event.getChannel().sendMessage("Bot cannot assignee the role " + opt.getValue() + " to you").queue();
             }
         });
 

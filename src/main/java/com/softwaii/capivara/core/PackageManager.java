@@ -39,7 +39,7 @@ public class PackageManager {
         this.packageService.destroy(guildId, packageName);
     }
 
-    public void addRole(Long guildId, String packageName, Role role, String name, String description) throws PackageDoesNotExistException, RoleAlreadyAddedException {
+    public void addRole(Long guildId, String packageName, Role role, String name, String description) throws PackageDoesNotExistException, RoleAlreadyAddedException, KeyAlreadyInPackageException {
         Package.PackageKey key = new Package.PackageKey(guildId, packageName);
         com.softwaii.capivara.entity.Role.RoleKey roleKey = new com.softwaii.capivara.entity.Role.RoleKey(key, name);
         if (roleService.exists(roleKey)) throw new RoleAlreadyAddedException();
@@ -71,6 +71,7 @@ public class PackageManager {
     public MessageEmbed getGuildPackages(Long guildId, List<Role> roles) {
         List<Package> packages = packageService.findAllByGuildId(guildId);
         AtomicBoolean failed = new AtomicBoolean(false);
+        StringBuilder failBuilder = new StringBuilder();
 
         EmbedBuilder builder = new EmbedBuilder();
         builder.setTitle("Packages");
@@ -84,21 +85,26 @@ public class PackageManager {
             String name = key.getName();
             String description = pkg.getDescription();
 
-            if(description != null)  sb.append("*").append(description).append("*\n");
+            if(description != null)  sb.append("*").append(description).append("*\n\n");
 
             pkg.getRoles().forEach(role -> {
                 Long roleId = role.getRoleId();
 
                 Optional<Role> optional = roles.stream().filter(r -> roleId == r.getIdLong()).findFirst();
 
-                if (optional.isEmpty()) failed.set(true);
+                if (optional.isEmpty()) {
+                    failed.set(true);
+                    failBuilder.append("Role '").append(role.getRoleKey().getName())
+                            .append("' from package '").append(name)
+                            .append("' with RoleId '").append(role.getRoleId()).append("' not found in this guild\n");
+                }
 
                 if(optional.isPresent()) {
                     Role roleJda = optional.get();
-                    String line = role.getRoleKey().getName() + ": " + roleJda.getAsMention() + "\n";
+                    String line = "**" + role.getRoleKey().getName() + "**" + ": " + roleJda.getAsMention() + "\n";
 
                     if(!role.getDescription().isBlank()) {
-                        line += "*" + role.getDescription() + "*\n";
+                        line += "*" + role.getDescription() + "*\n\n";
                     }
 
                     sb.append(line);
@@ -107,6 +113,11 @@ public class PackageManager {
 
             builder.addField(name, sb.toString(), false);
         });
+
+
+        if(failed.get()) {
+            builder.addField("Failed to find roles", failBuilder.toString(), false);
+        }
 
         return builder.build();
     }
@@ -135,20 +146,24 @@ public class PackageManager {
         SelectMenu.Builder builder = SelectMenu.create(customId);
 
         // Select Just one Package
-        if(pkg.isSingleChoice())  builder.setRequiredRange(1, 1);
-        else                      builder.setRequiredRange(0, pkg.getRoles().size());
+        if(pkg.isSingleChoice())  builder.setRequiredRange(0, 1);
+        else                      builder.setRequiredRange(0, 25);
 
-        // TODO: Check if all ids in package are in guildRoles
+        builder.setPlaceholder("Select a role");
 
         // Getting user roles and checking if the role is in the package (comparing ids)
         List<Long> roleIds = member.getRoles().stream().map(ISnowflake::getIdLong).collect(Collectors.toList());
 
         pkg.getRoles().forEach(role -> {
-            SelectOption option = SelectOption.of(role.getRoleKey().getName(), role.getRoleId().toString());
-            option = option.withDescription(role.getDescription());
+            // If the roleId isn't in the guild role ids, it means the role is not in the guild
+            if(guildRoles.contains(role.getRoleId())) {
 
-            if(roleIds.contains(role.getRoleId())) option = option.withDefault(true);
-            builder.addOptions(option);
+                SelectOption option = SelectOption.of(role.getRoleKey().getName(), role.getRoleId().toString());
+                option = option.withDescription(role.getDescription());
+
+                if (roleIds.contains(role.getRoleId())) option = option.withDefault(true);
+                builder.addOptions(option);
+            }
         });
 
         return builder.build();
