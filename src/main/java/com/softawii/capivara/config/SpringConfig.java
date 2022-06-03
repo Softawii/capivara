@@ -3,6 +3,7 @@ package com.softawii.capivara.config;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
+import java.util.Arrays;
 import java.util.Properties;
 
 import static java.lang.System.getProperty;
@@ -40,7 +42,7 @@ public class SpringConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
-        em.setPackagesToScan("com.softwaii.capivara.entity","com.softwaii.capivara.repository", "com.softawii.capivara.services");
+        em.setPackagesToScan("com.softawii.capivara.entity","com.softawii.capivara.repository", "com.softawii.capivara.services");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -57,6 +59,7 @@ public class SpringConfig {
         JDA jda;
         try {
             JDABuilder builder = JDABuilder.createDefault(discordToken);
+            builder.disableCache(Arrays.asList(CacheFlag.values()));
             jda = builder.build();
             jda.awaitReady();
         } catch (LoginException | InterruptedException e) {
@@ -69,7 +72,7 @@ public class SpringConfig {
     @Bean
     public Curupira curupira() {
         JDA jda = jda();
-        String pkg   = "com.softwaii.capivara.listeners";
+        String pkg   = "com.softawii.capivara.listeners";
         Curupira curupira = new Curupira(jda, Boolean.parseBoolean(env.getProperty("curupira.reset")), pkg);
 
         return curupira;
