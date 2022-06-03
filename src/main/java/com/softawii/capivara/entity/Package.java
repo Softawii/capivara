@@ -67,16 +67,24 @@ public class Package implements Serializable {
     @Column
     String description;
 
+    @Column(nullable = false, columnDefinition = "varchar(255) default ''")
+    String emojiId;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    boolean emojiUnicode;
+
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     List<Role> roles;
 
     public Package() {
     }
 
-    public Package(Long guildId, String name, boolean singleChoice, String description) {
+    public Package(Long guildId, String name, boolean singleChoice, String description, String emojiId, boolean emojiUnicode) {
         this.packageKey = new PackageKey(guildId, name);
         this.singleChoice = singleChoice;
         this.description = description;
+        this.emojiId = emojiId;
+        this.emojiUnicode = emojiUnicode;
     }
 
     public PackageKey getPackageKey() {
@@ -109,6 +117,22 @@ public class Package implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getEmojiId() {
+        return emojiId;
+    }
+
+    public void setEmojiId(String emojiId) {
+        this.emojiId = emojiId;
+    }
+
+    public boolean isEmojiUnicode() {
+        return emojiUnicode;
+    }
+
+    public void setEmojiUnicode(boolean emojiUnicode) {
+        this.emojiUnicode = emojiUnicode;
     }
 
     public void addRole(Role role) throws RoleAlreadyAddedException, KeyAlreadyInPackageException {

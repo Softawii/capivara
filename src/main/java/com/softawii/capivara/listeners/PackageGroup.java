@@ -4,9 +4,9 @@ import com.softawii.curupira.annotations.*;
 import com.softawii.capivara.core.PackageManager;
 import com.softawii.capivara.exceptions.*;
 import com.softawii.capivara.utils.Utils;
+import kotlin.Pair;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
@@ -33,6 +33,7 @@ public class PackageGroup {
     @IArgument(name="name", description = "The package to add the role to", required = true, type= OptionType.STRING)
     @IArgument(name="unique", description = "If the package is unique or not", required = false, type= OptionType.BOOLEAN)
     @IArgument(name="description", description = "The package description", required = false, type= OptionType.STRING)
+    @IArgument(name="emoji", description = "The package emoji", required = false, type= OptionType.STRING)
     public static void create(SlashCommandInteractionEvent event) {
         System.out.println("create");
 
@@ -40,9 +41,19 @@ public class PackageGroup {
         boolean unique  = event.getOption("unique") != null && event.getOption("unique").getAsBoolean();
         Long guildId = event.getGuild().getIdLong();
         String description = event.getOption("description") != null ? event.getOption("description").getAsString() : "";
+        String emojiString = event.getOption("emoji") != null ? event.getOption("emoji").getAsString() : "";
+        boolean isUnicode = false;
 
         try {
-            packageManager.create(guildId, name, unique, description);
+            Pair<String, Boolean> emoji = Utils.getEmoji(emojiString);
+            emojiString = emoji.getFirst();
+            isUnicode = emoji.getSecond();
+        } catch (MultipleEmojiMessageException e) {
+            event.reply("Provided emoji is not a single emoji").queue();
+        }
+
+        try {
+            packageManager.create(guildId, name, unique, description, emojiString, isUnicode);
             event.reply("Package with name '" + name + "' created").queue();
         } catch (PackageAlreadyExistsException e) {
             event.reply("Package already exists").queue();
@@ -70,15 +81,26 @@ public class PackageGroup {
     @IArgument(name="role", description = "role to be added", required = true, type= OptionType.ROLE)
     @IArgument(name="name", description = "The name to link to the role", required = false, type= OptionType.STRING)
     @IArgument(name="description", description = "The description to link to the role", required = false, type= OptionType.STRING)
+    @IArgument(name="emoji", description = "The emoji to link to the role", required = false, type= OptionType.STRING)
     public static void add(SlashCommandInteractionEvent event) {
         Long   guildId = event.getGuild().getIdLong();
         String packageName = event.getOption("package").getAsString();
         Role   role = event.getOption("role").getAsRole();
         String name = event.getOption("name") != null ? event.getOption("name").getAsString() : role.getName();
         String description = event.getOption("description") != null ? event.getOption("description").getAsString() : "";
+        String emojiString = event.getOption("emoji") != null ? event.getOption("emoji").getAsString() : "";
+        boolean isUnicode = false;
 
         try {
-            packageManager.addRole(guildId, packageName, role, name, description);
+            Pair<String, Boolean> emoji = Utils.getEmoji(emojiString);
+            emojiString = emoji.getFirst();
+            isUnicode = emoji.getSecond();
+        } catch (MultipleEmojiMessageException e) {
+            event.reply("Provided emoji is not a single emoji").queue();
+        }
+
+        try {
+            packageManager.addRole(guildId, packageName, role, name, description, emojiString, isUnicode);
             event.reply("Role '" + role.getName() + "' added to package '" + packageName + "'").queue();
         } catch (PackageDoesNotExistException e) {
             event.reply("Package does not exist").queue();
@@ -87,6 +109,16 @@ public class PackageGroup {
         } catch (KeyAlreadyInPackageException e) {
             event.reply("Key '" + name + "' already linked to package").queue();
         }
+    }
+
+    @ICommand(name = "emoji", description = "Get the emoji for a package")
+    @IArgument(name="emoji", description = "things",required = true, type= OptionType.STRING)
+    public static void emoji(SlashCommandInteractionEvent event) {
+        String emojiString = event.getOption("emoji").getAsString();
+
+        List<String> emojis = Utils.extractEmojis(emojiString);
+
+        event.reply(emojis.stream().reduce("", (a, b) -> a + " : " + b)).queue();
     }
 
     @ICommand(name = "package-remove", description = "Remove a role from a package")
@@ -149,7 +181,9 @@ public class PackageGroup {
         // TODO: get packages from event
         //String[] packages = event.getInteraction().getId().split(":");
 
-        SelectMenu menu = packageManager.getGuildPackagesMenu(guildId, null, packageMenu);
+        List<Emote> emotes = event.getGuild().getEmotes();
+
+        SelectMenu menu = packageManager.getGuildPackagesMenu(guildId, null, packageMenu, emotes);
 
         event.reply("Please select a package").addActionRow(menu).setEphemeral(true).queue();
     }
@@ -167,17 +201,18 @@ public class PackageGroup {
                 Long guildId   = event.getGuild().getIdLong();
 
                 List<Long> roleIds = event.getGuild().getRoles().stream().map(Role::getIdLong).collect(Collectors.toList());
-                    SelectMenu menu = null;
-                    try {
-                        menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds);
-                    } catch (PackageDoesNotExistException e) {
-                        event.editMessage("Package does not exist").setActionRow().queue();
-                        return;
-                    }
+                SelectMenu menu = null;
+                try {
+                    List<Emote> emotes = event.getGuild().getEmotes();
+                    menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds, emotes);
+                } catch (PackageDoesNotExistException e) {
+                    event.editMessage("Package does not exist").setActionRow().queue();
+                    return;
+                }
 
-                    event.editMessage("Please select a role").setActionRow(menu).queue();
+                event.reply("Please select a role").addActionRow(menu).setEphemeral(true).queue();
 
-            }, () -> event.editMessage("No package selected").setActionRow().queue()
+            }, () -> event.editMessage("No package selected").queue()
         );
     }
 
