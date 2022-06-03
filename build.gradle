@@ -5,9 +5,11 @@ plugins {
 group 'com.softwaii.laputa'
 version '1.0.0.1'
 
+
 repositories {
     mavenCentral()
 }
+
 
 def urlFile = { url, name ->
     File file = new File("$buildDir/download/${name}.jar")
@@ -35,6 +37,7 @@ dependencies {
 
     // implementation files('libs/curupira-0.1.1.jar')
     implementation urlFile('https://github.com/Softawii/curupira/releases/download/v0.1.2/curupira-0.1.2.jar', 'curupira-0.1.2')
+
 }
 
 test {
