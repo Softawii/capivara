@@ -59,7 +59,7 @@ public class SpringConfig {
         JDA jda;
         try {
             JDABuilder builder = JDABuilder.createDefault(discordToken);
-            builder.disableCache(Arrays.asList(CacheFlag.values()));
+            builder.enableCache(CacheFlag.EMOTE, CacheFlag.ROLE_TAGS);
             jda = builder.build();
             jda.awaitReady();
         } catch (LoginException | InterruptedException e) {

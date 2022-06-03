@@ -8,6 +8,7 @@ version '1.0.0.1'
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io/' }
 }
 
 
@@ -38,6 +39,7 @@ dependencies {
     // implementation files('libs/curupira-0.1.1.jar')
     implementation urlFile('https://github.com/Softawii/curupira/releases/download/v0.1.2/curupira-0.1.2.jar', 'curupira-0.1.2')
 
+    implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
 }
 
 test {

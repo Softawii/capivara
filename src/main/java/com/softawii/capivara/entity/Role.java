@@ -62,6 +62,12 @@ public class Role {
     @Column
     private Long roleId;
 
+    @Column(nullable = false, columnDefinition = "varchar(255) default ''")
+    private String emojiId;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean emojiUnicode;
+
     // TODO perigoso
     @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Package pkg;
@@ -69,10 +75,12 @@ public class Role {
     public Role() {
     }
 
-    public Role(RoleKey roleKey, String description, Long roleId) {
+    public Role(RoleKey roleKey, String description, Long roleId, String emojiId, boolean emojiUnicode) {
         this.roleKey = roleKey;
         this.description = description;
         this.roleId = roleId;
+        this.emojiId = emojiId;
+        this.emojiUnicode = emojiUnicode;
     }
 
     public RoleKey getRoleKey() {
@@ -105,6 +113,22 @@ public class Role {
 
     public void setPkg(Package pkg) {
         this.pkg = pkg;
+    }
+
+    public String getEmojiId() {
+        return emojiId;
+    }
+
+    public void setEmojiId(String emojiId) {
+        this.emojiId = emojiId;
+    }
+
+    public boolean isEmojiUnicode() {
+        return emojiUnicode;
+    }
+
+    public void setEmojiUnicode(boolean emojiUnicode) {
+        this.emojiUnicode = emojiUnicode;
     }
 
     @Override

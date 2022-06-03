@@ -5,10 +5,7 @@ import com.softawii.capivara.exceptions.*;
 import com.softawii.capivara.services.PackageService;
 import com.softawii.capivara.services.RoleService;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import org.springframework.stereotype.Component;
@@ -30,8 +27,8 @@ public class PackageManager {
         this.roleService = roleService;
     }
 
-    public void create(Long guildId, String packageName, boolean unique, String description) throws PackageAlreadyExistsException {
-        Package pkg = new Package(guildId, packageName, unique, description);
+    public void create(Long guildId, String packageName, boolean unique, String description, String emojiId, boolean emojiUnicode) throws PackageAlreadyExistsException {
+        Package pkg = new Package(guildId, packageName, unique, description, emojiId, emojiUnicode);
         this.packageService.create(pkg);
     }
 
@@ -39,12 +36,12 @@ public class PackageManager {
         this.packageService.destroy(guildId, packageName);
     }
 
-    public void addRole(Long guildId, String packageName, Role role, String name, String description) throws PackageDoesNotExistException, RoleAlreadyAddedException, KeyAlreadyInPackageException {
+    public void addRole(Long guildId, String packageName, Role role, String name, String description, String emojiId, boolean emojiUnicode) throws PackageDoesNotExistException, RoleAlreadyAddedException, KeyAlreadyInPackageException {
         Package.PackageKey key = new Package.PackageKey(guildId, packageName);
         com.softawii.capivara.entity.Role.RoleKey roleKey = new com.softawii.capivara.entity.Role.RoleKey(key, name);
         if (roleService.exists(roleKey)) throw new RoleAlreadyAddedException();
 
-        com.softawii.capivara.entity.Role roleEntity = roleService.create(new com.softawii.capivara.entity.Role(roleKey, description, role.getIdLong()));
+        com.softawii.capivara.entity.Role roleEntity = roleService.create(new com.softawii.capivara.entity.Role(roleKey, description, role.getIdLong(), emojiId, emojiUnicode));
         Package pkg = this.packageService.findByPackageId(key);
         pkg.addRole(roleEntity);
 
@@ -122,7 +119,7 @@ public class PackageManager {
         return builder.build();
     }
 
-    public SelectMenu getGuildPackagesMenu(Long guildId, List<String> packages_ids, String customId) {
+    public SelectMenu getGuildPackagesMenu(Long guildId, List<String> packages_ids, String customId, List<Emote> emotes) {
         List<Package> packages = packageService.findAllByGuildId(guildId);
         // TODO: If packages != null, check if package is in packages_ids
         SelectMenu.Builder builder = SelectMenu.create(customId);
@@ -135,13 +132,25 @@ public class PackageManager {
         for(Package pkg : packages) {
             SelectOption option = SelectOption.of(pkg.getPackageKey().getName(), pkg.getPackageKey().getName());
             option = option.withDescription(pkg.getDescription());
+
+            if(!pkg.getEmojiId().isBlank()) {
+                if(pkg.isEmojiUnicode()) option = option.withEmoji(Emoji.fromUnicode(pkg.getEmojiId()));
+                else {
+                    Emote emote = emotes.stream().filter(
+                            emote1 -> emote1.getAsMention().equals(pkg.getEmojiId())
+                    ).findFirst().orElse(null);
+
+                    if(emote != null) option = option.withEmoji(Emoji.fromEmote(emote));
+                }
+            }
+
             builder.addOptions(option);
         }
 
         return builder.build();
     }
 
-    public SelectMenu getGuildPackageRoleMenu(Long guildId, String packageName, String customId, Member member, List<Long> guildRoles) throws PackageDoesNotExistException {
+    public SelectMenu getGuildPackageRoleMenu(Long guildId, String packageName, String customId, Member member, List<Long> guildRoles, List<Emote> emotes) throws PackageDoesNotExistException {
         Package pkg = packageService.findByPackageId(new Package.PackageKey(guildId, packageName));
         SelectMenu.Builder builder = SelectMenu.create(customId);
 
@@ -160,6 +169,21 @@ public class PackageManager {
 
                 SelectOption option = SelectOption.of(role.getRoleKey().getName(), role.getRoleId().toString());
                 option = option.withDescription(role.getDescription());
+
+                // This role has an emote????
+                if(!role.getEmojiId().isBlank()) {
+
+                    if(role.isEmojiUnicode()) {
+                        option = option.withEmoji(Emoji.fromUnicode(role.getEmojiId()));
+                    } else {
+                        Emote emote = emotes.stream().filter(
+                                emote1 -> emote1.getAsMention().equals(role.getEmojiId())
+                        ).findFirst().orElse(null);
+
+                        if(emote != null) option = option.withEmoji(Emoji.fromEmote(emote));
+                    }
+
+                }
 
                 if (roleIds.contains(role.getRoleId())) option = option.withDefault(true);
                 builder.addOptions(option);
