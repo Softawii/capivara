@@ -1,5 +1,6 @@
 package com.softwaii.capivara.services;
 
+import com.softwaii.capivara.entity.Package;
 import com.softwaii.capivara.entity.Role;
 import com.softwaii.capivara.exceptions.RoleDoesNotExistException;
 import com.softwaii.capivara.repository.PackageRepository;
@@ -31,5 +32,11 @@ public class RoleService {
 
     public boolean exists(Role.RoleKey roleKey) {
         return roleRepository.existsById(roleKey);
+    }
+
+    public void remove(Package.PackageKey packageKey, String name) throws RoleDoesNotExistException {
+        Role.RoleKey key = new Role.RoleKey(packageKey, name);
+        if(!roleRepository.existsById(key)) throw new RoleDoesNotExistException("Role does not exist");
+        roleRepository.deleteById(key);
     }
 }

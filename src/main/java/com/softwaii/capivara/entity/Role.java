@@ -56,11 +56,14 @@ public class Role {
         }
     }
 
+    @Column
     private String description;
 
+    @Column
     private Long roleId;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    // TODO perigoso
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     Package pkg;
 
     public Role() {

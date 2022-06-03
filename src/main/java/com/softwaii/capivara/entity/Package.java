@@ -65,7 +65,7 @@ public class Package implements Serializable {
     @Column
     String description;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     List<Role> roles;
 
     public Package() {
@@ -109,10 +109,6 @@ public class Package implements Serializable {
     }
 
     public void addRole(Role role) throws RoleAlreadyAddedException {
-        System.out.println(this.getRoles());
-//        for(Role r : this.getRoles()) {
-//            if(r.getRoleKey().getName().equals(role.getRoleKey().getName())) throw new RoleAlreadyAddedException("Role " + role.getRoleKey().getName() + " already added to package " + packageKey.getName());
-//        }
         roles.add(role);
     }
 }

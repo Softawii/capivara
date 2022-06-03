@@ -38,7 +38,7 @@ public class PackageService {
     }
 
     public List<Package> findAllByGuildId(Long guildId) {
-        return packageRepository.findAllByPackageKey(new Package.PackageKey(guildId, null));
+        return packageRepository.findAllByPackageKey_GuildId(guildId);
     }
 
     public Package findByPackageId(Package.PackageKey key) throws PackageDoesNotExistException {

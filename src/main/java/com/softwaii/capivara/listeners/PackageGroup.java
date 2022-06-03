@@ -7,7 +7,9 @@ import com.softwaii.capivara.core.PackageManager;
 import com.softwaii.capivara.exceptions.PackageAlreadyExistsException;
 import com.softwaii.capivara.exceptions.PackageDoesNotExistException;
 import com.softwaii.capivara.exceptions.RoleAlreadyAddedException;
+import com.softwaii.capivara.exceptions.RoleDoesNotExistException;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -84,16 +86,28 @@ public class PackageGroup {
         }
     }
 
-//    @ICommand(name = "package-remove", description = "Remove a role from a package")
+    @ICommand(name = "package-remove", description = "Remove a role from a package")
     @IArgument(name="package", description = "The package to add the role to", required = true, type= OptionType.STRING)
-    @IArgument(name="role", description = "role to be added", required = true, type= OptionType.ROLE)
-    public static void remove(SlashCommandInteractionEvent event) {
+    @IArgument(name="name", description = "role link to remove", required = true, type= OptionType.STRING)
+    public static void remove(SlashCommandInteractionEvent event)  {
+        Long   guildId = event.getGuild().getIdLong();
+        String packageName = event.getOption("package").getAsString();
+        String roleName = event.getOption("name").getAsString();
 
+        try {
+            packageManager.removeRole(guildId, packageName, roleName);
+            event.reply(String.format("Role '%s' removed from '%s'", roleName, packageName)).queue();
+        } catch (RoleDoesNotExistException e) {
+            event.reply(String.format("Role '%s' does not exists in '%s'", roleName, packageName)).queue();
+        }
     }
 
-//    @ICommand(name="package-list", description = "List all packages")
+    @ICommand(name="package-list", description = "List all packages")
     public static void list(SlashCommandInteractionEvent event) {
-
+        Long guildId = event.getGuild().getIdLong();
+        List<Role> roles = event.getGuild().getRoles();
+        MessageEmbed guildPackages = packageManager.getGuildPackages(guildId, roles);
+        event.replyEmbeds(guildPackages).queue();
     }
 
 //    @ICommand(name = "package-message", description = "Generate a message with a button to packages")
