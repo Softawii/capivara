@@ -39,4 +39,10 @@ public class RoleService {
         if(!roleRepository.existsById(key)) throw new RoleDoesNotExistException("Role does not exist");
         roleRepository.deleteById(key);
     }
+
+    public void update(Role role) throws RoleDoesNotExistException {
+        Role.RoleKey key = role.getRoleKey();
+        if(!roleRepository.existsById(key)) throw new RoleDoesNotExistException("Role does not exist");
+        roleRepository.save(role);
+    }
 }

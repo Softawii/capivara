@@ -32,6 +32,19 @@ public class PackageManager {
         this.packageService.create(pkg);
     }
 
+    public void update(Long guildId, String packageName, Boolean unique, String description, String emojiId, boolean emojiUnicode) throws PackageDoesNotExistException {
+        Package pkg = this.packageService.findByPackageId(new Package.PackageKey(guildId, packageName));
+
+        if(unique != null) pkg.setSingleChoice(unique);
+        if(description != null) pkg.setDescription(description);
+        if(emojiId != null) {
+            pkg.setEmojiId(emojiId);
+            pkg.setEmojiUnicode(emojiUnicode);
+        }
+
+        this.packageService.update(pkg);
+    }
+
     public void destroy(Long guildId, String packageName) throws PackageDoesNotExistException {
         this.packageService.destroy(guildId, packageName);
     }
@@ -46,6 +59,30 @@ public class PackageManager {
         pkg.addRole(roleEntity);
 
         this.packageService.update(pkg);
+    }
+
+    public void editRole(Long guildId, String packageName, String name, Role role, String description, String emojiId, boolean emojiUnicode) throws PackageDoesNotExistException, RoleDoesNotExistException, RoleAlreadyAddedException {
+        Package.PackageKey key = new Package.PackageKey(guildId, packageName);
+        com.softawii.capivara.entity.Role.RoleKey roleKey = new com.softawii.capivara.entity.Role.RoleKey(key, name);
+        if (!roleService.exists(roleKey)) throw new RoleDoesNotExistException();
+
+        com.softawii.capivara.entity.Role roleEntity = roleService.findById(roleKey);
+
+        if(emojiId != null) {
+            roleEntity.setEmojiId(emojiId);
+            roleEntity.setEmojiUnicode(emojiUnicode);
+        }
+        if(description != null) roleEntity.setDescription(description);
+
+        if(role != null) {
+            Package pkg = this.packageService.findByPackageId(key);
+
+            if (pkg.contains(role.getIdLong())) throw new RoleAlreadyAddedException();
+
+            roleEntity.setRoleId(role.getIdLong());
+        }
+
+        roleService.update(roleEntity);
     }
 
     public void removeRole(Long guildId, String packageName, String roleName) throws RoleDoesNotExistException, PackageDoesNotExistException, RoleNotFoundException {

@@ -145,6 +145,10 @@ public class Package implements Serializable {
         roles.add(role);
     }
 
+    public boolean contains(Long roleId) {
+        return roles.stream().anyMatch(r -> Objects.equals(r.getRoleId(), roleId));
+    }
+
     public void removeRole(Role.RoleKey key) throws RoleNotFoundException {
         for (Role role : roles) {
             if (role.getRoleKey().equals(key)) {
