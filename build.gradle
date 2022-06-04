@@ -1,8 +1,10 @@
 plugins {
-    id 'java'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'java-library'
+    id 'application'
 }
 
-group 'com.softwaii.laputa'
+group 'com.softwaii.capivara'
 version '1.0.0.1'
 
 
@@ -37,11 +39,15 @@ dependencies {
     }
 
     // implementation files('libs/curupira-0.1.1.jar')
-    implementation urlFile('https://github.com/Softawii/curupira/releases/download/v0.1.2/curupira-0.1.2.jar', 'curupira-0.1.2')
+    implementation urlFile('https://github.com/Softawii/curupira/releases/download/v0.1.2.1/curupira-0.1.2.1.jar', 'curupira-0.1.2.1')
 
     implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
 }
 
+
 test {
     useJUnitPlatform()
 }
+
+sourceCompatibility = JavaVersion.VERSION_16
+targetCompatibility = JavaVersion.VERSION_16
