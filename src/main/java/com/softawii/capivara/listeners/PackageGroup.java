@@ -7,14 +7,18 @@ import com.softawii.capivara.utils.Utils;
 import kotlin.Pair;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
 import net.dv8tion.jda.api.exceptions.HierarchyException;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
@@ -68,11 +72,11 @@ public class PackageGroup {
     }
 
     @ICommand(name = "edit", description = "Update a package", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="name", description = "The package to update", required = true, type= OptionType.STRING)
+    @IArgument(name="name", description = "The package to update", required = true, type= OptionType.STRING, hasAutoComplete = true)
     @IArgument(name="unique", description = "If the package is unique or not", required = false, type= OptionType.BOOLEAN)
     @IArgument(name="description", description = "The package description", required = false, type= OptionType.STRING)
     @IArgument(name="emoji", description = "The package emoji", required = false, type= OptionType.STRING)
-    public static void update(SlashCommandInteractionEvent event) {
+    public static void edit(SlashCommandInteractionEvent event) {
         System.out.println("update");
 
         String name    = event.getOption("name").getAsString();
@@ -103,7 +107,7 @@ public class PackageGroup {
     }
 
     @ICommand(name = "destroy", description = "Create a package to get roles", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="name", description = "The package to remove the role to", required = true, type= OptionType.STRING)
+    @IArgument(name="name", description = "The package to remove the role to", required = true, type= OptionType.STRING, hasAutoComplete = true)
     public static void destroy(SlashCommandInteractionEvent event) {
         System.out.println("destroy");
 
@@ -123,7 +127,7 @@ public class PackageGroup {
     public static class RoleGroup {
 
         @ICommand(name = "add", description = "Add a role to a package", permissions = {Permission.ADMINISTRATOR})
-        @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING)
+        @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING, hasAutoComplete = true)
         @IArgument(name = "role", description = "role to be added", required = true, type = OptionType.ROLE)
         @IArgument(name = "name", description = "The name to link to the role", required = false, type = OptionType.STRING)
         @IArgument(name = "description", description = "The description to link to the role", required = false, type = OptionType.STRING)
@@ -170,8 +174,8 @@ public class PackageGroup {
         }
 
         @ICommand(name = "edit", description = "Edit a role in a package", permissions = {Permission.ADMINISTRATOR})
-        @IArgument(name = "package", description = "The package to edit", required = true, type = OptionType.STRING)
-        @IArgument(name = "name", description = "The name to link to the role", required = true, type = OptionType.STRING)
+        @IArgument(name = "package", description = "The package to edit", required = true, type = OptionType.STRING, hasAutoComplete = true)
+        @IArgument(name = "name", description = "The name to link to the role", required = true, type = OptionType.STRING, hasAutoComplete = true)
         @IArgument(name = "role", description = "The role to be edited", required = false, type = OptionType.ROLE)
         @IArgument(name = "description", description = "The description to link to the role", required = false, type = OptionType.STRING)
         @IArgument(name = "emoji", description = "The emoji to link to the role", required = false, type = OptionType.STRING)
@@ -210,8 +214,8 @@ public class PackageGroup {
         }
 
         @ICommand(name = "remove", description = "Remove a role from a package", permissions = {Permission.ADMINISTRATOR})
-        @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING)
-        @IArgument(name = "name", description = "role link to remove", required = true, type = OptionType.STRING)
+        @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING, hasAutoComplete = true)
+        @IArgument(name = "name", description = "role link to remove", required = true, type = OptionType.STRING, hasAutoComplete = true)
         public static void remove(SlashCommandInteractionEvent event) {
             Long guildId = event.getGuild().getIdLong();
             String packageName = event.getOption("package").getAsString();
@@ -244,7 +248,7 @@ public class PackageGroup {
     @IArgument(name="button-text", description = "Text of the button", required = true, type= OptionType.STRING)
     @IArgument(name="type", description = "Get Multiple or an Package", required = true, type= OptionType.STRING,
             choices={@IArgument.IChoice(key="Packages", value="packages"), @IArgument.IChoice(key="Unique", value="Unique")})
-    @IRange(value=@IArgument(name="package", description = "The package", required = false, type= OptionType.STRING), min = 0, max = 20)
+    @IRange(value=@IArgument(name="package", description = "The package", required = false, type= OptionType.STRING, hasAutoComplete = true), min = 0, max = 20)
     public static void message(SlashCommandInteractionEvent event) {
         System.out.println("message");
         Long guildId        = event.getGuild().getIdLong();
@@ -390,5 +394,56 @@ public class PackageGroup {
         });
 
         event.reply("Your roles have been updated").setEphemeral(true).queue();
+    }
+
+    public static class AutoCompleter extends ListenerAdapter {
+
+        @Override
+        public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
+            // This is where you can add your own auto-completion logic
+            // This autocompleter is just for the PackageGroup class not for PackageGroup.RoleGroup!
+            if(event.getGuild() == null) {
+                return;
+            }
+
+            String eventPath = event.getCommandPath();
+
+            System.out.println(String.format("AutoCompleter: %s : %s", eventPath, event.getFocusedOption().getName()));
+
+            if(eventPath.equals("package/edit") || eventPath.equals("package/destroy")) {
+                String focusedKey   = event.getFocusedOption().getName();
+                String focusedValue = event.getFocusedOption().getValue();
+                // AutoComplete to name (Package Name)
+                if(focusedKey.equals("name")) {
+                    event.replyChoices(packageManager.autoCompletePackageName(event.getGuild().getIdLong(), focusedValue)).queue();
+                }
+            } else if(eventPath.equals("package/message")) {
+                String focusedKey   = event.getFocusedOption().getName();
+                String focusedValue = event.getFocusedOption().getValue();
+                // AutoComplete to name (Package Name)
+                if(focusedKey.startsWith("package")) {
+                    event.replyChoices(packageManager.autoCompletePackageName(event.getGuild().getIdLong(), focusedValue)).queue();
+                }
+            } else if(eventPath.equals("package/role/add")) {
+                String focusedKey   = event.getFocusedOption().getName();
+                String focusedValue = event.getFocusedOption().getValue();
+                // AutoComplete to package (Package Name)
+                if(focusedKey.equals("package")) {
+                    event.replyChoices(packageManager.autoCompletePackageName(event.getGuild().getIdLong(), focusedValue)).queue();
+                }
+            } else if(eventPath.equals("package/role/remove") || eventPath.equals("package/role/edit")) {
+                String focusedKey   = event.getFocusedOption().getName();
+                String focusedValue = event.getFocusedOption().getValue();
+                // AutoComplete to package (Package Name)
+                if(focusedKey.equals("package")) {
+                    event.replyChoices(packageManager.autoCompletePackageName(event.getGuild().getIdLong(), focusedValue)).queue();
+                }
+                // AutoComplete to name (Role Name)
+                else if(focusedKey.equals("name")) {
+                    String packageName = event.getOption("package") != null ? event.getOption("package").getAsString() : "";
+                    event.replyChoices(packageManager.autoCompleteRolePackageName(event.getGuild().getIdLong(), packageName, focusedValue)).queue();
+                }
+            }
+        }
     }
 }

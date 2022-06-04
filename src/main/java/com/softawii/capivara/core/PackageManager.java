@@ -6,11 +6,13 @@ import com.softawii.capivara.services.PackageService;
 import com.softawii.capivara.services.RoleService;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -244,5 +246,31 @@ public class PackageManager {
         } catch (PackageDoesNotExistException e) {
             return false;
         }
+    }
+
+    public List<Command.Choice> autoCompletePackageName(Long guildId, String packageName) {
+        List<String> pkgNames = packageService.findAllByGuildId(guildId).stream().map(pkg -> pkg.getPackageKey().getName()).toList();
+
+        List<Command.Choice> choices = pkgNames
+                                        .stream()
+                                        .filter(c -> c.startsWith(packageName))
+                                        .map(c -> new Command.Choice(c, c))
+                                        .toList();
+
+        return choices;
+    }
+
+    public List<Command.Choice> autoCompleteRolePackageName(Long guildId, String packageName, String roleName) {
+        List<Package> packages = packageService.findAllByGuildId(guildId);
+
+        Package target = packages.stream().filter(pkg -> pkg.getPackageKey().getName().equals(packageName)).findFirst().orElse(null);
+
+        if(target == null) return new ArrayList<>();
+
+        return target.getRoles()
+                    .stream()
+                    .filter(role -> role.getRoleKey().getName().startsWith(roleName))
+                    .map(role -> new Command.Choice(role.getRoleKey().getName(), role.getRoleKey().getName()))
+                    .toList();
     }
 }

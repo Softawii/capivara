@@ -1,5 +1,6 @@
 package com.softawii.capivara.config;
 
+import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -60,6 +61,7 @@ public class SpringConfig {
         try {
             JDABuilder builder = JDABuilder.createDefault(discordToken);
             builder.enableCache(CacheFlag.EMOTE, CacheFlag.ROLE_TAGS);
+            builder.addEventListeners(new PackageGroup.AutoCompleter());
             jda = builder.build();
             jda.awaitReady();
         } catch (LoginException | InterruptedException e) {
