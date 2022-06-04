@@ -39,6 +39,12 @@ public class PackageGroup {
         System.out.println("create");
 
         String name    = event.getOption("name").getAsString();
+
+        if(name.contains(":")) {
+            event.reply("Package name can't contain ':'").queue();
+            return;
+        }
+
         boolean unique  = event.getOption("unique") != null && event.getOption("unique").getAsBoolean();
         Long guildId = event.getGuild().getIdLong();
         String description = event.getOption("description") != null ? event.getOption("description").getAsString() : "";
@@ -125,8 +131,20 @@ public class PackageGroup {
         public static void add(SlashCommandInteractionEvent event) {
             Long guildId = event.getGuild().getIdLong();
             String packageName = event.getOption("package").getAsString();
+
+            if(packageName.contains(":")) {
+                event.reply("Package name can't contain ':'").queue();
+                return;
+            }
+
             Role role = event.getOption("role").getAsRole();
             String name = event.getOption("name") != null ? event.getOption("name").getAsString() : role.getName();
+
+            if(name.contains(":")) {
+                event.reply("Role name can't contain ':'").queue();
+                return;
+            }
+
             String description = event.getOption("description") != null ? event.getOption("description").getAsString() : "";
             String emojiString = event.getOption("emoji") != null ? event.getOption("emoji").getAsString() : "";
             boolean isUnicode = false;
