@@ -158,7 +158,12 @@ public class PackageManager {
 
     public SelectMenu getGuildPackagesMenu(Long guildId, List<String> packages_ids, String customId, List<Emote> emotes) {
         List<Package> packages = packageService.findAllByGuildId(guildId);
-        // TODO: If packages != null, check if package is in packages_ids
+
+        // Filtering by packages_ids
+        if(packages_ids != null && !packages_ids.isEmpty()) {
+            packages = packages.stream().filter(pkg -> packages_ids.contains(pkg.getPackageKey().getName())).collect(Collectors.toList());
+        }
+
         SelectMenu.Builder builder = SelectMenu.create(customId);
 
         // Select Just one Package
@@ -228,5 +233,16 @@ public class PackageManager {
         });
 
         return builder.build();
+    }
+
+    public boolean checkIfAllPackagesExist(Long guildId, List<String> packageNames) {
+        return packageNames.stream().allMatch(packageName -> this.checkIfPackageExists(guildId, packageName));
+    }
+    public boolean checkIfPackageExists(Long guildId, String packageName) {
+        try {
+            return packageService.findByPackageId(new Package.PackageKey(guildId, packageName)) != null;
+        } catch (PackageDoesNotExistException e) {
+            return false;
+        }
     }
 }

@@ -25,9 +25,10 @@ import java.util.stream.Collectors;
 public class PackageGroup {
 
     public static PackageManager packageManager;
-    private static final String packageMenu   = "package-menu";
-    private static final String packageButton = "package-button";
-    private static final String roleMenu      = "role-menu";
+    private static final String packageMenu       = "package-menu";
+    private static final String packageUniqueMenu = "package-unique-menu";
+    private static final String packageButton     = "package-button";
+    private static final String roleMenu          = "role-menu";
 
     @ICommand(name = "create", description = "Create a package to get roles", permissions = {Permission.ADMINISTRATOR})
     @IArgument(name="name", description = "The package to be created", required = true, type= OptionType.STRING)
@@ -223,10 +224,12 @@ public class PackageGroup {
     @IArgument(name="title", description = "Title of the message", required = true, type= OptionType.STRING)
     @IArgument(name="description", description = "Description of the message", required = true, type= OptionType.STRING)
     @IArgument(name="button-text", description = "Text of the button", required = true, type= OptionType.STRING)
+    @IArgument(name="type", description = "Get Multiple or an Package", required = true, type= OptionType.STRING,
+            choices={@IArgument.IChoice(key="Packages", value="packages"), @IArgument.IChoice(key="Unique", value="Unique")})
     @IRange(value=@IArgument(name="package", description = "The package", required = false, type= OptionType.STRING), min = 0, max = 20)
     public static void message(SlashCommandInteractionEvent event) {
         System.out.println("message");
-        String guildId        = event.getGuild().getId();
+        Long guildId        = event.getGuild().getIdLong();
         String title          = event.getOption("title").getAsString();
         String description    = event.getOption("description").getAsString();
         String buttonText     = event.getOption("button-text").getAsString();
@@ -237,25 +240,56 @@ public class PackageGroup {
             if(packageName != null) packages.add(packageName);
         }
 
-        // TODO: Verify if package exists
-        MessageEmbed messageEmbed = Utils.simpleEmbed(title, description, Color.GREEN);
-        // TODO: Button Name if packages is different from null (or empty)
-        // Like package:package1:package2:package3...
-        Button button = Button.success(packageButton, buttonText);
-        event.replyEmbeds(messageEmbed).addActionRow(button).queue();
+        String type = event.getOption("type").getAsString();
+
+        // Get Multiple or All Packages
+        if(type.equals("packages")) {
+            if(!packages.isEmpty() && !packageManager.checkIfAllPackagesExist(guildId, packages)) {
+                event.reply("One or more packages does not exist").queue();
+                return;
+            }
+            MessageEmbed messageEmbed = Utils.simpleEmbed(title, description, Color.GREEN);
+
+            String buttonId = packageButton;
+            if(!packages.isEmpty()) {
+                String packagesString = String.join(":", packages);
+                buttonId += ":" + packagesString;
+            }
+
+            Button button = Button.success(buttonId, buttonText);
+            event.replyEmbeds(messageEmbed).addActionRow(button).queue();
+        } else {
+            if(packages.size() != 1) {
+                event.reply("You need to specify exactly one package").queue();
+                return;
+            }
+
+            if(!packageManager.checkIfPackageExists(guildId, packages.get(0))) {
+                event.reply("The package does not exist").queue();
+                return;
+            }
+            MessageEmbed messageEmbed = Utils.simpleEmbed(title, description, Color.GREEN);
+
+            String packageName = packages.get(0);
+            String buttonId = packageUniqueMenu + ":" + packageName;
+
+            Button button = Button.success(buttonId, buttonText);
+            event.replyEmbeds(messageEmbed).addActionRow(button).queue();
+        }
     }
 
     @IButton(id=packageButton)
     public static void packageGetter(ButtonInteractionEvent event) {
-        System.out.println("packageGetter");
+        System.out.println("packageGetter " + event.getComponentId());
 
         Long guildId = event.getGuild().getIdLong();
-        // TODO: get packages from event
-        //String[] packages = event.getInteraction().getId().split(":");
+
+        String[] packages = event.getComponentId().split(":");
+        packages = Arrays.copyOfRange(packages, 1, packages.length);
 
         List<Emote> emotes = event.getGuild().getEmotes();
 
-        SelectMenu menu = packageManager.getGuildPackagesMenu(guildId, null, packageMenu, emotes);
+        SelectMenu menu = packageManager.getGuildPackagesMenu(guildId, Arrays.stream(packages).toList(), packageMenu, emotes);
 
         event.reply("Please select a package").addActionRow(menu).setEphemeral(true).queue();
     }
@@ -286,6 +320,27 @@ public class PackageGroup {
 
             }, () -> event.editMessage("No package selected").queue()
         );
+    }
+
+    @IButton(id=packageUniqueMenu)
+    public static void packageUniqueMenu(ButtonInteractionEvent event) {
+        System.out.println("packageUniqueMenu " + event.getComponentId());
+
+        Long guildId = event.getGuild().getIdLong();
+        String _package = event.getComponentId().split(":")[1];
+        String customId = roleMenu + ":" + _package;
+
+        List<Long> roleIds = event.getGuild().getRoles().stream().map(Role::getIdLong).collect(Collectors.toList());
+        SelectMenu menu = null;
+        try {
+            List<Emote> emotes = event.getGuild().getEmotes();
+            menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds, emotes);
+        } catch (PackageDoesNotExistException e) {
+            event.editMessage("Package does not exist").setActionRow().queue();
+            return;
+        }
+
+        event.reply("Please select a role").addActionRow(menu).setEphemeral(true).queue();
     }
 
     @IMenu(id=roleMenu)
