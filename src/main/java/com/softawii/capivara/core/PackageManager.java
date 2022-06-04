@@ -102,7 +102,7 @@ public class PackageManager {
         }
     }
 
-    public MessageEmbed getGuildPackages(Long guildId, List<Role> roles) {
+    public MessageEmbed getGuildPackages(Long guildId, List<Role> roles, boolean showError) {
         List<Package> packages = packageService.findAllByGuildId(guildId);
         AtomicBoolean failed = new AtomicBoolean(false);
         StringBuilder failBuilder = new StringBuilder();
@@ -149,7 +149,7 @@ public class PackageManager {
         });
 
 
-        if(failed.get()) {
+        if(failed.get() && showError) {
             builder.addField("Failed to find roles", failBuilder.toString(), false);
         }
 

@@ -30,7 +30,7 @@ public class PackageGroup {
     private static final String roleMenu      = "role-menu";
 
     @ICommand(name = "create", description = "Create a package to get roles", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="name", description = "The package to add the role to", required = true, type= OptionType.STRING)
+    @IArgument(name="name", description = "The package to be created", required = true, type= OptionType.STRING)
     @IArgument(name="unique", description = "If the package is unique or not", required = false, type= OptionType.BOOLEAN)
     @IArgument(name="description", description = "The package description", required = false, type= OptionType.STRING)
     @IArgument(name="emoji", description = "The package emoji", required = false, type= OptionType.STRING)
@@ -115,7 +115,7 @@ public class PackageGroup {
     @ISubGroup(name = "role", description = "role subgroup")
     public static class RoleGroup {
 
-        @ICommand(name = "add", description = "Add a role to a package")
+        @ICommand(name = "add", description = "Add a role to a package", permissions = {Permission.ADMINISTRATOR})
         @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING)
         @IArgument(name = "role", description = "role to be added", required = true, type = OptionType.ROLE)
         @IArgument(name = "name", description = "The name to link to the role", required = false, type = OptionType.STRING)
@@ -150,7 +150,7 @@ public class PackageGroup {
             }
         }
 
-        @ICommand(name = "edit", description = "Edit a role in a package")
+        @ICommand(name = "edit", description = "Edit a role in a package", permissions = {Permission.ADMINISTRATOR})
         @IArgument(name = "package", description = "The package to edit", required = true, type = OptionType.STRING)
         @IArgument(name = "name", description = "The name to link to the role", required = true, type = OptionType.STRING)
         @IArgument(name = "role", description = "The role to be edited", required = false, type = OptionType.ROLE)
@@ -190,7 +190,7 @@ public class PackageGroup {
             }
         }
 
-        @ICommand(name = "remove", description = "Remove a role from a package")
+        @ICommand(name = "remove", description = "Remove a role from a package", permissions = {Permission.ADMINISTRATOR})
         @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING)
         @IArgument(name = "name", description = "role link to remove", required = true, type = OptionType.STRING)
         public static void remove(SlashCommandInteractionEvent event) {
@@ -211,9 +211,11 @@ public class PackageGroup {
     }
     @ICommand(name = "list", description = "List all packages")
     public static void list(SlashCommandInteractionEvent event) {
+        boolean showError =  event.getMember().hasPermission(Permission.ADMINISTRATOR);
+
         Long guildId = event.getGuild().getIdLong();
         List<Role> roles = event.getGuild().getRoles();
-        MessageEmbed guildPackages = packageManager.getGuildPackages(guildId, roles);
+        MessageEmbed guildPackages = packageManager.getGuildPackages(guildId, roles, showError);
         event.replyEmbeds(guildPackages).queue();
     }
 
