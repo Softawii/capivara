@@ -1,14 +1,10 @@
 package com.softawii.capivara.listeners;
 
 import com.softawii.capivara.utils.Utils;
-import com.softawii.curupira.annotations.IArgument;
-import com.softawii.curupira.annotations.IButton;
-import com.softawii.curupira.annotations.ICommand;
-import com.softawii.curupira.annotations.IGroup;
+import com.softawii.curupira.annotations.*;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -17,6 +13,9 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
 import java.awt.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.random.RandomGenerator;
 
 @IGroup(name = "role", description = "Role Group", hidden = false)
 public class RoleGroup {
@@ -28,54 +27,145 @@ public class RoleGroup {
     public static final String confirmAction = "role-confirm-action";
     public static final String cancelAction = "role-cancel-action";
 
-    @ICommand(name="create", description = "Create a role", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name = "type", description = "Role type", type = OptionType.STRING, required = true, choices = {
-            @IArgument.IChoice(value="Channel", key="Channel"),
-            @IArgument.IChoice(value="Category", key="Category"),
-            @IArgument.IChoice(value="Free", key="Free")
-    })
-    @IArgument(name = "name", description = "Role name", type = OptionType.STRING, required = false)
+    @ICommand(name="create", description = "Comando para criar um novo cargo", permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name = "name", description = "O nome do cargo a ser criado", type = OptionType.STRING, required = false)
+    @IArgument(name="channel", description = "O canal que o cargo será vinculado", type = OptionType.CHANNEL, required = false)
+    @IArgument(name="color", description = "A cor do cargo em hexadecimal (#FFFFFF)", type = OptionType.STRING, required = false)
+    @IArgument(name="visible", description = "Se o cargo deve ser exibido na lista de cargos separadamente, ali do lado sabe??", type = OptionType.BOOLEAN, required = false)
+    @IArgument(name="mentionable", description = "Se o cargo pode ser mencionado, ou seja, @everyone!", type = OptionType.BOOLEAN, required = false)
     public static void create(SlashCommandInteractionEvent event) {
-        event.getChannel().sendMessage("Role created").queue();
+        // Decoding
+        String name = event.getOption("name") != null ? event.getOption("name").getAsString() : null;
+        GuildChannel channel = event.getOption("channel") != null ? event.getOption("channel").getAsGuildChannel() : null;
+
+        if((name == null) == (channel == null)) {
+            MessageEmbed embed = Utils.simpleEmbed("Erro", "Você deve informar apenas o nome do cargo ou apenas o canal de vinculação", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
+        } else if(channel != null) {
+            name = channel.getName();
+        }
+
+        // Name Defined
+        String finalName = name;
+        if(event.getGuild().getRoles().stream().anyMatch(role -> role.getName().equals(finalName))) {
+            MessageEmbed embed = Utils.simpleEmbed("Erro", "Já existe um cargo com esse nome", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
+        };
+
+        // Color
+        String strColor = event.getOption("color") != null ? event.getOption("color").getAsString() : null;
+
+        Color color;
+        if(strColor != null) {
+            try {
+                color = Color.decode(strColor);
+            } catch (NumberFormatException e) {
+                MessageEmbed embed = Utils.simpleEmbed("Erro", "A cor informada não é uma cor válida", Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
+                return;
+            }
+        } else {
+            RandomGenerator random = RandomGenerator.getDefault();
+            color = new Color(random.nextInt(0, 255), random.nextInt(0, 255), random.nextInt(0, 255));
+        }
+
+        // Visible???
+        boolean visible = event.getOption("visible") != null && event.getOption("visible").getAsBoolean();
+        boolean mentionable = event.getOption("mentionable") == null || event.getOption("mentionable").getAsBoolean();
+
+        event.getGuild().createRole().setName(finalName).setColor(color).setHoisted(visible).setMentionable(mentionable).queue(role -> {
+            MessageEmbed embed = Utils.simpleEmbed("Cargo criado", "O cargo " + role.getAsMention()+ " foi criado com sucesso", Color.GREEN);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+        });
     }
 
     // DELETE SECTION -> DELETE / CONFIRM / CANCEL
-    @ICommand(name="delete", description = "Delete a role", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="role", description = "Role", type = OptionType.ROLE, required = true)
+    @ICommand(name="delete", description = "Quer deletar um cargo do servidor, amigao?", permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name="role", description = "O cargo que tu quer deletar!", type = OptionType.ROLE, required = true)
     public static void delete(SlashCommandInteractionEvent event) {
         // Not null, because it's server side and required
         Role role = event.getOption("role").getAsRole();
         String confirmId = String.format("%s:%s:%s", confirmAction, removeAction,  role.getId());
         String cancelId  = cancelAction;
 
-        MessageEmbed messageEmbed = Utils.simpleEmbed("Are you sure?",
-                "You really want to delete the role " + role.getAsMention() + "??",
+        MessageEmbed messageEmbed = Utils.simpleEmbed("Você tem certeza disso?",
+                "Você realmente quer deletar o cargo " + role.getAsMention() + "?",
                 Color.RED);
 
-        Button successButton = Button.success(confirmId, "Yes");
-        Button cancelButton  = Button.danger(cancelId, "No");
+        Button successButton = Button.success(confirmId, "Sim! Pode continuar!");
+        Button cancelButton  = Button.danger(cancelId, "Não, Deus me livre!!");
 
         event.replyEmbeds(messageEmbed).addActionRow(successButton, cancelButton).setEphemeral(true).queue();
     }
 
-    @ICommand(name="permissions", description = "update", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="role", description = "Role", type = OptionType.ROLE, required = true)
-    @IArgument(name="related", description = "Related", type = OptionType.CHANNEL, required = true)
-    @IArgument(name="type", description = "Apply to Channel or Category", type = OptionType.STRING, required = true,
-        choices = {
-            @IArgument.IChoice(value="Channel", key="Channel"),
-            @IArgument.IChoice(value="Category", key="Category")
-    })
-    @IArgument(name="permissions", description = "Permissions", type = OptionType.STRING, required = true,
-        choices = {
-            @IArgument.IChoice(value="Read", key="Read"),
-            @IArgument.IChoice(value="Write", key="Write")
-    })
-    public static void permissions(SlashCommandInteractionEvent event) {
-        event.getChannel().sendMessage("Role created").queue();
+    @ISubGroup(name = "channel", description = "Channel SubGroup")
+    public static class Channel {
+        @ICommand(name = "permissions", description = "Quer atualizar rapidamente algumas permissões do seu cargo??", permissions = {Permission.ADMINISTRATOR})
+        @IArgument(name = "role", description = "Fala o cargo ai chefe", type = OptionType.ROLE, required = true)
+        @IArgument(name = "related", description = "Pra qual canal que tu quer atualizar???", type = OptionType.CHANNEL, required = true)
+        @IArgument(name = "permissions", description = "Permissions", type = OptionType.STRING, required = true,
+                choices = {
+                        @IArgument.IChoice(value = "Read", key = "Read"),
+                        @IArgument.IChoice(value = "Write", key = "Write"),
+                        @IArgument.IChoice(value = "Connect", key = "Connect"),
+                        @IArgument.IChoice(value = "Speak", key = "Speak")
+                })
+        @IArgument(name = "allow", description = "Allow", type = OptionType.BOOLEAN, required = true)
+        public static void permissions(SlashCommandInteractionEvent event) {
+
+            Role role = event.getOption("role").getAsRole();
+            String permission = event.getOption("permissions").getAsString();
+            boolean allow = event.getOption("allow").getAsBoolean();
+
+
+            List<String> voicePermissions = List.of("Connect", "Speak");
+            List<String> textPermissions = List.of("Read", "Write");
+            ChannelType channelType = event.getOption("related").getChannelType();
+
+            // Everything is fine, let's update the permissions
+            if(channelType.isAudio()) {
+                VoiceChannel channel = event.getOption("related").getAsVoiceChannel();
+
+                if(!voicePermissions.contains(permission)) {
+                    MessageEmbed messageEmbed = Utils.simpleEmbed("Permissão inválida", "Permissões de voz só podem ser: " + voicePermissions.toString(), Color.RED);
+                    event.replyEmbeds(messageEmbed).setEphemeral(true).queue();
+                    return;
+                }
+
+                if(allow) role.getManager().givePermissions(getPermission(permission)).queue();
+                else      role.getManager().revokePermissions(getPermission(permission)).queue();
+            }
+            if(channelType.isMessage()) {
+                BaseGuildMessageChannel channel = (BaseGuildMessageChannel) event.getOption("related").getAsGuildChannel();
+
+                if(!textPermissions.contains(permission)) {
+                    MessageEmbed messageEmbed = Utils.simpleEmbed("Permissão inválida", "Permissões de texto só podem ser: " + textPermissions.toString(), Color.RED);
+                    event.replyEmbeds(messageEmbed).setEphemeral(true).queue();
+                    return;
+                }
+
+                if(allow) channel.getManager().putRolePermissionOverride(role.getIdLong(), List.of(getPermission(permission)), null).queue();
+                else      channel.getManager().putRolePermissionOverride(role.getIdLong(), null, List.of(getPermission(permission))).queue();
+            }
+
+            MessageEmbed messageEmbed = Utils.simpleEmbed("Permissões atualizadas", String.format("Permissão '%s' no canal atualizada com sucesso para o cargo %s", permission, role.getAsMention()), Color.GREEN);
+            event.replyEmbeds(messageEmbed).setEphemeral(true).queue();
+        }
+
+        public static Permission getPermission(String permission){
+            return switch (permission){
+                case "Read" ->  Permission.VIEW_CHANNEL;
+                case "Write" -> Permission.MESSAGE_SEND;
+                case "Connect" -> Permission.VOICE_CONNECT;
+                case "Speak" -> Permission.VOICE_SPEAK;
+                default -> throw new IllegalArgumentException("Invalid Permission");
+            };
+        }
     }
 
-
+    // SECTION BUTTON
     @IButton(id=confirmAction)
     public static void confirm(ButtonInteractionEvent event) {
         System.out.println("Received confirm: " + event.getComponentId());
@@ -114,8 +204,9 @@ public class RoleGroup {
 
     @IButton(id=cancelAction)
     public static void cancel(ButtonInteractionEvent event) {
-        event.getMessage().delete().queue();
-        event.reply("Cancelled").setEphemeral(true).queue();
+        MessageEmbed embed = Utils.simpleEmbed("Cancelado", "Cancelado com sucesso!! Não tente isso de novo heinn...", Color.RED);
+
+        event.editMessageEmbeds(embed).setActionRows().queue();
     }
 
 }
