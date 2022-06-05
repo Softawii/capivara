@@ -3,7 +3,7 @@
 Não irei focar em explicar o fluxo em detalhes (chamadas de função e retornos) 
 apenas explicar a ideia por trás de cada package do repositório e suas funções.
 
-<img src="./docs/fluxo.png">
+<img src="./fluxo.png">
 
 ### Listeners / Groups
 
