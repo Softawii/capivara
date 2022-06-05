@@ -1,6 +1,9 @@
 <div align="center">
     <img src="./docs/capybara-banner.png" alt="Banner">
+
+[![build-deploy](https://github.com/Softawii/capivara/actions/workflows/deploy.yaml/badge.svg)](https://github.com/Softawii/capivara/actions/workflows/deploy.yaml)
 </div>
+
 
 <h1 align="center">Capivara</h1>
 
