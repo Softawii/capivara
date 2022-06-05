@@ -1,0 +1,52 @@
+name: build-deploy
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-job:
+    name: Build Job
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v2
+
+      - name: 'Wait for SSH'
+        run: |
+          while ! nc -w5 -z ${{ secrets.INSTANCE_IP }} 22; do
+                  sleep 5
+                  echo "SSH not available..."
+          done; echo "SSH ready!"
+
+      - name: 'Stop App'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            kill $(ps aux | grep 'java -jar capivara.*.jar')
+            rm -rf ~/capivara/capivara.jar
+
+      - name: 'Download JAR'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/${{ secrets.SSH_USERNAME }}/capivara/
+            wget https://github.com/Softawii/capivara/releases/download/latest/capivara.jar
+
+      - name: 'Start BOT'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            nohup java -jar ~/capivara/capivara.jar --spring.config.location=file:~/capivara/config/main.properties > nohup.out 2> nohup.err < /dev/null &
