@@ -60,4 +60,4 @@ jobs:
           passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
           key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
-            nohup java -jar ~/capivara/capivara.jar --spring.config.location=file:/home/${{ secrets.SSH_USERNAME }}/capivara/config/main.properties > nohup.out 2> nohup.err < /dev/null &
+            nohup java -jar ~/capivara/capivara.jar --spring.config.location=file:/home/${{ secrets.SSH_USERNAME }}/capivara/config/main.properties --curupira.reset=true> nohup.out 2> nohup.err < /dev/null &
