@@ -28,7 +28,7 @@ jobs:
           passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
           key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
-            kill $(ps aux | grep 'java -jar capivara.*.jar')
+            sudo pkill -f 'java -jar .*capivara.*\.jar'
 
       - name: 'Delete Previous App'
         uses: appleboy/ssh-action@master
