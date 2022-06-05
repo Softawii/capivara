@@ -1,13 +1,13 @@
 package com.softawii.capivara;
 
-import com.softawii.curupira.core.Curupira;
 import com.softawii.capivara.core.PackageManager;
 import com.softawii.capivara.listeners.PackageGroup;
-import com.softawii.capivara.repository.PackageRepository;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Activity;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
@@ -16,18 +16,12 @@ public class Main implements CommandLineRunner {
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(Main.class, args);
         JDA jda = context.getBean(JDA.class);
-        System.out.println("Bot is ready as " + jda.getSelfUser().getName());
-        Curupira curupira = context.getBean(Curupira.class);
-        PackageManager pm = context.getBean(PackageManager.class);
-
-        PackageGroup.packageManager = pm;
-
-        PackageRepository repository = context.getBean(PackageRepository.class);
-//        repository.findAll();
+        BuildProperties buildProperties = context.getBean(BuildProperties.class);
+        jda.getPresence().setPresence(Activity.of(Activity.ActivityType.WATCHING,buildProperties.getVersion()), true);
+        System.out.println(buildProperties.getVersion() + " Bot is ready as " + jda.getSelfUser().getName());
+        PackageGroup.packageManager = context.getBean(PackageManager.class);
     }
 
     @Override
-    public void run(String... args) {
-        System.out.println("Nada");
-    }
+    public void run(String... args) {}
 }

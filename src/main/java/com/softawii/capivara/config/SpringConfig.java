@@ -22,15 +22,13 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
-import java.util.Arrays;
 import java.util.Properties;
-
-import static java.lang.System.getProperty;
 
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories("com.softawii.capivara.repository")
 @PropertySource("classpath:application.properties")
+@PropertySource(value = "${spring.config.location}", ignoreResourceNotFound = true)
 public class SpringConfig {
 
     private final Environment env;
@@ -75,7 +73,9 @@ public class SpringConfig {
     public Curupira curupira() {
         JDA jda = jda();
         String pkg   = "com.softawii.capivara.listeners";
-        Curupira curupira = new Curupira(jda, Boolean.parseBoolean(env.getProperty("curupira.reset")), pkg);
+        String resetEnv = env.getProperty("curupira.reset", "false");
+        boolean reset = Boolean.parseBoolean(resetEnv);
+        Curupira curupira = new Curupira(jda, reset, pkg);
 
         return curupira;
     }

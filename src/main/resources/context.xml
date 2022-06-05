@@ -15,13 +15,5 @@
     <context:annotation-config/>
     <context:component-scan base-package="com.softawii"/>
     <jpa:repositories base-package="com.softawii.capivara.repository"/>
-    <bean id="propertyPlaceholderConfigurer"
-          class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
-        <property name="locations">
-            <list>
-                <value>classpath:application.properties</value>
-            </list>
-        </property>
-    </bean>
 
 </beans>
