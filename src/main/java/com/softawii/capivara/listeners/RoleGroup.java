@@ -88,6 +88,13 @@ public class RoleGroup {
     public static void delete(SlashCommandInteractionEvent event) {
         // Not null, because it's server side and required
         Role role = event.getOption("role").getAsRole();
+
+        if(canInteract(event.getGuild().getSelfMember(), role)) {
+            MessageEmbed embed = Utils.simpleEmbed("Sem permissão irmão", "Esse cargo ta acima acima do meu! Missão Impossível", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
+        }
+
         String confirmId = String.format("%s:%s:%s", confirmAction, removeAction,  role.getId());
         String cancelId  = cancelAction;
 
@@ -106,6 +113,13 @@ public class RoleGroup {
     public static void clean(SlashCommandInteractionEvent event) {
         // Not null, because it's server side and required
         Role role = event.getOption("role").getAsRole();
+
+        if(canInteract(event.getGuild().getSelfMember(), role)) {
+            MessageEmbed embed = Utils.simpleEmbed("Sem permissão irmão", "Esse cargo ta acima acima do meu! Missão Impossível", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
+        }
+
         String confirmId = String.format("%s:%s:%s", confirmAction, cleanAction,  role.getId());
         String cancelId  = cancelAction;
 
@@ -135,6 +149,13 @@ public class RoleGroup {
         public static void permissions(SlashCommandInteractionEvent event) {
 
             Role role = event.getOption("role").getAsRole();
+
+            if(canInteract(event.getGuild().getSelfMember(), role)) {
+                MessageEmbed embed = Utils.simpleEmbed("Sem permissão irmão", "Esse cargo ta acima acima do meu! Missão Impossível", Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
+                return;
+            }
+
             String permission = event.getOption("permissions").getAsString();
             boolean allow = event.getOption("allow").getAsBoolean();
 
@@ -229,7 +250,6 @@ public class RoleGroup {
                 return;
             }
 
-
             Member selfMember = event.getGuild().getSelfMember();
             List<RestAction<Void>> removeActions = new ArrayList<>();
             event.getGuild().findMembersWithRoles(role).onSuccess(members -> {
@@ -257,6 +277,19 @@ public class RoleGroup {
         MessageEmbed embed = Utils.simpleEmbed("Cancelado", "Cancelado com sucesso!! Não tente isso de novo heinn...", Color.RED);
 
         event.editMessageEmbeds(embed).setActionRows().queue();
+    }
+
+
+    public static boolean canInteract(Member member, Role role) {
+
+        int rolePosition = role.getPosition();
+        int botPosition = member.getRoles().isEmpty() ? -1 : member.getRoles().get(0).getPosition();
+
+        if(botPosition == -1 || rolePosition >= botPosition) {
+            return false;
+        }
+
+       return true;
     }
 
 }
