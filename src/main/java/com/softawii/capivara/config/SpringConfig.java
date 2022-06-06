@@ -4,6 +4,8 @@ import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -57,8 +59,10 @@ public class SpringConfig {
     public JDA jda() {
         JDA jda;
         try {
-            JDABuilder builder = JDABuilder.createDefault(discordToken);
-            builder.enableCache(CacheFlag.EMOTE, CacheFlag.ROLE_TAGS);
+            JDABuilder builder = JDABuilder.create(discordToken, GatewayIntent.GUILD_MEMBERS);
+            builder.enableIntents(GatewayIntent.GUILD_EMOJIS);
+            builder.setMemberCachePolicy(MemberCachePolicy.ALL);
+            builder.enableCache(CacheFlag.EMOTE, CacheFlag.ROLE_TAGS, CacheFlag.MEMBER_OVERRIDES);
             builder.addEventListeners(new PackageGroup.AutoCompleter());
             jda = builder.build();
             jda.awaitReady();

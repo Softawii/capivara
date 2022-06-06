@@ -23,6 +23,8 @@ public class RoleGroup {
     // Specific Action
     public static final String actionButton = "role-action-button";
     public static final String removeAction = "role-remove-action";
+
+    public static final String cleanAction = "role-clean-action";
     // Confirm or Deny Action
     public static final String confirmAction = "role-confirm-action";
     public static final String cancelAction = "role-cancel-action";
@@ -92,10 +94,28 @@ public class RoleGroup {
 
         MessageEmbed messageEmbed = Utils.simpleEmbed("Você tem certeza disso?",
                 "Você realmente quer deletar o cargo " + role.getAsMention() + "?",
-                Color.RED);
+                Color.ORANGE);
 
         Button successButton = Button.success(confirmId, "Sim! Pode continuar!");
         Button cancelButton  = Button.danger(cancelId, "Não, Deus me livre!!");
+
+        event.replyEmbeds(messageEmbed).addActionRow(successButton, cancelButton).setEphemeral(true).queue();
+    }
+
+    @ICommand(name="clean", description = "Vamo fazer a limpa, hein?? Não vai sobrar ninguem!!", permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name="role", description = "Fala onde vamos limpar pro seu pai aqui!", type = OptionType.ROLE, required = true)
+    public static void clean(SlashCommandInteractionEvent event) {
+        // Not null, because it's server side and required
+        Role role = event.getOption("role").getAsRole();
+        String confirmId = String.format("%s:%s:%s", confirmAction, cleanAction,  role.getId());
+        String cancelId  = cancelAction;
+
+        MessageEmbed messageEmbed = Utils.simpleEmbed("Você tem certeza disso?",
+                "Você realmente quer remover **TODOS** os usuários do cargo" + role.getAsMention() + "??? Isso é muito forte viu!",
+                Color.ORANGE);
+
+        Button successButton = Button.success(confirmId, "Sim! Vamos limpar tudo!!");
+        Button cancelButton  = Button.danger(cancelId, "Não, terei piedade destes seres!!");
 
         event.replyEmbeds(messageEmbed).addActionRow(successButton, cancelButton).setEphemeral(true).queue();
     }
@@ -191,14 +211,33 @@ public class RoleGroup {
             Role role = event.getGuild().getRoleById(roleId);
 
             if(role == null) {
-                event.reply("Role not found").setEphemeral(true).queue();
+                MessageEmbed embed = Utils.simpleEmbed("Acharam o cargo antes de mim, temos um outro gerente na cidade",
+                        "Verifica ai se deletaram o cargo '" + role.getName() + "' ok??", Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
                 return;
             }
 
-            MessageEmbed embed = Utils.simpleEmbed("Role deleted",
-                                            "Role '" + role.getName() + "' deleted", Color.RED);
+            MessageEmbed embed = Utils.simpleEmbed("Deletei o cargo, de nada :ok_hand::skin-tone-3: ",
+                                            "Foi esse aqui que apaguei ó '" + role.getName() + "' ok??", Color.GREEN);
             event.editMessageEmbeds(embed).setActionRows().queue();
             role.delete().queue();
+        } else if(actionId.equals(cleanAction)) {
+            Role role = event.getGuild().getRoleById(roleId);
+
+            if(role == null) {
+                MessageEmbed embed = Utils.simpleEmbed("Não achei esse cargo... :(", "Maior loucura! Talvez alguem já tenha excluido!", Color.RED);
+                event.editMessageEmbeds(embed).setActionRows().queue();
+                return;
+            }
+
+            event.getGuild().findMembersWithRoles(role).onSuccess(members -> {
+                for(Member member : members) {
+                    event.getGuild().removeRoleFromMember(member, role).queue();
+                }
+            });
+
+            MessageEmbed embed = Utils.simpleEmbed("Fiz a limpa!", "Todos os membros que tinham esse cargo foram removidos.", Color.GREEN);
+            event.editMessageEmbeds(embed).setActionRows().queue();
         }
     }
 
