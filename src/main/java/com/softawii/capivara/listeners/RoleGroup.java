@@ -2,20 +2,19 @@ package com.softawii.capivara.listeners;
 
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.requests.RestAction;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.random.RandomGenerator;
+import java.util.stream.Collectors;
 
 @IGroup(name = "role", description = "Role Group", hidden = false)
 public class RoleGroup {
@@ -198,7 +197,7 @@ public class RoleGroup {
          */
         String[] args = event.getComponentId().split(":");
 
-        if(args.length != 3) {
+        if (args.length != 3) {
             event.reply("Invalid arguments -> " + event.getComponentId()).setEphemeral(true).queue();
             return;
         }
@@ -206,7 +205,7 @@ public class RoleGroup {
         String actionId = args[1];
         String roleId   = args[2];
 
-        if(actionId.equals(removeAction)) {
+        if (actionId.equals(removeAction)) {
             // Guild never null because it's a button in a server
             Role role = event.getGuild().getRoleById(roleId);
 
@@ -221,7 +220,7 @@ public class RoleGroup {
                                             "Foi esse aqui que apaguei ó '" + role.getName() + "' ok??", Color.GREEN);
             event.editMessageEmbeds(embed).setActionRows().queue();
             role.delete().queue();
-        } else if(actionId.equals(cleanAction)) {
+        } else if (actionId.equals(cleanAction)) {
             Role role = event.getGuild().getRoleById(roleId);
 
             if(role == null) {
@@ -230,14 +229,26 @@ public class RoleGroup {
                 return;
             }
 
+
+            Member selfMember = event.getGuild().getSelfMember();
+            List<RestAction<Void>> removeActions = new ArrayList<>();
             event.getGuild().findMembersWithRoles(role).onSuccess(members -> {
-                for(Member member : members) {
-                    event.getGuild().removeRoleFromMember(member, role).queue();
-                }
+                members.forEach(member -> {
+                    if (selfMember.canInteract(member)) {
+                        removeActions.add(event.getGuild().removeRoleFromMember(member, role));
+                    }
+                });
             });
 
-            MessageEmbed embed = Utils.simpleEmbed("Fiz a limpa!", "Todos os membros que tinham esse cargo foram removidos.", Color.GREEN);
-            event.editMessageEmbeds(embed).setActionRows().queue();
+            if (removeActions.isEmpty()) {
+                MessageEmbed embed = Utils.simpleEmbed("Tentei o que pude", "Tentei fazer a limpa, mas não encontrei alguém que eu possa remover o cargo", Color.ORANGE);
+                event.editMessageEmbeds(embed).setActionRows().queue();
+            } else {
+                RestAction.accumulate(removeActions, Collectors.toList()).queue(voids -> {
+                    MessageEmbed embed = Utils.simpleEmbed("Fiz a limpa!", String.format("Consegui remover o cargo de %d membros", removeActions.size()), Color.GREEN);
+                    event.editMessageEmbeds(embed).setActionRows().queue();
+                });
+            }
         }
     }
 
