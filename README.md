@@ -2,6 +2,7 @@
     <img src="./docs/capybara-banner.png" alt="Banner">
 
 [![deploy](https://github.com/Softawii/capivara/actions/workflows/deploy.yaml/badge.svg)](https://github.com/Softawii/capivara/actions/workflows/deploy.yaml)
+[![build](https://github.com/Softawii/capivara/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/Softawii/capivara/actions/workflows/build.yaml)
 </div>
 
 
