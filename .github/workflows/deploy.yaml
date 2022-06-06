@@ -1,12 +1,12 @@
-name: build-deploy
+name: deploy
 on:
   release:
     types: [published]
   workflow_dispatch:
 
 jobs:
-  build-job:
-    name: Build Job
+  deploy:
+    name: Deploy Job
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
