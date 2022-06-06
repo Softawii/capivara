@@ -219,7 +219,7 @@ public class RoleGroup {
         String[] args = event.getComponentId().split(":");
 
         if (args.length != 3) {
-            event.reply("Invalid arguments -> " + event.getComponentId()).setEphemeral(true).queue();
+            event.reply("Argumentos inválidos -> " + event.getComponentId()).setEphemeral(true).queue();
             return;
         }
 

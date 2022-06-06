@@ -37,18 +37,18 @@ public class PackageGroup {
     private static final String packageButton     = "package-button";
     private static final String roleMenu          = "role-menu";
 
-    @ICommand(name = "create", description = "Create a package to get roles", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="name", description = "The package to be created", required = true, type= OptionType.STRING)
-    @IArgument(name="unique", description = "If the package is unique or not", required = false, type= OptionType.BOOLEAN)
-    @IArgument(name="description", description = "The package description", required = false, type= OptionType.STRING)
-    @IArgument(name="emoji", description = "The package emoji", required = false, type= OptionType.STRING)
+    @ICommand(name = "create", description = "Cria um package que terá cargos associados", permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name="name", description = "Nome do package que será criado", required = true, type= OptionType.STRING)
+    @IArgument(name="unique", description = "Se só poderá escolher um dos cargos do package", required = false, type= OptionType.BOOLEAN)
+    @IArgument(name="description", description = "Descrição do package", required = false, type= OptionType.STRING)
+    @IArgument(name="emoji", description = "Emoji associado ao package", required = false, type= OptionType.STRING)
     public static void create(SlashCommandInteractionEvent event) {
         System.out.println("create");
 
         String name    = event.getOption("name").getAsString();
 
         if(name.contains(":")) {
-            event.reply("Package name can't contain ':'").queue();
+            event.reply("O cargo não pode conter o caractere ':'").queue();
             return;
         }
 
@@ -63,22 +63,22 @@ public class PackageGroup {
             emojiString = emoji.getFirst();
             isUnicode = emoji.getSecond();
         } catch (MultipleEmojiMessageException e) {
-            event.reply("Provided emoji is not a single emoji").queue();
+            event.reply("A mensagem não pode conter mais de um emoji").queue();
         }
 
         try {
             packageManager.create(guildId, name, unique, description, emojiString, isUnicode);
-            event.reply("Package with name '" + name + "' created").queue();
+            event.reply("Package com nome '" + name + "' foi craido").queue();
         } catch (PackageAlreadyExistsException e) {
-            event.reply("Package already exists").queue();
+            event.reply("O package já existe").queue();
         }
     }
 
-    @ICommand(name = "edit", description = "Update a package", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="name", description = "The package to update", required = true, type= OptionType.STRING, hasAutoComplete = true)
-    @IArgument(name="unique", description = "If the package is unique or not", required = false, type= OptionType.BOOLEAN)
-    @IArgument(name="description", description = "The package description", required = false, type= OptionType.STRING)
-    @IArgument(name="emoji", description = "The package emoji", required = false, type= OptionType.STRING)
+    @ICommand(name = "edit", description = "Atualizar o package", permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name="name", description = "Nome do package", required = true, type= OptionType.STRING, hasAutoComplete = true)
+    @IArgument(name="unique", description = "Se só poderá escolher um dos cargos do package", required = false, type= OptionType.BOOLEAN)
+    @IArgument(name="description", description = "Descrição do package", required = false, type= OptionType.STRING)
+    @IArgument(name="emoji", description = "Emoji do package", required = false, type= OptionType.STRING)
     public static void edit(SlashCommandInteractionEvent event) {
         System.out.println("update");
 
@@ -97,20 +97,20 @@ public class PackageGroup {
                 emojiString = emoji.getFirst();
                 isUnicode = emoji.getSecond();
             } catch (MultipleEmojiMessageException e) {
-                event.reply("Provided emoji is not a single emoji").queue();
+                event.reply("A mensagem não pode conter mais de um emoji").queue();
             }
         }
 
         try {
             packageManager.update(guildId, name, unique, description, emojiString, isUnicode);
-            event.reply("Package with name '" + name + "' created").queue();
+            event.reply("Package com nome '" + name + "' foi criado").queue();
         } catch (PackageDoesNotExistException e) {
-            event.reply("Package '" + name +"' does not exist").setEphemeral(true).queue();
+            event.reply("O package '" + name + "' não existe").setEphemeral(true).queue();
         }
     }
 
-    @ICommand(name = "destroy", description = "Create a package to get roles", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name="name", description = "The package to remove the role to", required = true, type= OptionType.STRING, hasAutoComplete = true)
+    @ICommand(name = "destroy", description = "Destroi um package", permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name="name", description = "O nome do package que será destruído", required = true, type= OptionType.STRING, hasAutoComplete = true)
     public static void destroy(SlashCommandInteractionEvent event) {
         System.out.println("destroy");
 
@@ -119,9 +119,9 @@ public class PackageGroup {
 
         try {
             packageManager.destroy(guildId, name);
-            event.reply("Package with name '" + name + "' destroyed").queue();
+            event.reply("O package com nome '" + name + "' foi destruído").queue();
         } catch (PackageDoesNotExistException e) {
-            event.reply("Package does not exist").queue();
+            event.reply("O package não existe").queue();
         }
     }
 
@@ -129,18 +129,18 @@ public class PackageGroup {
     @ISubGroup(name = "role", description = "role subgroup")
     public static class RoleGroup {
 
-        @ICommand(name = "add", description = "Add a role to a package", permissions = {Permission.ADMINISTRATOR})
-        @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING, hasAutoComplete = true)
-        @IArgument(name = "role", description = "role to be added", required = true, type = OptionType.ROLE)
-        @IArgument(name = "name", description = "The name to link to the role", required = false, type = OptionType.STRING)
-        @IArgument(name = "description", description = "The description to link to the role", required = false, type = OptionType.STRING)
-        @IArgument(name = "emoji", description = "The emoji to link to the role", required = false, type = OptionType.STRING)
+        @ICommand(name = "add", description = "Adicionar um cargo em um package", permissions = {Permission.ADMINISTRATOR})
+        @IArgument(name = "package", description = "O package que o cargo será adicionado", required = true, type = OptionType.STRING, hasAutoComplete = true)
+        @IArgument(name = "role", description = "Cargo que será adicionado", required = true, type = OptionType.ROLE)
+        @IArgument(name = "name", description = "Nome para associar ao cargo", required = false, type = OptionType.STRING)
+        @IArgument(name = "description", description = "A descrição que será associada ao cargo", required = false, type = OptionType.STRING)
+        @IArgument(name = "emoji", description = "O emoji que será associado ao cargo", required = false, type = OptionType.STRING)
         public static void add(SlashCommandInteractionEvent event) {
             Long guildId = event.getGuild().getIdLong();
             String packageName = event.getOption("package").getAsString();
 
             if(packageName.contains(":")) {
-                event.reply("Package name can't contain ':'").queue();
+                event.reply("O nome do package não pode conter o caractere ':'").queue();
                 return;
             }
 
@@ -148,7 +148,7 @@ public class PackageGroup {
             String name = event.getOption("name") != null ? event.getOption("name").getAsString() : role.getName();
 
             if(name.contains(":")) {
-                event.reply("Role name can't contain ':'").queue();
+                event.reply("O nome do cargo não pode conter o caractere ':'").queue();
                 return;
             }
 
@@ -161,27 +161,27 @@ public class PackageGroup {
                 emojiString = emoji.getFirst();
                 isUnicode = emoji.getSecond();
             } catch (MultipleEmojiMessageException e) {
-                event.reply("Provided emoji is not a single emoji").queue();
+                event.reply("A mensagem não pode conter mais de um emoji").queue();
             }
 
             try {
                 packageManager.addRole(guildId, packageName, role, name, description, emojiString, isUnicode);
-                event.reply("Role '" + role.getName() + "' added to package '" + packageName + "'").queue();
+                event.reply("Cargo '" + role.getName() + "' adicionado ao package '" + packageName + "'").queue();
             } catch (PackageDoesNotExistException e) {
-                event.reply("Package does not exist").queue();
+                event.reply("O package não existe").queue();
             } catch (RoleAlreadyAddedException e) {
-                event.reply("Role already added to package").queue();
+                event.reply("O cargo já está presente no package").queue();
             } catch (KeyAlreadyInPackageException e) {
-                event.reply("Key '" + name + "' already linked to package").queue();
+                event.reply("A chave/nome '" + name + "' já está associada ao package").queue();
             }
         }
 
-        @ICommand(name = "edit", description = "Edit a role in a package", permissions = {Permission.ADMINISTRATOR})
-        @IArgument(name = "package", description = "The package to edit", required = true, type = OptionType.STRING, hasAutoComplete = true)
-        @IArgument(name = "name", description = "The name to link to the role", required = true, type = OptionType.STRING, hasAutoComplete = true)
-        @IArgument(name = "role", description = "The role to be edited", required = false, type = OptionType.ROLE)
-        @IArgument(name = "description", description = "The description to link to the role", required = false, type = OptionType.STRING)
-        @IArgument(name = "emoji", description = "The emoji to link to the role", required = false, type = OptionType.STRING)
+        @ICommand(name = "edit", description = "Edita um cargo de um package", permissions = {Permission.ADMINISTRATOR})
+        @IArgument(name = "package", description = "Nome do package que será editado", required = true, type = OptionType.STRING, hasAutoComplete = true)
+        @IArgument(name = "name", description = "Nome associado ao cargo", required = true, type = OptionType.STRING, hasAutoComplete = true)
+        @IArgument(name = "role", description = "Cargo que será editado", required = false, type = OptionType.ROLE)
+        @IArgument(name = "description", description = "Descrição associado ao cargo", required = false, type = OptionType.STRING)
+        @IArgument(name = "emoji", description = "Emoji associado ao cargo", required = false, type = OptionType.STRING)
         public static void edit(SlashCommandInteractionEvent event) {
             // Primary Key
             Long guildId = event.getGuild().getIdLong();
@@ -200,25 +200,25 @@ public class PackageGroup {
                     emojiString = emoji.getFirst();
                     isUnicode = emoji.getSecond();
                 } catch (MultipleEmojiMessageException e) {
-                    event.reply("Provided emoji is not a single emoji").queue();
+                    event.reply("A mensagem não pode conter mais de um emoji").queue();
                 }
             }
 
             try {
                 packageManager.editRole(guildId, packageName, name, role, description, emojiString, isUnicode);
-                event.reply("Role '" + role.getName() + "' added to package '" + packageName + "'").queue();
+                event.reply("Cargo '" + role.getName() + "' adicionado ao package '" + packageName + "'").queue();
             } catch (PackageDoesNotExistException e) {
-                event.reply("Package does not exist").queue();
+                event.reply("O package não existe").queue();
             } catch (RoleAlreadyAddedException e) {
-                event.reply("Role already added to package").queue();
+                event.reply("O cargo já está presente no package").queue();
             } catch (RoleDoesNotExistException e) {
-                event.reply("Role does not exist").queue();
+                event.reply("O cargo não existe").queue();
             }
         }
 
-        @ICommand(name = "remove", description = "Remove a role from a package", permissions = {Permission.ADMINISTRATOR})
-        @IArgument(name = "package", description = "The package to add the role to", required = true, type = OptionType.STRING, hasAutoComplete = true)
-        @IArgument(name = "name", description = "role link to remove", required = true, type = OptionType.STRING, hasAutoComplete = true)
+        @ICommand(name = "remove", description = "Remove um cargo de um package", permissions = {Permission.ADMINISTRATOR})
+        @IArgument(name = "package", description = "Package que terá o cargo removido", required = true, type = OptionType.STRING, hasAutoComplete = true)
+        @IArgument(name = "name", description = "Nome do cargo associado ao package", required = true, type = OptionType.STRING, hasAutoComplete = true)
         public static void remove(SlashCommandInteractionEvent event) {
             Long guildId = event.getGuild().getIdLong();
             String packageName = event.getOption("package").getAsString();
@@ -226,16 +226,16 @@ public class PackageGroup {
 
             try {
                 packageManager.removeRole(guildId, packageName, roleName);
-                event.reply(String.format("Role '%s' removed from '%s'", roleName, packageName)).queue();
+                event.reply(String.format("Cargo '%s' removido de '%s'", roleName, packageName)).queue();
             } catch (RoleDoesNotExistException | RoleNotFoundException e) {
-                event.reply(String.format("Role '%s' does not exists in '%s'", roleName, packageName)).queue();
+                event.reply(String.format("Cargo '%s' não está presente em '%s'", roleName, packageName)).queue();
             } catch (PackageDoesNotExistException e) {
-                event.reply("Package does not exist").queue();
+                event.reply("O package não existe").queue();
             }
         }
 
     }
-    @ICommand(name = "list", description = "List all packages")
+    @ICommand(name = "list", description = "Lista todos os packages")
     public static void list(SlashCommandInteractionEvent event) {
         boolean showError =  event.getMember().hasPermission(Permission.ADMINISTRATOR);
 
@@ -245,13 +245,13 @@ public class PackageGroup {
         event.replyEmbeds(guildPackages).queue();
     }
 
-    @ICommand(name = "message", description = "Generate a message with a button to packages")
-    @IArgument(name="title", description = "Title of the message", required = true, type= OptionType.STRING)
-    @IArgument(name="description", description = "Description of the message", required = true, type= OptionType.STRING)
-    @IArgument(name="button-text", description = "Text of the button", required = true, type= OptionType.STRING)
-    @IArgument(name="type", description = "Get Multiple or an Package", required = true, type= OptionType.STRING,
+    @ICommand(name = "message", description = "Gera uma mensagem com botões associados aos packages")
+    @IArgument(name="title", description = "Título da mensagem", required = true, type= OptionType.STRING)
+    @IArgument(name="description", description = "Descrição da mensagem", required = true, type= OptionType.STRING)
+    @IArgument(name="button-text", description = "Texto do botão", required = true, type= OptionType.STRING)
+    @IArgument(name="type", description = "Um ou mais packages", required = true, type= OptionType.STRING,
             choices={@IArgument.IChoice(key="Packages", value="packages"), @IArgument.IChoice(key="Unique", value="Unique")})
-    @IRange(value=@IArgument(name="package", description = "The package", required = false, type= OptionType.STRING, hasAutoComplete = true), min = 0, max = 20)
+    @IRange(value=@IArgument(name="package", description = "O package", required = false, type= OptionType.STRING, hasAutoComplete = true), min = 0, max = 20)
     public static void message(SlashCommandInteractionEvent event) {
         System.out.println("message");
         Long guildId        = event.getGuild().getIdLong();
@@ -270,7 +270,7 @@ public class PackageGroup {
         // Get Multiple or All Packages
         if(type.equals("packages")) {
             if(!packages.isEmpty() && !packageManager.checkIfAllPackagesExist(guildId, packages)) {
-                event.reply("One or more packages does not exist").queue();
+                event.reply("Um ou mais packages não existem").queue();
                 return;
             }
             MessageEmbed messageEmbed = Utils.simpleEmbed(title, description, Color.GREEN);
@@ -285,12 +285,12 @@ public class PackageGroup {
             event.replyEmbeds(messageEmbed).addActionRow(button).queue();
         } else {
             if(packages.size() != 1) {
-                event.reply("You need to specify exactly one package").queue();
+                event.reply("Você precisa especificar exatamente **UM** package").queue();
                 return;
             }
 
             if(!packageManager.checkIfPackageExists(guildId, packages.get(0))) {
-                event.reply("The package does not exist").queue();
+                event.reply("O package não existe").queue();
                 return;
             }
             MessageEmbed messageEmbed = Utils.simpleEmbed(title, description, Color.GREEN);
@@ -316,7 +316,7 @@ public class PackageGroup {
 
         SelectMenu menu = packageManager.getGuildPackagesMenu(guildId, Arrays.stream(packages).toList(), packageMenu, emotes);
 
-        event.reply("Please select a package").addActionRow(menu).setEphemeral(true).queue();
+        event.reply("Selecione um package").addActionRow(menu).setEphemeral(true).queue();
     }
 
     @IMenu(id=packageMenu)
@@ -337,13 +337,13 @@ public class PackageGroup {
                     List<Emote> emotes = event.getGuild().getEmotes();
                     menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds, emotes);
                 } catch (PackageDoesNotExistException e) {
-                    event.editMessage("Package does not exist").setActionRow().queue();
+                    event.editMessage("O package não existe").setActionRow().queue();
                     return;
                 }
 
-                event.reply("Please select a role").addActionRow(menu).setEphemeral(true).queue();
+                event.reply("Selecione um cargo").addActionRow(menu).setEphemeral(true).queue();
 
-            }, () -> event.editMessage("No package selected").queue()
+            }, () -> event.editMessage("Nenhum package foi selecionado").queue()
         );
     }
 
@@ -361,11 +361,11 @@ public class PackageGroup {
             List<Emote> emotes = event.getGuild().getEmotes();
             menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds, emotes);
         } catch (PackageDoesNotExistException e) {
-            event.editMessage("Package does not exist").setActionRow().queue();
+            event.editMessage("O package não existe").setActionRow().queue();
             return;
         }
 
-        event.reply("Please select a role").addActionRow(menu).setEphemeral(true).queue();
+        event.reply("Selecione um cargo").addActionRow(menu).setEphemeral(true).queue();
     }
 
     @IMenu(id=roleMenu)
@@ -381,7 +381,7 @@ public class PackageGroup {
             Role role = event.getGuild().getRoleById(roleId);
 
             if(role == null) {
-                event.editMessage(event.getMessage().getContentDisplay() + "\nRole " + opt.getLabel() +  " : " +  opt.getValue() + " does not exist").queue();
+                event.editMessage(event.getMessage().getContentDisplay() + "\nCargo " + opt.getLabel() +  " : " +  opt.getValue() + " não existe").queue();
                 return;
             }
 
@@ -392,11 +392,11 @@ public class PackageGroup {
                     event.getGuild().removeRoleFromMember(event.getMember(), role).queue();
                 }
             } catch(HierarchyException e) {
-                event.getChannel().sendMessage("Bot cannot assignee the role " + opt.getValue() + " to you").queue();
+                event.getChannel().sendMessage("Não posso atribuir o cargo " + opt.getValue() + " para você").queue();
             }
         });
 
-        event.reply("Your roles have been updated").setEphemeral(true).queue();
+        event.reply("Seus cargos foram atualizados").setEphemeral(true).queue();
     }
 
     public static class AutoCompleter extends ListenerAdapter {
