@@ -1,7 +1,9 @@
 package com.softawii.capivara;
 
 import com.softawii.capivara.core.PackageManager;
+import com.softawii.capivara.core.TemplateManager;
 import com.softawii.capivara.listeners.PackageGroup;
+import com.softawii.capivara.listeners.TemplateGroup;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import org.springframework.boot.CommandLineRunner;
@@ -20,6 +22,7 @@ public class Main implements CommandLineRunner {
         jda.getPresence().setPresence(Activity.of(Activity.ActivityType.WATCHING,buildProperties.getVersion()), true);
         System.out.println(buildProperties.getVersion() + " Bot is ready as " + jda.getSelfUser().getName());
         PackageGroup.packageManager = context.getBean(PackageManager.class);
+        TemplateGroup.templateManager = context.getBean(TemplateManager.class);
     }
 
     @Override

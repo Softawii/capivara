@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
 import java.util.List;
+import java.util.random.RandomGenerator;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,7 +16,7 @@ import java.util.regex.Pattern;
 public class Utils {
 
     public static MessageEmbed simpleEmbed(String title, String description, Color color) {
-        return simpleEmbed(title, description, color, null);
+        return simpleEmbed(title, description, color, new MessageEmbed.Field[0]);
     }
 
     public static MessageEmbed simpleEmbed(String title, String description, Color color, MessageEmbed.Field... fields) {
@@ -24,7 +25,7 @@ public class Utils {
                 .setDescription(description)
                 .setColor(color);
 
-        if(fields != null) {
+        if(fields.length != 0) {
             for (MessageEmbed.Field field : fields) {
                 embedBuilder.addField(field);
             }
@@ -61,4 +62,17 @@ public class Utils {
 
         return new Pair<>(emoji, isUnicode);
     }
+
+    public static Color getRandomColor() {
+        RandomGenerator random = RandomGenerator.getDefault();
+        return new Color(random.nextInt(0, 255), random.nextInt(0, 255), random.nextInt(0, 255));
+    }
+
+    public static MessageEmbed parseObjectToJsonError() {
+        return Utils.simpleEmbed(
+                "Pane no sistema, alguém me desconfigurou",
+                "Acho que algo de errado no processamento dos dados.\n" +
+                        "Poderia tentar novamente?", Color.ORANGE);
+    }
+
 }
