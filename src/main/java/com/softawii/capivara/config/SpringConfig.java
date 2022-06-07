@@ -1,6 +1,7 @@
 package com.softawii.capivara.config;
 
 import com.softawii.capivara.listeners.PackageGroup;
+import com.softawii.capivara.listeners.TemplateGroup;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -63,7 +64,10 @@ public class SpringConfig {
             builder.enableIntents(GatewayIntent.GUILD_EMOJIS);
             builder.setMemberCachePolicy(MemberCachePolicy.ALL);
             builder.enableCache(CacheFlag.EMOTE, CacheFlag.ROLE_TAGS, CacheFlag.MEMBER_OVERRIDES);
-            builder.addEventListeners(new PackageGroup.AutoCompleter());
+            builder.addEventListeners(
+                    new PackageGroup.AutoCompleter(),
+                    new TemplateGroup.AutoCompleter()
+            );
             jda = builder.build();
             jda.awaitReady();
         } catch (LoginException | InterruptedException e) {

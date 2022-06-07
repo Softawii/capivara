@@ -5,6 +5,7 @@ import com.softawii.capivara.entity.Template.TemplateKey;
 import com.softawii.capivara.exceptions.TemplateAlreadyExistsException;
 import com.softawii.capivara.exceptions.TemplateDoesNotExistException;
 import com.softawii.capivara.services.TemplateService;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -41,5 +42,13 @@ public class TemplateManager {
 
     public boolean existsById(Long guildId, String name)  {
         return templateService.existsById(new TemplateKey(guildId, name));
+    }
+
+    public List<Command.Choice> autoCompleteTemplateName(Long guildId, String templateName) {
+        return templateService.findAllByGuildId(guildId).stream()
+                .map(template -> template.getTemplateKey().getName())
+                .filter(c -> c.startsWith(templateName))
+                .map(c -> new Command.Choice(c, c))
+                .toList();
     }
 }

@@ -14,9 +14,12 @@ import com.softawii.curupira.annotations.ICommand;
 import com.softawii.curupira.annotations.IGroup;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.requests.RestAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -118,7 +121,7 @@ public class TemplateGroup {
     }
 
     @ICommand(name = "update", description = "Atualiza um template a partir de uma categoria", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name = "name", description = "O nome template que será atualizado", type = OptionType.STRING, required = true)
+    @IArgument(name = "name", description = "O nome template que será atualizado", type = OptionType.STRING, required = true, hasAutoComplete = true)
     @IArgument(name = "category", description = "A categoria que será escaneada", type = OptionType.CHANNEL, required = true)
     public static void update(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
@@ -167,7 +170,7 @@ public class TemplateGroup {
     }
 
     @ICommand(name = "destroy", description = "Apaga um template", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name = "name", description = "O nome template que será destruído", type = OptionType.STRING, required = true)
+    @IArgument(name = "name", description = "O nome template que será destruído", type = OptionType.STRING, required = true, hasAutoComplete = true)
     public static void destroy(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
         Guild guild = event.getGuild();
@@ -185,7 +188,7 @@ public class TemplateGroup {
     }
 
     @ICommand(name = "apply", description = "Cria uma categoria a partir de um template", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name = "name", description = "O nome template que utilizado", type = OptionType.STRING, required = true)
+    @IArgument(name = "name", description = "O nome template que utilizado", type = OptionType.STRING, required = true, hasAutoComplete = true)
     public static void apply(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
         Guild guild = event.getGuild();
@@ -221,6 +224,28 @@ public class TemplateGroup {
             e.printStackTrace();
             event.replyEmbeds(Utils.parseObjectToJsonError()).queue();
         }
+    }
 
+    public static class AutoCompleter extends ListenerAdapter {
+
+        @Override
+        public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
+            if (event.getGuild() == null) {
+                return;
+            }
+
+            String eventPath = event.getCommandPath();
+
+            System.out.println(String.format("AutoCompleter: %s : %s", eventPath, event.getFocusedOption().getName()));
+
+            if (eventPath.equals("template/apply") || eventPath.equals("template/destroy") || eventPath.equals("template/update")) {
+                String focusedKey = event.getFocusedOption().getName();
+                String focusedValue = event.getFocusedOption().getValue();
+
+                if (focusedKey.equals("name")) {
+                    event.replyChoices(templateManager.autoCompleteTemplateName(event.getGuild().getIdLong(), focusedValue)).queue();
+                }
+            }
+        }
     }
 }
