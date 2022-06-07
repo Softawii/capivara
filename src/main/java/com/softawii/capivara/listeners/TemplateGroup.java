@@ -10,14 +10,17 @@ import com.softawii.capivara.exceptions.TemplateDoesNotExistException;
 import com.softawii.capivara.utils.TemplateUtil;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.IArgument;
+import com.softawii.curupira.annotations.IButton;
 import com.softawii.curupira.annotations.ICommand;
 import com.softawii.curupira.annotations.IGroup;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +36,20 @@ public class TemplateGroup {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static TemplateManager templateManager;
 
+    public static final String confirmAction = "template-confirm-action";
+    public static final String removeAction = "template-remove-action";
+    public static final String cancelAction = "template-cancel-action";
+
     @ICommand(name = "create", description = "Criar um template a partir de uma categoria", permissions = {Permission.ADMINISTRATOR})
     @IArgument(name = "name", description = "O nome template a ser criado", type = OptionType.STRING, required = true)
     @IArgument(name = "category", description = "A categoria que será escaneada", type = OptionType.CHANNEL, required = true)
     public static void create(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
+        if(name.contains(":")) {
+            event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
+            return;
+        }
+
         GuildChannel channel = event.getOption("category").getAsGuildChannel();
         ChannelType channelType = channel.getType();
         if (channelType != ChannelType.CATEGORY) {
@@ -52,7 +64,7 @@ public class TemplateGroup {
             MessageEmbed embed = Utils.simpleEmbed(
                     "Sinto muito",
                     "Já existe um template com esse nome", Color.ORANGE);
-            event.replyEmbeds(embed).queue();
+            event.replyEmbeds(embed).setEphemeral(true).queue();
         } else {
             Map<String, Integer> channelMap;
             try {
@@ -66,7 +78,7 @@ public class TemplateGroup {
                 String jsonString = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(channelMap);
                 Template template = templateManager.create(guild.getIdLong(), name, jsonString);
                 MessageEmbed embed = Utils.simpleEmbed("Supimpa", String.format("Template '%s' criado com sucesso", name), Color.GREEN);
-                event.replyEmbeds(embed).queue();
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
                 event.replyEmbeds(Utils.parseObjectToJsonError()).queue();
@@ -75,7 +87,7 @@ public class TemplateGroup {
                         "Que coincidência, seria isso um sinal?",
                         "Parece que alguém acabou de criar um template com o mesmo nome.\n" +
                                 "Poderia tentar novamente com o mesmo nome ou nome diferente?", Color.ORANGE);
-                event.replyEmbeds(embed).queue();
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             }
         }
     }
@@ -89,7 +101,7 @@ public class TemplateGroup {
             MessageEmbed embed = Utils.simpleEmbed(
                     "Não tenho nenhum template cadastrado",
                     "Cadastre um template e ele estará listado aqui.", Color.ORANGE);
-            event.replyEmbeds(embed).queue();
+            event.replyEmbeds(embed).setEphemeral(true).queue();
             return;
         }
 
@@ -117,7 +129,7 @@ public class TemplateGroup {
         });
 
         MessageEmbed embed = Utils.simpleEmbed("Templates", null, Color.GREEN, fields.toArray(new MessageEmbed.Field[]{}));
-        event.replyEmbeds(embed).queue();
+        event.replyEmbeds(embed).setEphemeral(true).queue();
     }
 
     @ICommand(name = "update", description = "Atualiza um template a partir de uma categoria", permissions = {Permission.ADMINISTRATOR})
@@ -125,7 +137,12 @@ public class TemplateGroup {
     @IArgument(name = "category", description = "A categoria que será escaneada", type = OptionType.CHANNEL, required = true)
     public static void update(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
-        GuildChannel channel = event.getOption("channel").getAsGuildChannel();
+        if(name.contains(":")) {
+            event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
+            return;
+        }
+
+        GuildChannel channel = event.getOption("category").getAsGuildChannel();
         ChannelType channelType = channel.getType();
         if (channelType != ChannelType.CATEGORY) {
             event.replyEmbeds(TemplateUtil.channelIsNotCategory()).queue();
@@ -149,7 +166,7 @@ public class TemplateGroup {
                 String jsonString = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(channelMap);
                 Template template = templateManager.update(guild.getIdLong(), name, jsonString);
                 MessageEmbed embed = Utils.simpleEmbed("Magnífico", String.format("Template '%s' atualizado com sucesso", name), Color.GREEN);
-                event.replyEmbeds(embed).queue();
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
                 event.replyEmbeds(Utils.parseObjectToJsonError()).queue();
@@ -158,14 +175,14 @@ public class TemplateGroup {
                 MessageEmbed embed = Utils.simpleEmbed(
                         "É sério???",
                         "É possível que alguém possa ter apagado o template enquanto o update ocorria", Color.ORANGE);
-                event.replyEmbeds(embed).queue();
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             }
         } catch (TemplateDoesNotExistException e) {
             e.printStackTrace();
             MessageEmbed embed = Utils.simpleEmbed(
                     "Não conheço esse indivíduo",
                     "Não encontrei nenhum template com esse nome para que possa ser atualizado", Color.ORANGE);
-            event.replyEmbeds(embed).queue();
+            event.replyEmbeds(embed).setEphemeral(true).queue();
         }
     }
 
@@ -173,24 +190,33 @@ public class TemplateGroup {
     @IArgument(name = "name", description = "O nome template que será destruído", type = OptionType.STRING, required = true, hasAutoComplete = true)
     public static void destroy(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
-        Guild guild = event.getGuild();
-
-        try {
-            templateManager.destroy(guild.getIdLong(), name);
-            MessageEmbed embed = Utils.simpleEmbed("Tchau tchau", String.format("O template '%s' foi destruído com sucesso", name), Color.GREEN);
-            event.replyEmbeds(embed).queue();
-        } catch (TemplateDoesNotExistException e) {
-            MessageEmbed embed = Utils.simpleEmbed(
-                    "Não conheço esse indivíduo",
-                    "Não encontrei nenhum template com esse nome para que possa ser destruído", Color.ORANGE);
-            event.replyEmbeds(embed).queue();
+        if(name.contains(":")) {
+            event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
+            return;
         }
+
+        String confirmId = String.format("%s:%s:%s", confirmAction, removeAction, name);
+        String cancelId  = cancelAction;
+
+        MessageEmbed embed = Utils.simpleEmbed("Você tem certeza disso?",
+                "Você realmente quer deletar o template '" + name + "'?",
+                Color.ORANGE);
+
+        Button successButton = Button.success(confirmId, "Sim! Pode continuar!");
+        Button cancelButton  = Button.danger(cancelId, "Não, Deus me livre!!");
+
+        event.replyEmbeds(embed).addActionRow(successButton, cancelButton).setEphemeral(true).queue();
     }
 
     @ICommand(name = "apply", description = "Cria uma categoria a partir de um template", permissions = {Permission.ADMINISTRATOR})
     @IArgument(name = "name", description = "O nome template que utilizado", type = OptionType.STRING, required = true, hasAutoComplete = true)
     public static void apply(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
+        if(name.contains(":")) {
+            event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
+            return;
+        }
+
         Guild guild = event.getGuild();
 
         try {
@@ -212,22 +238,64 @@ public class TemplateGroup {
 
                 RestAction.accumulate(createChannelAction, Collectors.toList()).queue(voids -> {
                     MessageEmbed embed = Utils.simpleEmbed("Tá na mão", "A categoria deve estar por aí", Color.GREEN);
-                    event.replyEmbeds(embed).queue();
+                    event.replyEmbeds(embed).setEphemeral(true).queue();
                 });
             });
         } catch (TemplateDoesNotExistException e) {
             MessageEmbed embed = Utils.simpleEmbed(
                     "Não conheço esse indivíduo",
                     "Não encontrei nenhum template com esse nome para que possa ser aplicado", Color.ORANGE);
-            event.replyEmbeds(embed).queue();
+            event.replyEmbeds(embed).setEphemeral(true).queue();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             event.replyEmbeds(Utils.parseObjectToJsonError()).queue();
         }
     }
 
-    public static class AutoCompleter extends ListenerAdapter {
+    // SECTION BUTTON
+    @IButton(id=confirmAction)
+    public static void confirm(ButtonInteractionEvent event) {
+        System.out.println("Received confirm: " + event.getComponentId());
 
+        /*
+        Expected Args:
+        - buttonId
+        - actionId
+        - templateName
+         */
+        String[] args = event.getComponentId().split(":");
+
+        if (args.length != 3) {
+            event.reply("Argumentos inválidos -> " + event.getComponentId()).setEphemeral(true).queue();
+            return;
+        }
+
+        String actionId = args[1];
+        String templateName = args[2];
+        Guild guild = event.getGuild();
+
+        if (actionId.equals(removeAction)) {
+            try {
+                templateManager.destroy(guild.getIdLong(), templateName);
+                MessageEmbed embed = Utils.simpleEmbed("Tchau tchau", String.format("O template '%s' foi destruído com sucesso", templateName), Color.GREEN);
+                event.editMessageEmbeds(embed).setActionRows().queue();
+            } catch (TemplateDoesNotExistException e) {
+                MessageEmbed embed = Utils.simpleEmbed(
+                        "Não conheço esse indivíduo",
+                        "Não encontrei nenhum template com esse nome para que possa ser destruído", Color.ORANGE);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
+            }
+        }
+    }
+
+    @IButton(id=cancelAction)
+    public static void cancel(ButtonInteractionEvent event) {
+        MessageEmbed embed = Utils.simpleEmbed("Cancelado", "Cancelado com sucesso!! Não tente isso de novo heinn...", Color.RED);
+
+        event.editMessageEmbeds(embed).setActionRows().queue();
+    }
+
+    public static class AutoCompleter extends ListenerAdapter {
         @Override
         public void onCommandAutoCompleteInteraction(@NotNull CommandAutoCompleteInteractionEvent event) {
             if (event.getGuild() == null) {

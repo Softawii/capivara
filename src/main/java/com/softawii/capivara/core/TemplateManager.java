@@ -25,6 +25,7 @@ public class TemplateManager {
 
     public Template update(Long guildId, String name, String json) throws TemplateDoesNotExistException {
         Template template = templateService.findById(new TemplateKey(guildId, name));
+        template.setJson(json);
         return templateService.update(template);
     }
 

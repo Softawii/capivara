@@ -68,6 +68,14 @@ public class Utils {
         return new Color(random.nextInt(0, 255), random.nextInt(0, 255), random.nextInt(0, 255));
     }
 
+    public static MessageEmbed nameContainsColon(String thisArgument) {
+        return Utils.simpleEmbed("Nome muito feio!", thisArgument + " não pode conter o caracter ':', foi mal, problemas internos aqui!", Color.RED);
+    }
+
+    public static MessageEmbed multipleEmoji() {
+        return Utils.simpleEmbed("Emoji muito feio!", "O emoji não pode conter mais de um emoji, tu ta doidinho!", Color.RED);
+    }
+
     public static MessageEmbed parseObjectToJsonError() {
         return Utils.simpleEmbed(
                 "Pane no sistema, alguém me desconfigurou",
