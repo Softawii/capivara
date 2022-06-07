@@ -7,6 +7,7 @@ import com.softawii.curupira.annotations.*;
 import kotlin.Pair;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Emote;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -19,6 +20,8 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -37,18 +40,20 @@ public class PackageGroup {
     private static final String packageButton     = "package-button";
     private static final String roleMenu          = "role-menu";
 
+    private static final Logger LOGGER = LogManager.getLogger(PackageGroup.class);
+
     @ICommand(name = "create", description = "Cria um package que terá cargos associados", permissions = {Permission.ADMINISTRATOR})
     @IArgument(name="name", description = "Nome do package que será criado", required = true, type= OptionType.STRING)
     @IArgument(name="unique", description = "Se só poderá escolher um dos cargos do package", required = false, type= OptionType.BOOLEAN)
     @IArgument(name="description", description = "Descrição do package", required = false, type= OptionType.STRING)
     @IArgument(name="emoji", description = "Emoji associado ao package", required = false, type= OptionType.STRING)
     public static void create(SlashCommandInteractionEvent event) {
-        System.out.println("create");
-
-        String name    = event.getOption("name").getAsString();
+        String name = event.getOption("name").getAsString();
 
         if(name.contains(":")) {
-            event.reply("O cargo não pode conter o caractere ':'").queue();
+            LOGGER.debug(String.format("create: Package Name contains :, just ignore it (%s)", name));
+            MessageEmbed embed = Utils.simpleEmbed("Nome muito feio!", "O nome do package não pode conter o caracter ':', foi mal, problemas internos aqui!", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
             return;
         }
 
@@ -63,14 +68,26 @@ public class PackageGroup {
             emojiString = emoji.getFirst();
             isUnicode = emoji.getSecond();
         } catch (MultipleEmojiMessageException e) {
-            event.reply("A mensagem não pode conter mais de um emoji").queue();
+            LOGGER.debug("create: Package contains Multiple Emojis");
+            MessageEmbed embed = Utils.simpleEmbed("Quantos Emojis você quer amigão??",
+                                                        "Você só pode usar um por vez, vamo maneirar ai...", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
         }
 
         try {
             packageManager.create(guildId, name, unique, description, emojiString, isUnicode);
-            event.reply("Package com nome '" + name + "' foi craido").queue();
+            LOGGER.info(String.format("create: Package %s created", name));
+            MessageEmbed embed = Utils.simpleEmbed("Pacote criado e pronto pra usar!",
+                                                    String.format("Tudo pronto pra você adicionar vários cargos no pacote '%s', só usar os comandos de /package role ...", name),
+                                                    Color.GREEN,
+                                                    new MessageEmbed.Field("Características", "O pacote é único? " + (unique ? "Sim" : "Não") + "\n" + "Descrição: " + description + "\n" + "Emoji: " + emojiString, false));
+
+            event.replyEmbeds(embed).queue();
         } catch (PackageAlreadyExistsException e) {
-            event.reply("O package já existe").queue();
+            LOGGER.info(String.format("create: Package %s already exists", name));
+            MessageEmbed embed = Utils.simpleEmbed("Pacote já existe!", "Ta querendo criar de novo por que??? Ta doido?", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
         }
     }
 
@@ -80,11 +97,8 @@ public class PackageGroup {
     @IArgument(name="description", description = "Descrição do package", required = false, type= OptionType.STRING)
     @IArgument(name="emoji", description = "Emoji do package", required = false, type= OptionType.STRING)
     public static void edit(SlashCommandInteractionEvent event) {
-        System.out.println("update");
-
         String name    = event.getOption("name").getAsString();
         Long guildId = event.getGuild().getIdLong();
-
 
         Boolean unique  = event.getOption("unique") != null ? event.getOption("unique").getAsBoolean() : null;
         String description = event.getOption("description") != null ? event.getOption("description").getAsString() : null;
@@ -97,34 +111,52 @@ public class PackageGroup {
                 emojiString = emoji.getFirst();
                 isUnicode = emoji.getSecond();
             } catch (MultipleEmojiMessageException e) {
-                event.reply("A mensagem não pode conter mais de um emoji").queue();
+                LOGGER.debug("edit: Package contains Multiple Emojis");
+                MessageEmbed embed = Utils.simpleEmbed("Quantos Emojis você quer amigão??", "Você só pode usar um por vez, vamo maneirar ai...", Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
+                return;
             }
         }
 
         try {
             packageManager.update(guildId, name, unique, description, emojiString, isUnicode);
+            LOGGER.info(String.format("edit: Package %s updated", name));
             event.reply("Package com nome '" + name + "' foi criado").queue();
+
+            StringBuilder sb = new StringBuilder();
+            if (unique != null)  sb.append("O pacote é único? ").append(unique ? "Sim" : "Não").append("\n");
+            if (description != null) sb.append("Descrição: ").append(description).append("\n");
+            if (emojiString != null) sb.append("Emoji: ").append(emojiString).append("\n");
+
+            MessageEmbed embed = Utils.simpleEmbed("Pacote atualizado, ta como se tivesse criado de novo",
+                    "Só usar os comandos de /package role ...",
+                    Color.GREEN,
+                    new MessageEmbed.Field("O que mudou???", sb.toString(), false));
+            event.replyEmbeds(embed).queue();
         } catch (PackageDoesNotExistException e) {
-            event.reply("O package '" + name + "' não existe").setEphemeral(true).queue();
+            LOGGER.info(String.format("edit: Package %s does not exist", name));
+            MessageEmbed embed = Utils.simpleEmbed("Pacote não existe", "Você pode criar um novo pacote com /package create", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
         }
     }
 
     @ICommand(name = "destroy", description = "Destroi um package", permissions = {Permission.ADMINISTRATOR})
     @IArgument(name="name", description = "O nome do package que será destruído", required = true, type= OptionType.STRING, hasAutoComplete = true)
     public static void destroy(SlashCommandInteractionEvent event) {
-        System.out.println("destroy");
-
         Long guildId = event.getGuild().getIdLong();
         String name = event.getOption("name").getAsString();
 
         try {
             packageManager.destroy(guildId, name);
-            event.reply("O package com nome '" + name + "' foi destruído").queue();
+            LOGGER.info(String.format("destroy: Package %s destroyed", name));
+            MessageEmbed embed = Utils.simpleEmbed(String.format("Pacote %s destruído", name), "Acabamos com esse ai, mas sempre que quiser criar um novo você já sabe!", Color.GREEN);
+            event.replyEmbeds(embed).queue();
         } catch (PackageDoesNotExistException e) {
-            event.reply("O package não existe").queue();
+            LOGGER.debug(String.format("destroy: Package %s does not exist", name));
+            MessageEmbed embed = Utils.simpleEmbed("Pacote não existe", "Ta doido?? Apagando pacote que não existe", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
         }
     }
-
 
     @ISubGroup(name = "role", description = "role subgroup")
     public static class RoleGroup {
@@ -140,7 +172,9 @@ public class PackageGroup {
             String packageName = event.getOption("package").getAsString();
 
             if(packageName.contains(":")) {
-                event.reply("O nome do package não pode conter o caractere ':'").queue();
+                LOGGER.debug(String.format("add: Package Name contains :, just ignore it (%s)", packageName));
+                MessageEmbed embed = Utils.simpleEmbed("Nome muito feio!", "O nome do package não pode conter o caracter ':', foi mal, problemas internos aqui!", Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
                 return;
             }
 
@@ -148,7 +182,9 @@ public class PackageGroup {
             String name = event.getOption("name") != null ? event.getOption("name").getAsString() : role.getName();
 
             if(name.contains(":")) {
-                event.reply("O nome do cargo não pode conter o caractere ':'").queue();
+                LOGGER.debug(String.format("add: Role Name contains :, just ignore it (%s)", name));
+                MessageEmbed embed = Utils.simpleEmbed("Nome muito feio!", "O nome do cargo não pode conter o caracter ':', foi mal, problemas internos aqui!", Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
                 return;
             }
 
@@ -161,18 +197,30 @@ public class PackageGroup {
                 emojiString = emoji.getFirst();
                 isUnicode = emoji.getSecond();
             } catch (MultipleEmojiMessageException e) {
-                event.reply("A mensagem não pode conter mais de um emoji").queue();
+                LOGGER.debug("add: MultipleEmojiMessageException");
+                MessageEmbed embed = Utils.simpleEmbed("Emoji muito feio!", "O emoji não pode conter mais de um emoji, tu ta doidinho!", Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
+                return;
             }
 
             try {
                 packageManager.addRole(guildId, packageName, role, name, description, emojiString, isUnicode);
-                event.reply("Cargo '" + role.getName() + "' adicionado ao package '" + packageName + "'").queue();
+                LOGGER.info(String.format("add: Role %s added to package %s", role.getName(), packageName));
+                MessageEmbed embed = Utils.simpleEmbed("Cargo adicionado!", String.format("O cargo %s foi adicionado ao pacote '%s', qualquer lista com o pacote já está atualizada",
+                                                        role.getAsMention(), packageName), Color.GREEN);
+                event.replyEmbeds(embed).queue();
             } catch (PackageDoesNotExistException e) {
-                event.reply("O package não existe").queue();
+                LOGGER.debug("add: PackageDoesNotExistException");
+                MessageEmbed embed = Utils.simpleEmbed("Pacote não existe!", String.format("O pacote '%s' não existe, crie-o primeiro!", packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (RoleAlreadyAddedException e) {
-                event.reply("O cargo já está presente no package").queue();
+                LOGGER.debug("add: RoleAlreadyAddedException");
+                MessageEmbed embed = Utils.simpleEmbed("Cargo já existe!", String.format("O cargo '%s' já existe no pacote '%s'!", role.getAsMention(), packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (KeyAlreadyInPackageException e) {
-                event.reply("A chave/nome '" + name + "' já está associada ao package").queue();
+                LOGGER.debug("add: KeyAlreadyInPackageException");
+                MessageEmbed embed = Utils.simpleEmbed("Nome já existe!", String.format("O nome '%s' já existe no pacote '%s'!", name, packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             }
         }
 
@@ -200,19 +248,29 @@ public class PackageGroup {
                     emojiString = emoji.getFirst();
                     isUnicode = emoji.getSecond();
                 } catch (MultipleEmojiMessageException e) {
-                    event.reply("A mensagem não pode conter mais de um emoji").queue();
+                    LOGGER.debug("edit: MultipleEmojiMessageException");
+                    MessageEmbed embed = Utils.simpleEmbed("Muitos emojis!", "Não é possível usar mais de um emoji ao mesmo tempo!", Color.RED);
+                    event.replyEmbeds(embed).setEphemeral(true).queue();
                 }
             }
 
             try {
                 packageManager.editRole(guildId, packageName, name, role, description, emojiString, isUnicode);
-                event.reply("Cargo '" + role.getName() + "' adicionado ao package '" + packageName + "'").queue();
+                LOGGER.info("edit: Role edited successfully");
+                MessageEmbed embed = Utils.simpleEmbed("Cargo editado!", String.format("O cargo '%s' foi editado com sucesso no pacote '%s'!", role.getAsMention(), packageName), Color.GREEN);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (PackageDoesNotExistException e) {
-                event.reply("O package não existe").queue();
+                LOGGER.debug("edit: PackageDoesNotExistException");
+                MessageEmbed embed = Utils.simpleEmbed("Pacote não existe!", String.format("O pacote '%s' não existe!", packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (RoleAlreadyAddedException e) {
-                event.reply("O cargo já está presente no package").queue();
+                LOGGER.debug("edit: RoleAlreadyAddedException");
+                MessageEmbed embed = Utils.simpleEmbed("Cargo já existe!", String.format("O cargo '%s' já existe no pacote '%s'!", name, packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (RoleDoesNotExistException e) {
-                event.reply("O cargo não existe").queue();
+                LOGGER.debug("edit: RoleDoesNotExistException");
+                MessageEmbed embed = Utils.simpleEmbed("Cargo não existe!", String.format("O cargo '%s' não existe no pacote '%s'!", name, packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             }
         }
 
@@ -226,11 +284,17 @@ public class PackageGroup {
 
             try {
                 packageManager.removeRole(guildId, packageName, roleName);
-                event.reply(String.format("Cargo '%s' removido de '%s'", roleName, packageName)).queue();
+                LOGGER.info("remove: Role removed successfully");
+                MessageEmbed embed = Utils.simpleEmbed("Cargo removido!", String.format("O cargo '%s' foi removido com sucesso do pacote '%s'!", roleName, packageName), Color.GREEN);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (RoleDoesNotExistException | RoleNotFoundException e) {
-                event.reply(String.format("Cargo '%s' não está presente em '%s'", roleName, packageName)).queue();
+                LOGGER.debug("remove: RoleDoesNotExistException | RoleNotFoundException");
+                MessageEmbed embed = Utils.simpleEmbed("Cargo não existe!", String.format("O cargo '%s' não existe no pacote '%s'!", roleName, packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (PackageDoesNotExistException e) {
-                event.reply("O package não existe").queue();
+                LOGGER.debug("remove: PackageDoesNotExistException");
+                MessageEmbed embed = Utils.simpleEmbed("Pacote não existe!", String.format("O pacote '%s' não existe!", packageName), Color.RED);
+                event.replyEmbeds(embed).setEphemeral(true).queue();
             }
         }
 
