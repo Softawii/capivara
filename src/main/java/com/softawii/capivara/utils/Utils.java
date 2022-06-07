@@ -15,12 +15,25 @@ import java.util.regex.Pattern;
 public class Utils {
 
     public static MessageEmbed simpleEmbed(String title, String description, Color color) {
-        return new EmbedBuilder()
+        return simpleEmbed(title, description, color, null);
+    }
+
+    public static MessageEmbed simpleEmbed(String title, String description, Color color, MessageEmbed.Field... fields) {
+        EmbedBuilder embedBuilder = new EmbedBuilder()
                 .setTitle(title)
                 .setDescription(description)
-                .setColor(color)
-                .build();
+                .setColor(color);
+
+        if(fields != null) {
+            for (MessageEmbed.Field field : fields) {
+                embedBuilder.addField(field);
+            }
+        }
+
+        return embedBuilder.build();
     }
+
+
 
     public static List<String> extractEmojis(String text) {
         List<String> emojis = EmojiParser.extractEmojis(text);

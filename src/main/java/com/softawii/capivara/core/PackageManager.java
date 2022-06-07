@@ -121,7 +121,7 @@ public class PackageManager {
             String name = key.getName();
             String description = pkg.getDescription();
 
-            if(description != null)  sb.append("*").append(description).append("*\n\n");
+            if(!description.isBlank())  sb.append("*").append(description).append("*\n\n");
 
             pkg.getRoles().forEach(role -> {
                 Long roleId = role.getRoleId();
