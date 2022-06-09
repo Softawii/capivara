@@ -25,7 +25,6 @@ public class EmbedManager {
 
         public EmbedHandler() {
             this.builder = new EmbedBuilder().setTitle("Titulo muito legal!").setDescription("Descrição sensacional");
-            this.message = "";
             this.fields = new ArrayList<>();
         }
         public void setMessage(String message) {

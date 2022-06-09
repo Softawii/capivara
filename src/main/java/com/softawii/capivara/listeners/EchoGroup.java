@@ -40,17 +40,20 @@ import java.util.stream.Collectors;
 @IGroup(name = "echo", description = "Echo Group")
 public class EchoGroup {
 
-    // Row 1
+    //region Send/Cancel Constants
     private static final String buttonSend          = "echo-send";
     private static final String buttonDeny          = "echo-deny";
+    //endregion
 
-    // Row 2
+    //region Title/Description Constants
     private static final String buttonTitle         = "echo-title";
     private static final String modalTitle          = "echo-title-modal";
     private static final String buttonImage           = "echo-image";
     private static final String modalImage           = "echo-image-modal";
 
-    // Row 3
+    //endregion
+
+    //region Fields Constants
     private static final String buttonNewField      = "echo-new-field";
     private static final String modalNewField       = "echo-new-field-modal";
     private static final String buttonRemoveField   = "echo-remove-field";
@@ -58,10 +61,18 @@ public class EchoGroup {
     private static final String buttonEditField     = "echo-edit-field";
     private static final String menuEditField       = "echo-edit-field-menu";
     private static final String modalEditField      = "echo-edit-field-modal";
+    //endregion Constants
+
+    //region Message Constants
+
+    public static final String buttonEditMessage    = "echo-edit-message";
+    public static final String modalEditMessage     = "echo-edit-message-modal";
+
+    public static final String buttonRemoveMessage   = "echo-remove-message";
+
+    //endregion
 
     private static final Logger LOGGER = LogManager.getLogger(EchoGroup.class);
-
-    public static final String echoModal = "echo-modal";
 
     public static EmbedManager embedManager;
 
@@ -80,18 +91,23 @@ public class EchoGroup {
             return;
         }
 
-        if(message == null) message = "Vê se a mensagem está boa pra você!";
-
         // Generating Embed Model
         Map.Entry<String, EmbedManager.EmbedHandler> init = embedManager.init();
         init.getValue().setMessage(message);
         init.getValue().setTarget(event.getOption("target").getAsGuildChannel());
 
-        event.reply(message)
+        if(message != null) {
+            event.reply(message)
                 .addEmbeds(init.getValue().build())
                 .addActionRows(EchoGroup.embedEditor(init.getKey()))
                 .setEphemeral(true)
                 .queue();
+        } else {
+            event.replyEmbeds(init.getValue().build())
+                .addActionRows(EchoGroup.embedEditor(init.getKey()))
+                .setEphemeral(true)
+                .queue();
+        }
     }
 
     @IButton(id=buttonSend)
@@ -115,10 +131,11 @@ public class EchoGroup {
 
         MessageAction messageAction;
         if(target instanceof TextChannel textChannel) {
-            messageAction = textChannel.sendMessage(embedHandler.getMessage()).setEmbeds(embedHandler.build());
-
+            if(embedHandler.getMessage() != null)   messageAction = textChannel.sendMessage(embedHandler.getMessage()).setEmbeds(embedHandler.build());
+            else                                    messageAction = textChannel.sendMessageEmbeds(embedHandler.build());
         } else if(target instanceof NewsChannel newsChannel) {
-            messageAction = newsChannel.sendMessage(embedHandler.getMessage()).setEmbeds(embedHandler.build());
+            if(embedHandler.getMessage() != null) messageAction = newsChannel.sendMessage(embedHandler.getMessage()).setEmbeds(embedHandler.build());
+            else                                  messageAction = newsChannel.sendMessageEmbeds(embedHandler.build());
         } else {
             MessageEmbed embed = Utils.simpleEmbed("Algo errado aqui! Mil perdões", "O canal vinculado não é de um tipo suportado!", Color.RED);
             event.replyEmbeds(embed).setEphemeral(true).queue();
@@ -310,7 +327,7 @@ public class EchoGroup {
         try {
             embedHandler.addField(new MessageEmbed.Field(name, value, false));
         } catch (FieldLengthException e) {
-            MessageEmbed embed = Utils.simpleEmbed("Algo errado aqui! Mil perdões", "O título ou a mensagem são muito longos!", Color.RED);
+            MessageEmbed embed = Utils.simpleEmbed("Algo errado aqui! Mil perdões", "Vcê está tentando botar muitos campos!!!", Color.RED);
             event.replyEmbeds(embed).setEphemeral(true).queue();
             return;
         }
@@ -440,6 +457,60 @@ public class EchoGroup {
 
     //endregion
 
+    //region Message
+
+    @IButton(id=buttonEditMessage)
+    public static void editMessage(ButtonInteractionEvent event) {
+        String id = event.getComponentId().split(":")[1];
+        Curupira curupira = Main.context.getBean(Curupira.class);
+        Modal.Builder builder = curupira.getModal(modalEditMessage).setId(modalEditMessage + ":" + id);
+        event.replyModal(builder.build()).queue();
+    }
+
+    @IModal(id=modalEditMessage, title = "Escreve sua mensagem ai!", description = "Escreve ai, bora!", textInputs = {
+            @IModal.ITextInput(id = "message", label = "Mensagem", style = TextInputStyle.SHORT, placeholder = "FrasesDeEfeito.com.br", required = true, minLength = 1, maxLength = 256),
+    })
+    public static void modalMessage(ModalInteractionEvent event) {
+        String message = event.getValue("message").getAsString();
+
+        // Extracting ID
+        // Format: modalEditMessage:<id>
+        String id = event.getModalId().split(":")[1];
+
+        EmbedManager.EmbedHandler embedHandler = null;
+        try {
+            embedHandler = embedManager.get(id);
+        } catch (KeyNotFoundException e) {
+            MessageEmbed embed = Utils.simpleEmbed("Algo errado aqui! Mil perdões", "Embed não encontrado no nosso sistema, vai ter que fazer de novo!", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
+        }
+
+        embedHandler.setMessage(message);
+        event.editMessage(message).queue();
+    }
+
+
+    @IButton(id=buttonRemoveMessage)
+    public static void removeMessage(ButtonInteractionEvent event) {
+        String id = event.getComponentId().split(":")[1];
+
+        EmbedManager.EmbedHandler embedHandler = null;
+        try {
+            embedHandler = embedManager.get(id);
+        } catch (KeyNotFoundException e) {
+            MessageEmbed embed = Utils.simpleEmbed("Algo errado aqui! Mil perdões", "Embed não encontrado no nosso sistema, vai ter que fazer de novo!", Color.RED);
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
+        }
+
+        embedHandler.setMessage(null);
+
+        event.editMessage("Você removeu sua mensagem! (Se quiser adicionar outra só clicar no botão de editar)").queue();
+    }
+
+    //endregion
+
     //region Utils
     public static List<ActionRow> embedEditor(String id) {
 
@@ -456,9 +527,14 @@ public class EchoGroup {
         Button deleteField  = Button.secondary(buttonRemoveField + ":" + id, "Remover Campo");
         Button editField    = Button.secondary(buttonEditField + ":" + id,   "Editar Campo");
 
+        // Edit / Remove Message
+        Button editMessage   = Button.secondary(buttonEditMessage + ":" + id, "Editar Mensagem");
+        Button removeMessage = Button.secondary(buttonRemoveMessage + ":" + id, "Remover Mensagem");
+
         List<ActionRow> actionRows = new ArrayList<>();
         actionRows.add(ActionRow.of(title, imageField));
         actionRows.add(ActionRow.of(newField, deleteField, editField));
+        actionRows.add(ActionRow.of(editMessage, removeMessage));
         actionRows.add(ActionRow.of(send, deny));
 
         return actionRows;
