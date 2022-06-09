@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 public class Utils {
 
     public static MessageEmbed simpleEmbed(String title, String description, Color color) {
-        return simpleEmbed(title, description, color, null);
+        return simpleEmbed(title, description, color, (MessageEmbed.Field) null);
     }
 
     public static MessageEmbed simpleEmbed(String title, String description, Color color, MessageEmbed.Field... fields) {
