@@ -25,6 +25,7 @@ public class Main implements CommandLineRunner {
         System.out.println(buildProperties.getVersion() + " Bot is ready as " + jda.getSelfUser().getName());
         PackageGroup.packageManager     = context.getBean(PackageManager.class);
         EchoGroup.embedManager          = context.getBean(EmbedManager.class);
+        PackageGroup.embedManager       = EchoGroup.embedManager;
     }
 
     @Override
