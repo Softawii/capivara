@@ -8,7 +8,6 @@ import com.softawii.curupira.annotations.*;
 import kotlin.Pair;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Emote;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -53,8 +52,7 @@ public class PackageGroup {
 
         if(name.contains(":")) {
             LOGGER.debug(String.format("create: Package Name contains :, just ignore it (%s)", name));
-            MessageEmbed embed = Utils.simpleEmbed("Nome muito feio!", "O nome do package não pode conter o caracter ':', foi mal, problemas internos aqui!", Color.RED);
-            event.replyEmbeds(embed).setEphemeral(true).queue();
+            event.replyEmbeds(Utils.nameContainsColon("O nome do package")).setEphemeral(true).queue();
             return;
         }
 
@@ -174,8 +172,7 @@ public class PackageGroup {
 
             if(packageName.contains(":")) {
                 LOGGER.debug(String.format("add: Package Name contains :, just ignore it (%s)", packageName));
-                MessageEmbed embed = Utils.simpleEmbed("Nome muito feio!", "O nome do package não pode conter o caracter ':', foi mal, problemas internos aqui!", Color.RED);
-                event.replyEmbeds(embed).setEphemeral(true).queue();
+                event.replyEmbeds(Utils.nameContainsColon("O nome do package")).setEphemeral(true).queue();
                 return;
             }
 
@@ -184,8 +181,7 @@ public class PackageGroup {
 
             if(name.contains(":")) {
                 LOGGER.debug(String.format("add: Role Name contains :, just ignore it (%s)", name));
-                MessageEmbed embed = Utils.simpleEmbed("Nome muito feio!", "O nome do cargo não pode conter o caracter ':', foi mal, problemas internos aqui!", Color.RED);
-                event.replyEmbeds(embed).setEphemeral(true).queue();
+                event.replyEmbeds(Utils.nameContainsColon("O nome do package")).setEphemeral(true).queue();
                 return;
             }
 
@@ -199,8 +195,7 @@ public class PackageGroup {
                 isUnicode = emoji.getSecond();
             } catch (MultipleEmojiMessageException e) {
                 LOGGER.debug("add: MultipleEmojiMessageException");
-                MessageEmbed embed = Utils.simpleEmbed("Emoji muito feio!", "O emoji não pode conter mais de um emoji, tu ta doidinho!", Color.RED);
-                event.replyEmbeds(embed).setEphemeral(true).queue();
+                event.replyEmbeds(Utils.multipleEmoji()).setEphemeral(true).queue();
                 return;
             }
 

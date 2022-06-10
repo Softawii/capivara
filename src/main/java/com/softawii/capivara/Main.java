@@ -3,7 +3,9 @@ package com.softawii.capivara;
 import com.softawii.capivara.core.EmbedManager;
 import com.softawii.capivara.core.PackageManager;
 import com.softawii.capivara.listeners.EchoGroup;
+import com.softawii.capivara.core.TemplateManager;
 import com.softawii.capivara.listeners.PackageGroup;
+import com.softawii.capivara.listeners.TemplateGroup;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import org.springframework.boot.CommandLineRunner;
@@ -26,6 +28,7 @@ public class Main implements CommandLineRunner {
         PackageGroup.packageManager     = context.getBean(PackageManager.class);
         EchoGroup.embedManager          = context.getBean(EmbedManager.class);
         PackageGroup.embedManager       = EchoGroup.embedManager;
+        TemplateGroup.templateManager   = context.getBean(TemplateManager.class);
     }
 
     @Override
