@@ -1,5 +1,6 @@
 package com.softawii.capivara.listeners;
 
+import com.softawii.capivara.core.EmbedManager;
 import com.softawii.capivara.core.PackageManager;
 import com.softawii.capivara.exceptions.*;
 import com.softawii.capivara.utils.Utils;
@@ -16,6 +17,7 @@ import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEve
 import net.dv8tion.jda.api.exceptions.HierarchyException;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
@@ -24,16 +26,15 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @IGroup(name= "Package", description = "Group to manage roles", hidden = false)
 public class PackageGroup {
 
     public static PackageManager packageManager;
+    public static EmbedManager  embedManager;
     private static final String packageMenu       = "package-menu";
     private static final String packageUniqueMenu = "package-unique-menu";
     private static final String packageButton     = "package-button";
@@ -305,17 +306,16 @@ public class PackageGroup {
     }
 
     @ICommand(name = "message", description = "Gera uma mensagem com botões associados aos packages")
-    @IArgument(name="title", description = "Título da mensagem", required = true, type= OptionType.STRING)
-    @IArgument(name="description", description = "Descrição da mensagem", required = true, type= OptionType.STRING)
+    @IArgument(name="target", description = "O canal que você quer enviar a mensagem", type = OptionType.CHANNEL, required = true)
     @IArgument(name="button-text", description = "Texto do botão", required = true, type= OptionType.STRING)
     @IArgument(name="type", description = "Um ou mais packages", required = true, type= OptionType.STRING,
             choices={@IArgument.IChoice(key="Packages", value="packages"), @IArgument.IChoice(key="Unique", value="Unique")})
+    @IArgument(name="message", description = "Mensagem bonita pra ficar fora do embed!", required = false, type= OptionType.STRING)
     @IRange(value=@IArgument(name="package", description = "O package", required = false, type= OptionType.STRING, hasAutoComplete = true), min = 0, max = 20)
     public static void message(SlashCommandInteractionEvent event) {
         System.out.println("message");
-        Long guildId        = event.getGuild().getIdLong();
-        String title          = event.getOption("title").getAsString();
-        String description    = event.getOption("description").getAsString();
+        Long guildId          = event.getGuild().getIdLong();
+        String message        = event.getOption("message") != null ? event.getOption("message").getAsString() : null;
         String buttonText     = event.getOption("button-text").getAsString();
         List<String> packages = new ArrayList<>();
 
@@ -326,22 +326,22 @@ public class PackageGroup {
 
         String type = event.getOption("type").getAsString();
 
+        // Button to Reply
+        Button button;
+
         // Get Multiple or All Packages
         if(type.equals("packages")) {
             if(!packages.isEmpty() && !packageManager.checkIfAllPackagesExist(guildId, packages)) {
                 event.reply("Um ou mais packages não existem").queue();
                 return;
             }
-            MessageEmbed messageEmbed = Utils.simpleEmbed(title, description, Color.GREEN);
-
             String buttonId = packageButton;
             if(!packages.isEmpty()) {
                 String packagesString = String.join(":", packages);
                 buttonId += ":" + packagesString;
             }
 
-            Button button = Button.success(buttonId, buttonText);
-            event.replyEmbeds(messageEmbed).addActionRow(button).queue();
+            button = Button.success(buttonId, buttonText);
         } else {
             if(packages.size() != 1) {
                 event.reply("Você precisa especificar exatamente **UM** package").queue();
@@ -352,13 +352,30 @@ public class PackageGroup {
                 event.reply("O package não existe").queue();
                 return;
             }
-            MessageEmbed messageEmbed = Utils.simpleEmbed(title, description, Color.GREEN);
 
+            // ECHO PART
             String packageName = packages.get(0);
             String buttonId = packageUniqueMenu + ":" + packageName;
+            button = Button.success(buttonId, buttonText);
+        }
 
-            Button button = Button.success(buttonId, buttonText);
-            event.replyEmbeds(messageEmbed).addActionRow(button).queue();
+        // Generating Embed Model
+        Map.Entry<String, EmbedManager.EmbedHandler> init = embedManager.init();
+        init.getValue().setMessage(message);
+        init.getValue().setTarget(event.getOption("target").getAsGuildChannel());
+        init.getValue().setActiveRows(Collections.singletonList(ActionRow.of(button)));
+
+        if(message != null) {
+            event.reply(message)
+                    .addEmbeds(init.getValue().build())
+                    .addActionRows(EchoGroup.embedEditor(init.getKey()))
+                    .setEphemeral(true)
+                    .queue();
+        } else {
+            event.replyEmbeds(init.getValue().build())
+                    .addActionRows(EchoGroup.embedEditor(init.getKey()))
+                    .setEphemeral(true)
+                    .queue();
         }
     }
 
