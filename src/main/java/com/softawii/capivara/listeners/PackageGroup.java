@@ -253,7 +253,7 @@ public class PackageGroup {
             try {
                 packageManager.editRole(guildId, packageName, name, role, description, emojiString, isUnicode);
                 LOGGER.info("edit: Role edited successfully");
-                MessageEmbed embed = Utils.simpleEmbed("Cargo editado!", String.format("O cargo '%s' foi editado com sucesso no pacote '%s'!", role.getAsMention(), packageName), Color.GREEN);
+                MessageEmbed embed = Utils.simpleEmbed("Cargo editado!", String.format("O cargo '%s' foi editado com sucesso no pacote '%s'!", name, packageName), Color.GREEN);
                 event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (PackageDoesNotExistException e) {
                 LOGGER.debug("edit: PackageDoesNotExistException");

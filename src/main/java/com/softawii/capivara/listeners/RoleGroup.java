@@ -150,7 +150,7 @@ public class RoleGroup {
 
             Role role = event.getOption("role").getAsRole();
 
-            if(canInteract(event.getGuild().getSelfMember(), role)) {
+            if(!canInteract(event.getGuild().getSelfMember(), role)) {
                 MessageEmbed embed = Utils.simpleEmbed("Sem permissão irmão", "Esse cargo ta acima acima do meu! Missão Impossível", Color.RED);
                 event.replyEmbeds(embed).setEphemeral(true).queue();
                 return;
@@ -283,7 +283,7 @@ public class RoleGroup {
     public static boolean canInteract(Member member, Role role) {
 
         int rolePosition = role.getPosition();
-        int botPosition = member.getRoles().isEmpty() ? -1 : member.getRoles().get(0).getPosition();
+        int botPosition = member.getRoles().isEmpty() ? -1 : member.getRoles().stream().map(Role::getPosition).max(Integer::compareTo).get();
 
         if(botPosition == -1 || rolePosition >= botPosition) {
             return false;
