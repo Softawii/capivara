@@ -9,49 +9,36 @@
 <h1 align="center">Capivara</h1>
 
 
-Capivara é um bot para 'Discord' com o objetivo de facilitar a gerência de cargos, permissões, denúncias e muito mais.
+Capivara é um bot para 'Discord' com o objetivo de facilitar a gerência de cargos, permissões, denúncias e muito mais! Pode chamar ele pro seu servidor [por aqui](https://discord.com/api/oauth2/authorize?client_id=983021336496590918&permissions=8&scope=bot%20applications.commands)!
+
+### Básico da Estrutura do Bot
+
+O bot é dividido em "setores", cada setor é responsável por um grupo de tarefas (você pode conferir cada um na nossa wiki), por exemplo:
+
+Para o setor de manejo de packages temos:
+- PackageListener
+- PackageManager
+- PackageService
+- PackageRepository
 
 
-No atual formato o bot é separado em 3 partes:
+#### Listener
 
-## Pacotes
+Responsável por escutar os comandos vindos do discord, decodificar os campos, e, se necessário, passar a responsabilidade da regra de negócio para o Manager.
 
-### 1. PackageGroup
+#### Manager
 
-Pacotes são um conjunto de cargos agrupados por algum objetivo arbitrário. 
-Por exemplo, um pacote pode ser um grupo de cargos que são representam os jogos que são jogados no servidor.
+Reponsável por aplicar a regra de negócio e, se necessário, se comunicar com o Service (comunicando apenas com os services (poderia ser mesclado ao mesmo, porém, deixamos assim).
 
-Neste 'Pacote' estão agrupados todos os comandos relacionados ao gerenciamento de pacotes.
+#### Service
 
-<div align="center">
-    <img src="./docs/package-commands.png" alt="Banner">
-</div>
+Abstração para o banco, alguns tratamentos para passar para a camada de baixo
 
-#### Exemplos de uso
+#### Repository
 
-<div align="center">
-    <img src="./docs/package-message.png">
-</div>
+Bora falar com o DB?
 
-<div align="center">
-    <img src="./docs/package-packages.png">
-</div>
+### Para Contribuir!
 
-<div align="center">
-    <img src="./docs/package-roles.png">
-</div>
-
-
-### 2. RoleGroup
-
-TODO
-
-
-### 3. ReportGroup
-
-TODO
-
-## Resumo do Fluxo
-
-[Clique aqui para a exposição completa](./docs/fluxo.md)
+Cria seu fork ou branch e faça um MR
 
