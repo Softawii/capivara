@@ -4,6 +4,10 @@ on:
 
 jobs:
   build:
+    environment: PUB
+    env:
+      GITHUB_USER: ${{ secrets._GITHUB_USER }}
+      GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out repository'
