@@ -61,9 +61,9 @@ public class SpringConfig {
         JDA jda;
         try {
             JDABuilder builder = JDABuilder.create(discordToken, GatewayIntent.GUILD_MEMBERS);
-            builder.enableIntents(GatewayIntent.GUILD_EMOJIS);
+            builder.enableIntents(GatewayIntent.GUILD_EMOJIS_AND_STICKERS);
             builder.setMemberCachePolicy(MemberCachePolicy.ALL);
-            builder.enableCache(CacheFlag.EMOTE, CacheFlag.ROLE_TAGS, CacheFlag.MEMBER_OVERRIDES);
+            builder.enableCache(CacheFlag.EMOJI, CacheFlag.ROLE_TAGS, CacheFlag.MEMBER_OVERRIDES, CacheFlag.STICKER);
             builder.addEventListeners(
                     new PackageGroup.AutoCompleter(),
                     new TemplateGroup.AutoCompleter()
@@ -83,7 +83,10 @@ public class SpringConfig {
         String pkg   = "com.softawii.capivara.listeners";
         String resetEnv = env.getProperty("curupira.reset", "false");
         boolean reset = Boolean.parseBoolean(resetEnv);
-        Curupira curupira = new Curupira(jda, reset, pkg);
+
+        System.out.println("Reset: " + reset);
+
+        Curupira curupira = new Curupira(jda, reset, null, pkg);
 
         return curupira;
     }

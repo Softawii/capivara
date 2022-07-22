@@ -6,9 +6,12 @@ import com.softawii.capivara.services.PackageService;
 import com.softawii.capivara.services.RoleService;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import net.dv8tion.jda.internal.entities.emoji.RichCustomEmojiImpl;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -158,7 +161,7 @@ public class PackageManager {
         return builder.build();
     }
 
-    public SelectMenu getGuildPackagesMenu(Long guildId, List<String> packages_ids, String customId, List<Emote> emotes) {
+    public SelectMenu getGuildPackagesMenu(Long guildId, List<String> packages_ids, String customId, List<RichCustomEmoji> emotes) {
         List<Package> packages = packageService.findAllByGuildId(guildId);
 
         // Filtering by packages_ids
@@ -180,11 +183,10 @@ public class PackageManager {
             if(!pkg.getEmojiId().isBlank()) {
                 if(pkg.isEmojiUnicode()) option = option.withEmoji(Emoji.fromUnicode(pkg.getEmojiId()));
                 else {
-                    Emote emote = emotes.stream().filter(
+                    RichCustomEmoji emote = emotes.stream().filter(
                             emote1 -> emote1.getAsMention().equals(pkg.getEmojiId())
                     ).findFirst().orElse(null);
-
-                    if(emote != null) option = option.withEmoji(Emoji.fromEmote(emote));
+                    if(emote != null) option = option.withEmoji(Emoji.fromCustom(emote));
                 }
             }
 
@@ -194,7 +196,7 @@ public class PackageManager {
         return builder.build();
     }
 
-    public SelectMenu getGuildPackageRoleMenu(Long guildId, String packageName, String customId, Member member, List<Long> guildRoles, List<Emote> emotes) throws PackageDoesNotExistException {
+    public SelectMenu getGuildPackageRoleMenu(Long guildId, String packageName, String customId, Member member, List<Long> guildRoles, List<RichCustomEmoji> emotes) throws PackageDoesNotExistException {
         Package pkg = packageService.findByPackageId(new Package.PackageKey(guildId, packageName));
         SelectMenu.Builder builder = SelectMenu.create(customId);
 
@@ -216,15 +218,14 @@ public class PackageManager {
 
                 // This role has an emote????
                 if(!role.getEmojiId().isBlank()) {
-
                     if(role.isEmojiUnicode()) {
                         option = option.withEmoji(Emoji.fromUnicode(role.getEmojiId()));
                     } else {
-                        Emote emote = emotes.stream().filter(
+                        RichCustomEmoji emote = emotes.stream().filter(
                                 emote1 -> emote1.getAsMention().equals(role.getEmojiId())
                         ).findFirst().orElse(null);
 
-                        if(emote != null) option = option.withEmoji(Emoji.fromEmote(emote));
+                        if(emote != null) option = option.withEmoji(Emoji.fromCustom(emote));
                     }
 
                 }

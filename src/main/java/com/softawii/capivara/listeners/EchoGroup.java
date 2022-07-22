@@ -94,7 +94,7 @@ public class EchoGroup {
         // Generating Embed Model
         Map.Entry<String, EmbedManager.EmbedHandler> init = embedManager.init();
         init.getValue().setMessage(message);
-        init.getValue().setTarget(event.getOption("target").getAsGuildChannel());
+        init.getValue().setTarget(event.getOption("target").getAsChannel().asGuildMessageChannel());
 
         if(message != null) {
             event.reply(message)

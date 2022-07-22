@@ -37,7 +37,7 @@ public class RoleGroup {
     public static void create(SlashCommandInteractionEvent event) {
         // Decoding
         String name = event.getOption("name") != null ? event.getOption("name").getAsString() : null;
-        GuildChannel channel = event.getOption("channel") != null ? event.getOption("channel").getAsGuildChannel() : null;
+        GuildChannel channel = event.getOption("channel") != null ? event.getOption("channel").getAsChannel().asGuildMessageChannel() : null;
 
         if((name == null) == (channel == null)) {
             MessageEmbed embed = Utils.simpleEmbed("Erro", "Você deve informar apenas o nome do cargo ou apenas o canal de vinculação", Color.RED);
@@ -89,7 +89,7 @@ public class RoleGroup {
         // Not null, because it's server side and required
         Role role = event.getOption("role").getAsRole();
 
-        if(canInteract(event.getGuild().getSelfMember(), role)) {
+        if(!canInteract(event.getGuild().getSelfMember(), role)) {
             MessageEmbed embed = Utils.simpleEmbed("Sem permissão irmão", "Esse cargo ta acima acima do meu! Missão Impossível", Color.RED);
             event.replyEmbeds(embed).setEphemeral(true).queue();
             return;
@@ -114,7 +114,7 @@ public class RoleGroup {
         // Not null, because it's server side and required
         Role role = event.getOption("role").getAsRole();
 
-        if(canInteract(event.getGuild().getSelfMember(), role)) {
+        if(!canInteract(event.getGuild().getSelfMember(), role)) {
             MessageEmbed embed = Utils.simpleEmbed("Sem permissão irmão", "Esse cargo ta acima acima do meu! Missão Impossível", Color.RED);
             event.replyEmbeds(embed).setEphemeral(true).queue();
             return;
@@ -166,7 +166,7 @@ public class RoleGroup {
 
             // Everything is fine, let's update the permissions
             if(channelType.isAudio()) {
-                VoiceChannel channel = event.getOption("related").getAsVoiceChannel();
+                VoiceChannel channel = event.getOption("related").getAsChannel().asVoiceChannel();
 
                 if(!voicePermissions.contains(permission)) {
                     MessageEmbed messageEmbed = Utils.simpleEmbed("Permissão inválida", "Permissões de voz só podem ser: " + voicePermissions.toString(), Color.RED);
@@ -178,7 +178,7 @@ public class RoleGroup {
                 else      role.getManager().revokePermissions(getPermission(permission)).queue();
             }
             if(channelType.isMessage()) {
-                BaseGuildMessageChannel channel = (BaseGuildMessageChannel) event.getOption("related").getAsGuildChannel();
+                GuildChannel channel = event.getOption("related").getAsChannel();
 
                 if(!textPermissions.contains(permission)) {
                     MessageEmbed messageEmbed = Utils.simpleEmbed("Permissão inválida", "Permissões de texto só podem ser: " + textPermissions.toString(), Color.RED);
@@ -186,8 +186,8 @@ public class RoleGroup {
                     return;
                 }
 
-                if(allow) channel.getManager().putRolePermissionOverride(role.getIdLong(), List.of(getPermission(permission)), null).queue();
-                else      channel.getManager().putRolePermissionOverride(role.getIdLong(), null, List.of(getPermission(permission))).queue();
+                if(allow) channel.getPermissionContainer().getManager().putRolePermissionOverride(role.getIdLong(), List.of(getPermission(permission)), null).queue();
+                else      channel.getPermissionContainer().getManager().putRolePermissionOverride(role.getIdLong(), null, List.of(getPermission(permission))).queue();
             }
 
             MessageEmbed messageEmbed = Utils.simpleEmbed("Permissões atualizadas", String.format("Permissão '%s' no canal atualizada com sucesso para o cargo %s", permission, role.getAsMention()), Color.GREEN);

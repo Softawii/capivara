@@ -7,9 +7,9 @@ import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
 import kotlin.Pair;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -120,7 +120,6 @@ public class PackageGroup {
         try {
             packageManager.update(guildId, name, unique, description, emojiString, isUnicode);
             LOGGER.info(String.format("edit: Package %s updated", name));
-            event.reply("Package com nome '" + name + "' foi criado").queue();
 
             StringBuilder sb = new StringBuilder();
             if (unique != null)  sb.append("O pacote é único? ").append(unique ? "Sim" : "Não").append("\n");
@@ -362,7 +361,7 @@ public class PackageGroup {
         // Generating Embed Model
         Map.Entry<String, EmbedManager.EmbedHandler> init = embedManager.init();
         init.getValue().setMessage(message);
-        init.getValue().setTarget(event.getOption("target").getAsGuildChannel());
+        init.getValue().setTarget(event.getOption("target").getAsChannel().asGuildMessageChannel());
         init.getValue().setActiveRows(Collections.singletonList(ActionRow.of(button)));
 
         if(message != null) {
@@ -388,7 +387,7 @@ public class PackageGroup {
         String[] packages = event.getComponentId().split(":");
         packages = Arrays.copyOfRange(packages, 1, packages.length);
 
-        List<Emote> emotes = event.getGuild().getEmotes();
+        List<RichCustomEmoji> emotes = event.getGuild().getEmojis();
 
         SelectMenu menu = packageManager.getGuildPackagesMenu(guildId, Arrays.stream(packages).toList(), packageMenu, emotes);
 
@@ -410,7 +409,7 @@ public class PackageGroup {
                 List<Long> roleIds = event.getGuild().getRoles().stream().map(Role::getIdLong).collect(Collectors.toList());
                 SelectMenu menu = null;
                 try {
-                    List<Emote> emotes = event.getGuild().getEmotes();
+                    List<RichCustomEmoji> emotes = event.getGuild().getEmojis();
                     menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds, emotes);
                 } catch (PackageDoesNotExistException e) {
                     event.editMessage("O package não existe").setActionRow().queue();
@@ -434,7 +433,7 @@ public class PackageGroup {
         List<Long> roleIds = event.getGuild().getRoles().stream().map(Role::getIdLong).collect(Collectors.toList());
         SelectMenu menu = null;
         try {
-            List<Emote> emotes = event.getGuild().getEmotes();
+            List<RichCustomEmoji> emotes = event.getGuild().getEmojis();
             menu = packageManager.getGuildPackageRoleMenu(guildId, _package, customId, event.getMember(), roleIds, emotes);
         } catch (PackageDoesNotExistException e) {
             event.editMessage("O package não existe").setActionRow().queue();

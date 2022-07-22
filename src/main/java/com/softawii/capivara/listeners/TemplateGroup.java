@@ -50,7 +50,7 @@ public class TemplateGroup {
             return;
         }
 
-        GuildChannel channel = event.getOption("category").getAsGuildChannel();
+        GuildChannel channel = event.getOption("category").getAsChannel().asGuildMessageChannel();
         ChannelType channelType = channel.getType();
         if (channelType != ChannelType.CATEGORY) {
             event.replyEmbeds(TemplateUtil.channelIsNotCategory()).queue();
@@ -142,7 +142,7 @@ public class TemplateGroup {
             return;
         }
 
-        GuildChannel channel = event.getOption("category").getAsGuildChannel();
+        GuildChannel channel = event.getOption("category").getAsChannel().asGuildMessageChannel();
         ChannelType channelType = channel.getType();
         if (channelType != ChannelType.CATEGORY) {
             event.replyEmbeds(TemplateUtil.channelIsNotCategory()).queue();
