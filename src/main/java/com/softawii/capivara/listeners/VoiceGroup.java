@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,7 +21,7 @@ public class VoiceGroup {
     private static final Logger LOGGER = LogManager.getLogger(VoiceGroup.class);
 
     @ISubGroup(name="Dynamic", description = "Dynamic")
-    public static class Dynamic {
+    public static class Dynamic extends ListenerAdapter {
 
         /**
          * This command is used to put a 'Voice Dynamic Master' channel in a category
@@ -46,6 +47,7 @@ public class VoiceGroup {
             Member   member   = event.getMember();
 
             // TODO: Manager (business rule)
+
 
             LOGGER.debug(method + " : end");
         }
