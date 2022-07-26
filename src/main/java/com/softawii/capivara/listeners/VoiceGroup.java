@@ -198,7 +198,19 @@ public class VoiceGroup {
 
         @Override
         public void onChannelDelete(@NotNull ChannelDeleteEvent event) {
-            // TODO: Category Delete Event
+            if (event.getChannel().getType() == ChannelType.CATEGORY) {
+                Category category = event.getChannel().asCategory();
+                if(voiceManager.isDynamicCategory(category)) {
+                    try {
+                        voiceManager.unsetDynamicCategory(category);
+                    } catch (KeyNotFoundException e) {
+                        // Ok... it's not a dynamic category
+                    }
+                }
+            }
+
+
+
             if (event.getChannel().getType() == ChannelType.VOICE) {
                 VoiceChannel channel = event.getChannel().asVoiceChannel();
                 // Checking if it is a drone voice channel
@@ -220,12 +232,15 @@ public class VoiceGroup {
                 VoiceChannel hive = event.getChannel().asVoiceChannel();
                 Category hiveCategory = event.getOldValue();
 
+                Guild guild = event.getGuild();
+                hiveCategory = guild.getCategoryById(hiveCategory.getIdLong());
+
                 if(hiveCategory != null) {
                     try {
                         VoiceHive dbHive = voiceManager.find(hiveCategory);
 
                         if(dbHive.hiveId() == hive.getIdLong()) {
-                            hive.getManager().setParent(hiveCategory).queue();
+                            hive.getManager().setParent(hiveCategory).queue(q -> {}, e -> {});
                         }
 
                     } catch (KeyNotFoundException e) {

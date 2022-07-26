@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class VoiceManager {
@@ -33,7 +34,7 @@ public class VoiceManager {
     }
 
     public VoiceHive setDynamicCategory(Category category) throws ExistingDynamicCategoryException {
-
+        LOGGER.debug("setDynamicCategory: " + category);
         // Verify if the category is already a dynamic category
         if (voiceHiveService.existsByCategoryId(category.getIdLong())) throw new ExistingDynamicCategoryException();
 
@@ -50,11 +51,11 @@ public class VoiceManager {
     }
 
     public void unsetDynamicCategory(Category category) throws KeyNotFoundException {
+        LOGGER.debug("Unsetting dynamic category: {}", category);
+
         VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
 
-        category.getChannels().stream().filter(channel -> channel.getIdLong() == voiceHive.hiveId()).findFirst().ifPresent(channel -> {
-            channel.delete().queue();
-        });
+        Objects.requireNonNull(category.getGuild().getVoiceChannelById(voiceHive.hiveId())).delete().complete();
 
         voiceHiveService.destroy(category.getIdLong());
     }
