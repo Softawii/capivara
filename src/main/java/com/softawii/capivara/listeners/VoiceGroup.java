@@ -12,14 +12,22 @@ import com.softawii.curupira.annotations.ISubGroup;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
+import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
+import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 @IGroup(name = "Voice", description = "Voice", hidden=false)
 public class VoiceGroup {
@@ -31,6 +39,8 @@ public class VoiceGroup {
     public static class Dynamic extends ListenerAdapter {
 
         public static VoiceManager voiceManager;
+
+        //region Discord Commands
 
         /**
          * This command is used to put a 'Voice Dynamic Master' channel in a category
@@ -167,5 +177,64 @@ public class VoiceGroup {
             LOGGER.debug(method + " : end");
         }
 
+        //endregion
+
+
+        //region Voice Events
+
+        /**
+         * This event is used to verify if the user is in a drone voice channel, if so, it will check to delete the drone
+         * @param event : VoiceChannelCreateEvent
+         */
+        @Override
+        public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
+            VoiceChannel joined = (VoiceChannel) event.getChannelJoined();
+            VoiceChannel left   = (VoiceChannel) event.getChannelLeft();
+            Member member       = event.getMember();
+
+            if(joined != null)  voiceManager.checkToCreateTemporary(joined, member);
+            if(left != null)    voiceManager.checkToDeleteTemporary(left, member);
+        }
+
+        @Override
+        public void onChannelDelete(@NotNull ChannelDeleteEvent event) {
+            // TODO: Category Delete Event
+            if (event.getChannel().getType() == ChannelType.VOICE) {
+                VoiceChannel channel = event.getChannel().asVoiceChannel();
+                // Checking if it is a drone voice channel
+                voiceManager.checkToDeleteTemporary(channel, null);
+
+                // Checking if it is a hive voice channel
+                Category hive     = channel.getParentCategory();
+                long snowflakeId  = channel.getIdLong();
+
+                if(hive != null) {
+                    voiceManager.checkToDeleteHive(hive, snowflakeId);
+                }
+            }
+        }
+
+        @Override
+        public void onChannelUpdateParent(@NotNull ChannelUpdateParentEvent event) {
+            if(event.getChannelType() == ChannelType.VOICE) {
+                VoiceChannel hive = event.getChannel().asVoiceChannel();
+                Category hiveCategory = event.getOldValue();
+
+                if(hiveCategory != null) {
+                    try {
+                        VoiceHive dbHive = voiceManager.find(hiveCategory);
+
+                        if(dbHive.hiveId() == hive.getIdLong()) {
+                            hive.getManager().setParent(hiveCategory).queue();
+                        }
+
+                    } catch (KeyNotFoundException e) {
+                        // The category is not a hive, just ignore it...
+                    }
+                }
+            }
+        }
+
+        //endregion
     }
 }

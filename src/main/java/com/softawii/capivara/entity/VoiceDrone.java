@@ -5,7 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Entity
-public class VoiceWorker {
+public class VoiceDrone {
 
     /**
      * It is used to identify the worker, it's a snowflake id
@@ -19,6 +19,18 @@ public class VoiceWorker {
      */
     @Column
     private long OwnerId;
+
+    // region Constructors
+
+    public VoiceDrone() {
+    }
+
+    public VoiceDrone(long channelId, long ownerId) {
+        this.channelId = channelId;
+        this.OwnerId = ownerId;
+    }
+
+    // endregion
 
     // region Getters and Setters
 
