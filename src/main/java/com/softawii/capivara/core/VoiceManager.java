@@ -28,9 +28,8 @@ public class VoiceManager {
     public VoiceHive setDynamicCategory(Category category) throws ExistingDynamicCategoryException {
 
         // Verify if the category is already a dynamic category
-        if (voiceHiveService.existsByCategoryId(category.getIdLong())) {
-            throw new ExistingDynamicCategoryException();
-        }
+        if (voiceHiveService.existsByCategoryId(category.getIdLong())) throw new ExistingDynamicCategoryException();
+
 
         // Creates a hive
         VoiceChannel hive = category.createVoiceChannel("Hive").complete();
