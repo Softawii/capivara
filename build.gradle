@@ -56,8 +56,7 @@ dependencies {
         exclude module: 'opus-java'
     }
 
-    // implementation urlFile('https://github.com/Softawii/curupira/releases/download/v0.1.2.1/curupira-0.1.2.1.jar', 'curupira-0.1.2.1')
-    implementation("com.softawii:curupira:0.2.1:all")
+    implementation("com.github.Softawii:curupira:v0.2.5:all")
 
     implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
 }

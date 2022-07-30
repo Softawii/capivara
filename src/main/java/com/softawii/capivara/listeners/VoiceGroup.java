@@ -5,34 +5,45 @@ import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.utils.Utils;
-import com.softawii.curupira.annotations.IArgument;
-import com.softawii.curupira.annotations.ICommand;
-import com.softawii.curupira.annotations.IGroup;
-import com.softawii.curupira.annotations.ISubGroup;
+import com.softawii.curupira.annotations.*;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.components.Modal;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
-@IGroup(name = "Voice", description = "Voice", hidden=false)
+
+@IGroup(name = "Voice", description = "Voice", hidden = false)
 public class VoiceGroup {
 
     private static final Logger LOGGER = LogManager.getLogger(VoiceGroup.class);
 
-    @ISubGroup(name="Dynamic", description = "Dynamic")
+    @ISubGroup(name = "Dynamic", description = "Dynamic")
     public static class Dynamic extends ListenerAdapter {
 
         public static VoiceManager voiceManager;
+
+        // region constants
+        public static final String configModal = "voice-dynamic-config-modal";
+        public static final String generateConfigModal = "voice-dynamic-generate-config-modal";
+
+        // endregion
 
         //region Discord Commands
 
@@ -41,7 +52,7 @@ public class VoiceGroup {
          *
          * @param event : SlashCommandInteractionEvent
          */
-        @ICommand(name="set", description = "Set dynamic voice channels to the selected category", permissions = {Permission.ADMINISTRATOR})
+        @ICommand(name = "set", description = "Set dynamic voice channels to the selected category", permissions = {Permission.ADMINISTRATOR})
         @IArgument(name = "category", description = "Category to add dynamic voice chat!", required = true, type = OptionType.CHANNEL)
         @SuppressWarnings({"ConstantConditions", "unused"})
         public static void set(SlashCommandInteractionEvent event) {
@@ -51,7 +62,7 @@ public class VoiceGroup {
             // region Verify and Decode
             GuildChannelUnion channel = event.getOption("category").getAsChannel();
 
-            if(channel.getType() != ChannelType.CATEGORY) {
+            if (channel.getType() != ChannelType.CATEGORY) {
                 LOGGER.debug(method + " : error : non category : " + channel);
                 event.reply("You need to pass a category!").queue();
                 return;
@@ -68,12 +79,12 @@ public class VoiceGroup {
                 // Reply -> Never NULL (Guild Command)
                 Guild guild = event.getGuild();
 
-                GuildChannel hiveChannel = guild.getGuildChannelById(hive.getVoiceId());
+                VoiceChannel hiveChannel = guild.getVoiceChannelById(hive.getVoiceId());
 
                 MessageEmbed embed = Utils.simpleEmbed("Voice Hive Initialized",
                         "Just click in " + hiveChannel.getAsMention() + " to create a dynamic channel!", Color.GREEN);
 
-                event.replyEmbeds(embed).queue();
+                event.replyEmbeds(embed).addActionRow(Button.primary(generateConfigModal + ":" + hiveChannel.getParentCategoryIdLong(), "Open Settings")).setEphemeral(true).queue();
             } catch (ExistingDynamicCategoryException e) {
                 LOGGER.debug(method + " : error : " + e.getMessage());
 
@@ -86,8 +97,8 @@ public class VoiceGroup {
                     return;
                 }
                 // Reply -> Never NULL (Guild Command)
-                Guild guild = event.getGuild();
-                GuildChannel hiveChannel = guild.getVoiceChannelById(hive.getVoiceId());
+                Guild        guild       = event.getGuild();
+                VoiceChannel hiveChannel = guild.getVoiceChannelById(hive.getVoiceId());
                 MessageEmbed embed = Utils.simpleEmbed("The current category is already a hive of voice channels!",
                         "Just click in " + hiveChannel.getAsMention() + " to create a dynamic channel!", Color.RED);
                 event.replyEmbeds(embed).queue();
@@ -96,7 +107,7 @@ public class VoiceGroup {
             LOGGER.debug(method + " : end");
         }
 
-        @ICommand(name="unset", description = "Unset dynamic voice channels to the selected category", permissions = {Permission.ADMINISTRATOR})
+        @ICommand(name = "unset", description = "Unset dynamic voice channels to the selected category", permissions = {Permission.ADMINISTRATOR})
         @IArgument(name = "category", description = "Category to add dynamic voice chat!", required = true, type = OptionType.CHANNEL)
         @SuppressWarnings({"ConstantConditions", "unused"})
         public static void unset(SlashCommandInteractionEvent event) {
@@ -106,7 +117,7 @@ public class VoiceGroup {
             // region Verify and Decode
             GuildChannelUnion channel = event.getOption("category").getAsChannel();
 
-            if(channel.getType() != ChannelType.CATEGORY) {
+            if (channel.getType() != ChannelType.CATEGORY) {
                 LOGGER.debug(method + " : error : non category : " + channel);
                 event.reply("You need to pass a category!").queue();
                 return;
@@ -140,23 +151,23 @@ public class VoiceGroup {
             LOGGER.debug(method + " : end");
         }
 
-        @ICommand(name="list", description = "List all dynamic voice channels categories")
+        @ICommand(name = "list", description = "List all dynamic voice channels categories")
         @SuppressWarnings({"ConstantConditions", "unused"})
         public static void list(SlashCommandInteractionEvent event) {
             String method = new Throwable().getStackTrace()[0].getMethodName();
             LOGGER.debug(method + " : start");
 
-            long guildId = event.getGuild().getIdLong();
-            Guild guild = event.getGuild();
+            long  guildId = event.getGuild().getIdLong();
+            Guild guild   = event.getGuild();
 
             List<VoiceHive> hives = voiceManager.findAllByGuildId(guildId);
 
             StringBuilder sb = new StringBuilder();
-            for(VoiceHive hive : hives) {
+            for (VoiceHive hive : hives) {
                 VoiceChannel hiveChannel = guild.getVoiceChannelById(hive.getVoiceId());
                 Category     parent      = hiveChannel.getParentCategory();
 
-                if(hiveChannel == null || parent == null) {
+                if (hiveChannel == null || parent == null) {
                     LOGGER.debug(method + " : error : hive channel not found : " + hive.getVoiceId());
                     continue;
                 }
@@ -174,6 +185,90 @@ public class VoiceGroup {
             LOGGER.debug(method + " : end");
         }
 
+        @ICommand(name = "config", description = "Configure dynamic voice channels", permissions = {Permission.ADMINISTRATOR})
+        @IArgument(name = "category", description = "Category to configure your dynamic voice chat!", required = true, type = OptionType.CHANNEL)
+        @SuppressWarnings({"unused"})
+        public static void config(SlashCommandInteractionEvent event) {
+            String method = new Throwable().getStackTrace()[0].getMethodName();
+            LOGGER.debug(method + " : start");
+
+            // region Verify and Decode
+            GuildChannelUnion channel = event.getOption("category").getAsChannel();
+
+            if (channel.getType() != ChannelType.CATEGORY) {
+                LOGGER.debug(method + " : error : non category : " + channel);
+                event.reply("You need to pass a category!").queue();
+                return;
+            }
+
+            // endregion
+
+            Category category = channel.asCategory();
+
+            //  Manager (business rule)
+            Modal configModal = voiceManager.getConfigModal(category, Dynamic.configModal);
+
+            if(configModal == null) {
+                LOGGER.debug(method + " : error : config modal not found : " + category);
+                event.reply("This category is not a dynamic voice channel!").queue();
+                return;
+            }
+
+            event.replyModal(configModal).queue();
+            LOGGER.debug(method + " : end");
+        }
+
+        @IButton(id=generateConfigModal)
+        public static void generateConfig(ButtonInteractionEvent event) {
+            LOGGER.debug("generateConfig : start");
+            String[] args = event.getComponentId().split(":");
+
+            if(args.length != 2) {
+                LOGGER.debug("generateConfig : error : invalid component id : " + event.getComponentId());
+                return;
+            }
+
+            long categoryId = Long.parseLong(args[1]);
+            Category category = event.getGuild().getCategoryById(categoryId);
+
+            if(category == null) {
+                LOGGER.debug("generateConfig : error : category not found : " + categoryId);
+                return;
+            }
+
+            Modal configModal = voiceManager.getConfigModal(category, Dynamic.configModal);
+
+            event.replyModal(configModal).queue();
+        }
+
+        @IModal(id = configModal)
+        public static void configModal(ModalInteractionEvent event) {
+            String method = new Throwable().getStackTrace()[0].getMethodName();
+            LOGGER.debug(method + " : start");
+
+            String strCategoryId = event.getModalId().split(":")[1];
+            long   categoryId = Long.parseLong(strCategoryId);
+
+            try {
+                Category category = event.getGuild().getCategoryById(categoryId);
+
+                if(category == null) {
+                    LOGGER.debug(method + " : error : category not found : " + categoryId);
+                    event.reply("Category not found!").setEphemeral(true).queue();
+                    return;
+                }
+                voiceManager.setConfigModal(event, category);
+                event.reply("Configuration updated!").setEphemeral(true).queue();
+            } catch (KeyNotFoundException e) {
+                event.reply("This category is not a dynamic voice channel!").setEphemeral(true).queue();
+            } catch(Exception e) {
+                LOGGER.debug(method + " : error : " + e.getMessage());
+                event.reply("An error occurred while configuring the dynamic voice channel!").setEphemeral(true).queue();
+            }
+
+            LOGGER.debug(method + " : end");
+        }
+
         //endregion
 
 
@@ -181,23 +276,24 @@ public class VoiceGroup {
 
         /**
          * This event is used to verify if the user is in a drone voice channel, if so, it will check to delete the drone
+         *
          * @param event : VoiceChannelCreateEvent
          */
         @Override
         public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
             VoiceChannel joined = (VoiceChannel) event.getChannelJoined();
             VoiceChannel left   = (VoiceChannel) event.getChannelLeft();
-            Member member       = event.getMember();
+            Member       member = event.getMember();
 
-            if(joined != null)  voiceManager.checkToCreateTemporary(joined, member);
-            if(left != null)    voiceManager.checkToDeleteTemporary(left, member);
+            if (joined != null) voiceManager.checkToCreateTemporary(joined, member);
+            if (left != null) voiceManager.checkToDeleteTemporary(left, member);
         }
 
         @Override
         public void onChannelDelete(@NotNull ChannelDeleteEvent event) {
             if (event.getChannel().getType() == ChannelType.CATEGORY) {
                 Category category = event.getChannel().asCategory();
-                if(voiceManager.isDynamicCategory(category)) {
+                if (voiceManager.isDynamicCategory(category)) {
                     try {
                         voiceManager.unsetDynamicCategory(category);
                     } catch (KeyNotFoundException e) {
@@ -207,17 +303,16 @@ public class VoiceGroup {
             }
 
 
-
             if (event.getChannel().getType() == ChannelType.VOICE) {
                 VoiceChannel channel = event.getChannel().asVoiceChannel();
                 // Checking if it is a drone voice channel
                 voiceManager.checkToDeleteTemporary(channel, null);
 
                 // Checking if it is a hive voice channel
-                Category hive     = channel.getParentCategory();
-                long snowflakeId  = channel.getIdLong();
+                Category hive        = channel.getParentCategory();
+                long     snowflakeId = channel.getIdLong();
 
-                if(hive != null) {
+                if (hive != null) {
                     voiceManager.checkToDeleteHive(hive, snowflakeId);
                 }
             }
@@ -225,16 +320,18 @@ public class VoiceGroup {
 
         @Override
         public void onChannelUpdateParent(@NotNull ChannelUpdateParentEvent event) {
-            if(event.getChannelType() == ChannelType.VOICE) {
-                VoiceChannel hive = event.getChannel().asVoiceChannel();
-                Category hiveCategory = event.getOldValue();
+            if (event.getChannelType() == ChannelType.VOICE) {
+                VoiceChannel hive         = event.getChannel().asVoiceChannel();
+                Category     hiveCategory = event.getOldValue();
 
-                if(hiveCategory != null) {
+                if (hiveCategory != null) {
                     try {
                         VoiceHive dbHive = voiceManager.find(hiveCategory);
 
-                        if(dbHive.getVoiceId() == hive.getIdLong()) {
-                            hive.getManager().setParent(hiveCategory).queue(q -> {}, e -> {});
+                        if (dbHive.getVoiceId() == hive.getIdLong()) {
+                            hive.getManager().setParent(hiveCategory).queue(q -> {
+                            }, e -> {
+                            });
                         }
 
                     } catch (KeyNotFoundException e) {

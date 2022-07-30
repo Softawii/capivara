@@ -4,18 +4,22 @@ import com.softawii.capivara.entity.VoiceDrone;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
+import com.softawii.capivara.listeners.VoiceGroup;
 import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.capivara.services.VoiceHiveService;
-import net.dv8tion.jda.api.entities.Category;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.VoiceChannel;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.interactions.components.Modal;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Component
 public class VoiceManager {
@@ -23,6 +27,19 @@ public class VoiceManager {
     private final VoiceHiveService  voiceHiveService;
     private final VoiceDroneService voiceDroneService;
     private final Logger LOGGER = LogManager.getLogger(VoiceManager.class);
+
+    // region Constants
+
+    public static final String configModal_idle       = "%OWNER% Channel";
+    public static final String configModal_playing    = "\uD83C\uDFAE %PLAYING%";
+    public static final String configModal_streaming  = "\uD83D\uDCFA %CHANNEL%";
+
+    // fields
+    public static final String configModal_fieldIdle      = "set-idle";
+    public static final String configModal_fieldPlaying   = "set-playing";
+    public static final String configModal_fieldStreaming = "set-streaming";
+
+    // endregion
 
     public VoiceManager(VoiceHiveService voiceHiveService, VoiceDroneService voiceDroneService) {
         this.voiceHiveService = voiceHiveService;
@@ -46,7 +63,7 @@ public class VoiceManager {
         long guildId              = category.getGuild().getIdLong();
 
         // Returns the hive
-        return voiceHiveService.create(new VoiceHive(categoryId, guildId, hive.getIdLong()));
+        return voiceHiveService.create(new VoiceHive(categoryId, guildId, hive.getIdLong(), configModal_idle, configModal_playing, configModal_streaming));
     }
 
     public void unsetDynamicCategory(Category category) throws KeyNotFoundException {
@@ -80,9 +97,24 @@ public class VoiceManager {
             // Creating the voice drone
             Category hiveCategory = channel.getParentCategory();
 
-            // TODO: Defining the drone name
+            Optional<Activity> streaming = member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.STREAMING).findFirst();
+            Optional<Activity> playing   = member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.PLAYING).findFirst();
+
+            // Priority: Streaming > Playing > Idle
+            String droneName = configModal_idle;
             String username = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
-            String droneName = "Drone - " + username;
+
+            if(streaming.isPresent()) {
+                droneName = hive.getStreaming().replaceAll("%CHANNEL%", streaming.get().getName());
+            }
+            if(playing.isPresent()) {
+                droneName = hive.getPlaying().replaceAll("%PLAYING%", playing.get().getName());
+            }
+            if(playing.isEmpty() && streaming.isEmpty()) {
+                droneName = hive.getIdle();
+            }
+
+            droneName = droneName.replaceAll("%OWNER%", username);
 
             // Create voice
             VoiceChannel voice = hiveCategory.createVoiceChannel(droneName).complete();
@@ -128,5 +160,40 @@ public class VoiceManager {
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");
         }
+    }
+
+    public Modal getConfigModal(Category category, String id) {
+        try {
+            VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
+
+            Modal.Builder builder = Modal.create(id + ":" + category.getIdLong(), "Configuring " + category.getName() + " (Empty for don't use)").addActionRow(
+                    TextInput.create(configModal_fieldIdle, "Channel Name when Idle", TextInputStyle.SHORT).setValue(voiceHive.getIdle()).build()
+            ).addActionRow(
+                    TextInput.create(configModal_fieldPlaying, "Channel Name when Playing", TextInputStyle.SHORT).setValue(voiceHive.getPlaying()).setRequired(false).build()
+            ).addActionRow(
+                    TextInput.create(configModal_fieldStreaming, "Channel Name when Streaming", TextInputStyle.SHORT).setValue(voiceHive.getStreaming()).setRequired(false).build()
+            );
+
+            return builder.build();
+
+        } catch (KeyNotFoundException e) {
+            LOGGER.debug("Key not found, ignoring...");
+        }
+        return null;
+    }
+
+    public void setConfigModal(ModalInteractionEvent event, Category category) throws KeyNotFoundException {
+        VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
+
+        // Set the new values
+        for(ModalMapping mapping : event.getValues()) {
+            if(mapping.getId().equals(configModal_fieldIdle))
+                voiceHive.setIdle(mapping.getAsString());
+            else if(mapping.getId().equals(configModal_fieldPlaying))
+                voiceHive.setPlaying(mapping.getAsString());
+            else if(mapping.getId().equals(configModal_fieldStreaming))
+                voiceHive.setStreaming(mapping.getAsString());
+        }
+        voiceHiveService.update(voiceHive);
     }
 }
