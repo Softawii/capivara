@@ -14,9 +14,6 @@ import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -27,13 +24,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
-import java.util.Objects;
-
 @IGroup(name = "Voice", description = "Voice", hidden=false)
 public class VoiceGroup {
 
     private static final Logger LOGGER = LogManager.getLogger(VoiceGroup.class);
-    public static VoiceManager voiceManager;
 
     @ISubGroup(name="Dynamic", description = "Dynamic")
     public static class Dynamic extends ListenerAdapter {
@@ -49,6 +43,7 @@ public class VoiceGroup {
          */
         @ICommand(name="set", description = "Set dynamic voice channels to the selected category", permissions = {Permission.ADMINISTRATOR})
         @IArgument(name = "category", description = "Category to add dynamic voice chat!", required = true, type = OptionType.CHANNEL)
+        @SuppressWarnings({"ConstantConditions", "unused"})
         public static void set(SlashCommandInteractionEvent event) {
             String method = new Throwable().getStackTrace()[0].getMethodName();
             LOGGER.debug(method + " : start");
@@ -103,6 +98,7 @@ public class VoiceGroup {
 
         @ICommand(name="unset", description = "Unset dynamic voice channels to the selected category", permissions = {Permission.ADMINISTRATOR})
         @IArgument(name = "category", description = "Category to add dynamic voice chat!", required = true, type = OptionType.CHANNEL)
+        @SuppressWarnings({"ConstantConditions", "unused"})
         public static void unset(SlashCommandInteractionEvent event) {
             String method = new Throwable().getStackTrace()[0].getMethodName();
             LOGGER.debug(method + " : start");
@@ -144,12 +140,13 @@ public class VoiceGroup {
             LOGGER.debug(method + " : end");
         }
 
-        @ICommand(name="list", description = "List all dynamic voice channels categories", permissions = {Permission.ADMINISTRATOR})
+        @ICommand(name="list", description = "List all dynamic voice channels categories")
+        @SuppressWarnings({"ConstantConditions", "unused"})
         public static void list(SlashCommandInteractionEvent event) {
             String method = new Throwable().getStackTrace()[0].getMethodName();
             LOGGER.debug(method + " : start");
 
-            Long guildId = event.getGuild().getIdLong();
+            long guildId = event.getGuild().getIdLong();
             Guild guild = event.getGuild();
 
             List<VoiceHive> hives = voiceManager.findAllByGuildId(guildId);
@@ -231,9 +228,6 @@ public class VoiceGroup {
             if(event.getChannelType() == ChannelType.VOICE) {
                 VoiceChannel hive = event.getChannel().asVoiceChannel();
                 Category hiveCategory = event.getOldValue();
-
-                Guild guild = event.getGuild();
-                hiveCategory = guild.getCategoryById(hiveCategory.getIdLong());
 
                 if(hiveCategory != null) {
                     try {
