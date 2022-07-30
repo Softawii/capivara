@@ -21,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -113,25 +114,31 @@ public class VoiceManager {
             VoiceDrone drone = voiceDroneService.create(new VoiceDrone(voice.getIdLong(), member.getIdLong(), null));
 
             // TODO: Add embed to show the drone options
-            this.createControlPanel(voice, drone);
+            this.createControlPanel(voice, drone, member, voice.getName());
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");
         }
     }
 
-    public boolean isVisible(VoiceChannel channel) {
+    private boolean isVisible(VoiceChannel channel) {
         return channel.getGuild().getPublicRole().getPermissions(channel).contains(Permission.VIEW_CHANNEL);
     }
 
-    public boolean canConnect(VoiceChannel channel) {
+    private boolean canConnect(VoiceChannel channel) {
         return channel.getGuild().getPublicRole().getPermissions(channel).contains(Permission.VOICE_CONNECT);
     }
 
-    public void createControlPanel(VoiceChannel channel, VoiceDrone drone) {
+    public void createControlPanel(VoiceChannel channel, Member member, String newName) throws KeyNotFoundException {
+        VoiceDrone drone =  voiceDroneService.find(channel.getIdLong());
+        createControlPanel(channel, drone, member, newName);
+    }
+
+    private void createControlPanel(VoiceChannel channel, VoiceDrone drone, Member member, String name) {
         LOGGER.debug("Creating control panel for: {}", channel.getId());
 
+        // region Embed Creator
         EmbedBuilder builder = new EmbedBuilder();
-        builder.setTitle("⚙️ Control Panel - " + channel.getName());
+        builder.setTitle("⚙️ Control Panel - " + name);
         builder.setDescription("Here, you can control your private channel.");
         // Fields to Show
         builder.addField("Owner", channel.getGuild().getMemberById(drone.getOwnerId()).getAsMention(), true);
@@ -139,34 +146,58 @@ public class VoiceManager {
         builder.addField("Visible", isVisible(channel) ? "Yes" : "No", true);
         builder.addField("Connectable", canConnect(channel) ? "Yes" : "No", true);
 
-        // Buttons
+        // Other things
+        builder.setColor(Color.YELLOW);
+        builder.setAuthor(member.getUser().getAsTag(), null, member.getUser().getAvatarUrl());
 
+        // endregion
+
+        // region Buttons
         // General Config
-        Button connect = Button.success(canConnect(channel) ? "private" : "public", canConnect(channel) ? "Make Private" : "Make Public");
-        Button visible = Button.success(isVisible(channel) ? "hide" : "show", isVisible(channel) ? "Hide Channel" : "Show Channel");
-        Button limit   = Button.secondary("limit", "Change Limit");
+        Button connect = Button.success( VoiceGroup.Dynamic.droneConnect, canConnect(channel) ? "Make Private" : "Make Public");
+        Button visible = Button.success(VoiceGroup.Dynamic.droneVisibility, isVisible(channel) ? "Hide Channel" : "Show Channel");
+        Button limit   = Button.secondary(VoiceGroup.Dynamic.droneLimit, "Change Limit");
+        Button rename  = Button.secondary(VoiceGroup.Dynamic.droneName, "Rename Channel");
 
         // Specific Config
-        Button invite = Button.primary("invite", "Invite User");
-        Button kick   = Button.secondary("kick", "Kick User");
-        Button ban    = Button.danger("ban", "Ban User");
+        Button invite = Button.primary(VoiceGroup.Dynamic.droneInvite, "Invite User");
+        Button kick   = Button.secondary(VoiceGroup.Dynamic.droneKick, "Kick User");
+        Button ban    = Button.danger(VoiceGroup.Dynamic.droneBan, "Ban User");
 
-        ActionRow general = ActionRow.of(connect, visible, limit);
+        ActionRow general = ActionRow.of(connect, visible, limit, rename);
         ActionRow specific = ActionRow.of(invite, kick, ban);
+        // endregion
 
         // Send the message
+        sendControlPanel(channel, drone, builder, List.of(general, specific));
+    }
+
+    private void sendControlPanel(VoiceChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
+        // We already have a message, so we need to update it
         if(drone.getControlPanel() != null) {
-           channel.editMessageEmbedsById(drone.getControlPanel(), builder.build()).setActionRows(general, specific).complete();
-        } else {
-            channel.sendMessageEmbeds(builder.build()).setActionRows(general, specific).queue(q -> {
-                drone.setControlPanel(q.getIdLong());
-            }, e -> {
-                LOGGER.error("Error creating control panel: {}", e.getMessage());
+            channel.editMessageEmbedsById(drone.getControlPanel(), builder.build()).setActionRows(actionRows).queue(q -> { /* It's ok! */}, e -> {
+                LOGGER.error("Error updating control panel: {}", e.getMessage());
+                // If error, we need to create a new one
+                sendNewControlPanel(channel, drone, builder, actionRows);
             });
+        } else {
+            sendNewControlPanel(channel, drone, builder, actionRows);
         }
     }
 
-    public String getDroneName(Member member, VoiceHive hive) {
+    private void sendNewControlPanel(VoiceChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
+        channel.sendMessageEmbeds(builder.build()).setActionRows(actionRows).queue(q -> {
+            drone.setControlPanel(q.getIdLong());
+            try {
+                voiceDroneService.update(drone);
+            } catch (KeyNotFoundException ex) {
+                // WTF????
+                throw new RuntimeException(ex);
+            }
+        }, ee -> LOGGER.error("Error creating control panel: {}", ee.getMessage()));
+    }
+
+    private String getDroneName(Member member, VoiceHive hive) {
         String droneName = configModal_idle;
         String username = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
 

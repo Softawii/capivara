@@ -1,14 +1,17 @@
 package com.softawii.capivara.listeners;
 
+import com.softawii.capivara.core.DroneManager;
 import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
+import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
@@ -19,9 +22,6 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +38,20 @@ public class VoiceGroup {
     public static class Dynamic extends ListenerAdapter {
 
         public static VoiceManager voiceManager;
+        public static DroneManager droneManager;
 
         // region constants
         public static final String configModal = "voice-dynamic-config-modal";
         public static final String generateConfigModal = "voice-dynamic-generate-config-modal";
+
+        public static final String droneConnect       = "voice-dynamic-drone-private-public";
+        public static final String droneVisibility    = "voice-dynamic-drone-visibility";
+        public static final String droneLimit         = "voice-dynamic-drone-limit";
+        public static final String droneName          = "voice-dynamic-drone-name";
+
+        public static final String droneInvite        = "voice-dynamic-drone-channel";
+        public static final String droneKick          = "voice-dynamic-drone-kick";
+        public static final String droneBan           = "voice-dynamic-drone-ban";
 
         // endregion
 
@@ -218,6 +228,10 @@ public class VoiceGroup {
             LOGGER.debug(method + " : end");
         }
 
+        //endregion
+
+        // region Discord Modals, Buttons and Menus
+
         @IButton(id=generateConfigModal)
         public static void generateConfig(ButtonInteractionEvent event) {
             LOGGER.debug("generateConfig : start");
@@ -275,6 +289,36 @@ public class VoiceGroup {
             }
 
             LOGGER.debug(method + " : end");
+        }
+
+        @IButton(id=droneName)
+        public static void renameDroneButton(ButtonInteractionEvent event) {
+            MessageChannelUnion channel = event.getChannel();
+
+            Modal modal = null;
+            try {
+                modal = droneManager.checkRenameDrone(event.getGuild(), channel, event.getMember(), droneName);
+            } catch (KeyNotFoundException e) {
+                event.reply("This channel is not a temporary channel!").queue();
+            } catch (MissingPermissionsException e) {
+                event.reply("You don't have the required permissions to rename this channel!").queue();
+            }
+
+            event.replyModal(modal).queue();
+        }
+
+        @IModal(id=droneName)
+        public static void renameDroneModal(ModalInteractionEvent event) {
+            try {
+                String newName = droneManager.renameDrone(event);
+                event.reply("Channel renamed!").setEphemeral(true).queue();
+
+                if(event.getChannelType() == ChannelType.VOICE) {
+                    voiceManager.createControlPanel(event.getChannel().asVoiceChannel(), event.getMember(), newName);
+                }
+            } catch(Exception e) {
+                event.reply("An error occurred while renaming the channel!").setEphemeral(true).queue();
+            }
         }
 
         //endregion

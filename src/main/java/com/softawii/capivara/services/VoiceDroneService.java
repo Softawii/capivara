@@ -26,6 +26,11 @@ public class VoiceDroneService {
         voiceDroneRepository.deleteById(SnowflakeId);
     }
 
+    public void update(VoiceDrone drone) throws KeyNotFoundException {
+        if(!voiceDroneRepository.existsById(drone.getChannelId())) throw new KeyNotFoundException();
+        voiceDroneRepository.save(drone);
+    }
+
     public boolean exists(Long SnowflakeId) {
         return voiceDroneRepository.existsById(SnowflakeId);
     }

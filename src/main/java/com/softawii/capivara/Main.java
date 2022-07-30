@@ -1,10 +1,7 @@
 package com.softawii.capivara;
 
-import com.softawii.capivara.core.EmbedManager;
-import com.softawii.capivara.core.PackageManager;
-import com.softawii.capivara.core.VoiceManager;
+import com.softawii.capivara.core.*;
 import com.softawii.capivara.listeners.EchoGroup;
-import com.softawii.capivara.core.TemplateManager;
 import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.capivara.listeners.TemplateGroup;
 import com.softawii.capivara.listeners.VoiceGroup;
@@ -34,6 +31,7 @@ public class Main implements CommandLineRunner {
         PackageGroup.embedManager       = EchoGroup.embedManager;
         TemplateGroup.templateManager   = context.getBean(TemplateManager.class);
         VoiceGroup.Dynamic.voiceManager = context.getBean(VoiceManager.class);
+        VoiceGroup.Dynamic.droneManager = context.getBean(DroneManager.class);
     }
 
     @Override
