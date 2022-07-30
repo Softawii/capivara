@@ -11,44 +11,57 @@ public class VoiceDrone {
      * It is used to identify the worker, it's a snowflake id
      */
     @Id
-    private long channelId;
+    private Long channelId;
 
     /**
      * It is used to identify owner of the current worker
      * If it's "null", it means that the worker is not owned by anyone
      */
     @Column
-    private long OwnerId;
+    private Long ownerId;
+
+    @Column
+    private Long controlPanel;
 
     // region Constructors
 
     public VoiceDrone() {
     }
 
-    public VoiceDrone(long channelId, long ownerId) {
+    public VoiceDrone(Long channelId, Long ownerId, Long controlPanel) {
         this.channelId = channelId;
-        this.OwnerId = ownerId;
+        this.ownerId = ownerId;
+        this.controlPanel = controlPanel;
     }
 
     // endregion
 
     // region Getters and Setters
 
-    public long channelId() {
+    public Long getChannelId() {
         return channelId;
     }
 
-    public void setChannelId(long channelId) {
+    public void setChannelId(Long channelId) {
         this.channelId = channelId;
     }
 
-    public long OwnerId() {
-        return OwnerId;
+    public Long getOwnerId() {
+        return ownerId;
     }
 
-    public void setOwnerId(long ownerId) {
-        OwnerId = ownerId;
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
     }
+
+    public Long getControlPanel() {
+        return controlPanel;
+    }
+
+    public void setControlPanel(Long controlPanel) {
+        this.controlPanel = controlPanel;
+    }
+
 
     // endregion
 }

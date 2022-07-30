@@ -17,7 +17,7 @@ public class VoiceDroneService {
     }
 
     public VoiceDrone create(VoiceDrone voiceDrone) {
-        if(voiceDroneRepository.existsById(voiceDrone.channelId())) throw new KeyAlreadyExistsException();
+        if(voiceDroneRepository.existsById(voiceDrone.getChannelId())) throw new KeyAlreadyExistsException();
         return voiceDroneRepository.save(voiceDrone);
     }
 
