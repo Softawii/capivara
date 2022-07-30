@@ -12,8 +12,10 @@ jobs:
     steps:
       - name: 'Check out repository'
         uses: actions/checkout@v2
+
       - name: 'Download latest JDK 17'
         run: wget https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz
+
       - name: 'Set up JDK'
         uses: actions/setup-java@v2
         with:
@@ -21,7 +23,9 @@ jobs:
           distribution: 'jdkfile'
           jdkFile: jdk-17_linux-x64_bin.tar.gz
           cache: 'gradle'
+
       - name: 'Grant execute permission for gradlew'
         run: chmod +x gradlew
+
       - name: 'Build with Gradle'
         run: ./gradlew build
