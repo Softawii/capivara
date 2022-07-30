@@ -20,34 +20,33 @@ public class VoiceHiveService {
     }
 
     public VoiceHive create(VoiceHive voiceHive) throws ExistingDynamicCategoryException {
-        if (voiceHiveRepository.existsByHiveKey(voiceHive.hiveKey())) throw new ExistingDynamicCategoryException();
+        if (voiceHiveRepository.existsById(voiceHive.getCategoryId())) throw new ExistingDynamicCategoryException();
         return voiceHiveRepository.save(voiceHive);
     }
 
     public void destroy(Long SnowflakeId) throws KeyNotFoundException {
-        Optional<VoiceHive> voiceHive = voiceHiveRepository.findByHiveKey_CategoryId(SnowflakeId);
-        if (!voiceHive.isPresent()) throw new KeyNotFoundException();
+        Optional<VoiceHive> voiceHive = voiceHiveRepository.findById(SnowflakeId);
+        if (voiceHive.isEmpty()) throw new KeyNotFoundException();
 
         // voiceHiveRepository
-        voiceHiveRepository.deleteByHiveKey_CategoryId(SnowflakeId);
+        voiceHiveRepository.deleteById(SnowflakeId);
     }
 
     public List<VoiceHive> findAllByGuildId(Long SnowflakeId) {
-        return voiceHiveRepository.findAllByHiveKey_GuildId(SnowflakeId);
+        return voiceHiveRepository.findAllByGuildId(SnowflakeId);
     }
 
-
     public VoiceHive update(VoiceHive voiceHive) throws KeyNotFoundException {
-        if (voiceHiveRepository.existsByHiveKey(voiceHive.hiveKey())) throw new KeyNotFoundException();
+        if (!voiceHiveRepository.existsById(voiceHive.getCategoryId())) throw new KeyNotFoundException();
         return voiceHiveRepository.save(voiceHive);
     }
 
     public boolean existsByCategoryId(long SnowflakeId) {
-        return voiceHiveRepository.existsByHiveKey_CategoryId(SnowflakeId);
+        return voiceHiveRepository.existsByCategoryId(SnowflakeId);
     }
 
     public VoiceHive find(Long SnowflakeId) throws KeyNotFoundException {
-        Optional<VoiceHive> voiceHive = voiceHiveRepository.findByHiveKey_CategoryId(SnowflakeId);
+        Optional<VoiceHive> voiceHive = voiceHiveRepository.findById(SnowflakeId);
         return voiceHive.orElseThrow(KeyNotFoundException::new);
     }
 }

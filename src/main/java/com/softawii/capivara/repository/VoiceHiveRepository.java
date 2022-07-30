@@ -9,15 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface VoiceHiveRepository extends JpaRepository<VoiceHive, Long> {
+    List<VoiceHive> findAllByGuildId(@NotNull Long SnowflakeId);
 
-    boolean existsByHiveKey_CategoryId(Long aLong);
-
-    boolean existsByHiveKey(VoiceHive.HiveKey hiveKey);
-
-    Optional<VoiceHive> findByHiveKey_CategoryId(@NotNull Long SnowflakeId);
-
-    List<VoiceHive> findAllByHiveKey_GuildId(@NotNull Long SnowflakeId);
-
-    @Transactional
-    void deleteByHiveKey_CategoryId(Long aLong);
+    boolean existsByCategoryId(@NotNull Long SnowflakeId);
 }

@@ -38,16 +38,15 @@ public class VoiceManager {
         // Verify if the category is already a dynamic category
         if (voiceHiveService.existsByCategoryId(category.getIdLong())) throw new ExistingDynamicCategoryException();
 
-        // Creates a hive
+        // Creates a hive (wait for the voice channel to be created)
         VoiceChannel hive = category.createVoiceChannel("Hive").complete();
 
         // DB Keys
         long categoryId           = category.getIdLong();
         long guildId              = category.getGuild().getIdLong();
-        VoiceHive.HiveKey hiveKey = new VoiceHive.HiveKey(categoryId, guildId);
 
         // Returns the hive
-        return voiceHiveService.create(new VoiceHive(hiveKey, hive.getIdLong()));
+        return voiceHiveService.create(new VoiceHive(categoryId, guildId, hive.getIdLong()));
     }
 
     public void unsetDynamicCategory(Category category) throws KeyNotFoundException {
@@ -55,7 +54,7 @@ public class VoiceManager {
 
         VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
 
-        Objects.requireNonNull(category.getGuild().getVoiceChannelById(voiceHive.hiveId())).delete().complete();
+        Objects.requireNonNull(category.getGuild().getVoiceChannelById(voiceHive.getVoiceId())).delete().complete();
 
         voiceHiveService.destroy(category.getIdLong());
     }
@@ -76,12 +75,12 @@ public class VoiceManager {
             // Checking if the current category is a dynamic category
             VoiceHive hive = voiceHiveService.find(snowflakeId);
 
-            if(channel.getIdLong() != hive.hiveId()) return;
+            if(channel.getIdLong() != hive.getVoiceId()) return;
 
             // Creating the voice drone
             Category hiveCategory = channel.getParentCategory();
 
-            // Defining the drone name
+            // TODO: Defining the drone name
             String username = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
             String droneName = "Drone - " + username;
 
@@ -97,7 +96,7 @@ public class VoiceManager {
             // Add voice to drone db
             voiceDroneService.create(new VoiceDrone(voice.getIdLong(), member.getIdLong()));
         } catch (KeyNotFoundException e) {
-            LOGGER.info("Key not found, ignoring...");
+            LOGGER.debug("Key not found, ignoring...");
         }
     }
 
@@ -123,8 +122,8 @@ public class VoiceManager {
         try {
             VoiceHive voiceHive = voiceHiveService.find(hive.getIdLong());
 
-            if(voiceHive.hiveId() == snowflakeId) {
-                voiceHiveService.destroy(voiceHive.hiveKey().getCategoryId());
+            if(voiceHive.getVoiceId() == snowflakeId) {
+                voiceHiveService.destroy(voiceHive.getCategoryId());
             }
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");

@@ -73,7 +73,7 @@ public class VoiceGroup {
                 // Reply -> Never NULL (Guild Command)
                 Guild guild = event.getGuild();
 
-                GuildChannel hiveChannel = guild.getGuildChannelById(hive.hiveId());
+                GuildChannel hiveChannel = guild.getGuildChannelById(hive.getVoiceId());
 
                 MessageEmbed embed = Utils.simpleEmbed("Voice Hive Initialized",
                         "Just click in " + hiveChannel.getAsMention() + " to create a dynamic channel!", Color.GREEN);
@@ -92,7 +92,7 @@ public class VoiceGroup {
                 }
                 // Reply -> Never NULL (Guild Command)
                 Guild guild = event.getGuild();
-                GuildChannel hiveChannel = guild.getVoiceChannelById(hive.hiveId());
+                GuildChannel hiveChannel = guild.getVoiceChannelById(hive.getVoiceId());
                 MessageEmbed embed = Utils.simpleEmbed("The current category is already a hive of voice channels!",
                         "Just click in " + hiveChannel.getAsMention() + " to create a dynamic channel!", Color.RED);
                 event.replyEmbeds(embed).queue();
@@ -156,11 +156,11 @@ public class VoiceGroup {
 
             StringBuilder sb = new StringBuilder();
             for(VoiceHive hive : hives) {
-                VoiceChannel hiveChannel = guild.getVoiceChannelById(hive.hiveId());
+                VoiceChannel hiveChannel = guild.getVoiceChannelById(hive.getVoiceId());
                 Category     parent      = hiveChannel.getParentCategory();
 
                 if(hiveChannel == null || parent == null) {
-                    LOGGER.debug(method + " : error : hive channel not found : " + hive.hiveId());
+                    LOGGER.debug(method + " : error : hive channel not found : " + hive.getVoiceId());
                     continue;
                 }
 
@@ -239,7 +239,7 @@ public class VoiceGroup {
                     try {
                         VoiceHive dbHive = voiceManager.find(hiveCategory);
 
-                        if(dbHive.hiveId() == hive.getIdLong()) {
+                        if(dbHive.getVoiceId() == hive.getIdLong()) {
                             hive.getManager().setParent(hiveCategory).queue(q -> {}, e -> {});
                         }
 
