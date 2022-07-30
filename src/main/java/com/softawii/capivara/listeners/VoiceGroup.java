@@ -248,7 +248,7 @@ public class VoiceGroup {
 
             String strCategoryId = event.getModalId().split(":")[1];
             long   categoryId = Long.parseLong(strCategoryId);
-
+            VoiceHive voiceHive;
             try {
                 Category category = event.getGuild().getCategoryById(categoryId);
 
@@ -257,13 +257,21 @@ public class VoiceGroup {
                     event.reply("Category not found!").setEphemeral(true).queue();
                     return;
                 }
-                voiceManager.setConfigModal(event, category);
-                event.reply("Configuration updated!").setEphemeral(true).queue();
+                voiceHive = voiceManager.setConfigModal(event, category);
             } catch (KeyNotFoundException e) {
                 event.reply("This category is not a dynamic voice channel!").setEphemeral(true).queue();
+                return;
             } catch(Exception e) {
                 LOGGER.debug(method + " : error : " + e.getMessage());
                 event.reply("An error occurred while configuring the dynamic voice channel!").setEphemeral(true).queue();
+                return;
+            }
+
+            try {
+                event.replyEmbeds(voiceHive.show(event.getGuild())).queue();
+            } catch(Exception e) {
+                LOGGER.debug(method + " : error : " + e.getMessage());
+                event.reply("update!!").setEphemeral(true).queue();
             }
 
             LOGGER.debug(method + " : end");

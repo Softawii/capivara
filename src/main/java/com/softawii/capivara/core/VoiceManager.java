@@ -104,11 +104,12 @@ public class VoiceManager {
             String droneName = configModal_idle;
             String username = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
 
-            if(streaming.isPresent()) {
+            if(streaming.isPresent() && !hive.getStreaming().isBlank()) {
                 droneName = hive.getStreaming().replaceAll("%CHANNEL%", streaming.get().getName());
             }
-            if(playing.isPresent()) {
-                droneName = hive.getPlaying().replaceAll("%PLAYING%", playing.get().getName());
+            if(playing.isPresent() && !hive.getPlaying().isBlank()) {
+                if(streaming.isEmpty()) droneName = hive.getPlaying().replaceAll("%PLAYING%", playing.get().getName());
+                else                    droneName = droneName.replaceAll("%PLAYING%", streaming.get().getName());
             }
             if(playing.isEmpty() && streaming.isEmpty()) {
                 droneName = hive.getIdle();
@@ -182,7 +183,7 @@ public class VoiceManager {
         return null;
     }
 
-    public void setConfigModal(ModalInteractionEvent event, Category category) throws KeyNotFoundException {
+    public VoiceHive setConfigModal(ModalInteractionEvent event, Category category) throws KeyNotFoundException {
         VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
 
         // Set the new values
@@ -195,5 +196,7 @@ public class VoiceManager {
                 voiceHive.setStreaming(mapping.getAsString());
         }
         voiceHiveService.update(voiceHive);
+
+        return voiceHive;
     }
 }

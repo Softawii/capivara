@@ -1,5 +1,12 @@
 package com.softawii.capivara.entity;
 
+import com.softawii.capivara.core.EmbedManager;
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.interactions.components.Modal;
+
 import javax.persistence.*;
 
 @Entity
@@ -47,6 +54,23 @@ public class VoiceHive {
         this.playing = playing;
         this.streaming = streaming;
 
+    }
+
+    // endregion
+
+    // Region Show
+
+    public MessageEmbed show(Guild guild) {
+        EmbedBuilder Builder = new EmbedBuilder();
+
+        Builder.setTitle(String.format("Configurations to \"%s\"", guild.getCategoryById(categoryId).getName()));
+
+        Builder.addField("Main Channel: ", guild.getVoiceChannelById(voiceId).getAsMention(), false);
+        Builder.addField("Default: ", idle, true);
+        Builder.addField("Default Playing: ", playing, true);
+        Builder.addField("Default Streaming: ", streaming, true);
+
+        return Builder.build();
     }
 
     // endregion
