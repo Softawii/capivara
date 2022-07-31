@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
+import net.dv8tion.jda.api.managers.channel.concrete.VoiceChannelManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
@@ -113,8 +114,7 @@ public class VoiceManager {
             // Add voice to drone db
             VoiceDrone drone = voiceDroneService.create(new VoiceDrone(voice.getIdLong(), member.getIdLong(), null));
 
-            // TODO: Add embed to show the drone options
-            this.createControlPanel(voice, drone, member, voice.getName());
+            this.createControlPanel(voice, voice, drone, member);
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");
         }
@@ -128,23 +128,24 @@ public class VoiceManager {
         return channel.getGuild().getPublicRole().getPermissions(channel).contains(Permission.VOICE_CONNECT);
     }
 
-    public void createControlPanel(VoiceChannel channel, Member member, String newName) throws KeyNotFoundException {
+    public void createControlPanel(VoiceChannel channel) throws KeyNotFoundException {
         VoiceDrone drone =  voiceDroneService.find(channel.getIdLong());
-        createControlPanel(channel, drone, member, newName);
+        Member member    =  channel.getGuild().getMemberById(drone.getOwnerId());
+        createControlPanel(channel, channel, drone, member);
     }
 
-    private void createControlPanel(VoiceChannel channel, VoiceDrone drone, Member member, String name) {
-        LOGGER.debug("Creating control panel for: {}", channel.getId());
+    private void createControlPanel(VoiceChannel voiceChannel, GuildMessageChannel textChannel, VoiceDrone drone, Member member) {
+        LOGGER.debug("Creating control panel for: {}", voiceChannel.getId());
 
         // region Embed Creator
         EmbedBuilder builder = new EmbedBuilder();
-        builder.setTitle("⚙️ Control Panel - " + name);
-        builder.setDescription("Here, you can control your private channel.");
+        builder.setTitle("⚙️ Control Panel - " + voiceChannel.getName());
+        builder.setDescription("Here, you can control your private voiceChannel.");
         // Fields to Show
-        builder.addField("Owner", channel.getGuild().getMemberById(drone.getOwnerId()).getAsMention(), true);
-        builder.addField("User Limit", channel.getUserLimit() == 0 ? "No Limits" : String.valueOf(channel.getUserLimit()), true);
-        builder.addField("Visible", isVisible(channel) ? "Yes" : "No", true);
-        builder.addField("Connectable", canConnect(channel) ? "Yes" : "No", true);
+        builder.addField("Owner", voiceChannel.getGuild().getMemberById(drone.getOwnerId()).getAsMention(), true);
+        builder.addField("User Limit", voiceChannel.getUserLimit() == 0 ? "No Limits" : String.valueOf(voiceChannel.getUserLimit()), true);
+        builder.addField("Visible", isVisible(voiceChannel) ? "Yes" : "No", true);
+        builder.addField("Connectable", canConnect(voiceChannel) ? "Yes" : "No", true);
 
         // Other things
         builder.setColor(Color.YELLOW);
@@ -154,25 +155,20 @@ public class VoiceManager {
 
         // region Buttons
         // General Config
-        Button connect = Button.success( VoiceGroup.Dynamic.droneConnect, canConnect(channel) ? "Make Private" : "Make Public");
-        Button visible = Button.success(VoiceGroup.Dynamic.droneVisibility, isVisible(channel) ? "Hide Channel" : "Show Channel");
-        Button limit   = Button.secondary(VoiceGroup.Dynamic.droneLimit, "Change Limit");
-        Button rename  = Button.secondary(VoiceGroup.Dynamic.droneName, "Rename Channel");
 
-        // Specific Config
+        Button config  = Button.primary(VoiceGroup.Dynamic.droneConfig, "Settings");
         Button invite = Button.primary(VoiceGroup.Dynamic.droneInvite, "Invite User");
         Button kick   = Button.secondary(VoiceGroup.Dynamic.droneKick, "Kick User");
         Button ban    = Button.danger(VoiceGroup.Dynamic.droneBan, "Ban User");
 
-        ActionRow general = ActionRow.of(connect, visible, limit, rename);
-        ActionRow specific = ActionRow.of(invite, kick, ban);
+        ActionRow general = ActionRow.of(config, invite, kick, ban);
         // endregion
 
         // Send the message
-        sendControlPanel(channel, drone, builder, List.of(general, specific));
+        sendControlPanel(textChannel, drone, builder, List.of(general));
     }
 
-    private void sendControlPanel(VoiceChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
+    private void sendControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
         // We already have a message, so we need to update it
         if(drone.getControlPanel() != null) {
             channel.editMessageEmbedsById(drone.getControlPanel(), builder.build()).setActionRows(actionRows).queue(q -> { /* It's ok! */}, e -> {
@@ -185,7 +181,7 @@ public class VoiceManager {
         }
     }
 
-    private void sendNewControlPanel(VoiceChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
+    private void sendNewControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
         channel.sendMessageEmbeds(builder.build()).setActionRows(actionRows).queue(q -> {
             drone.setControlPanel(q.getIdLong());
             try {
