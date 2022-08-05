@@ -38,4 +38,8 @@ public class VoiceDroneService {
     public VoiceDrone find(Long snowflakeId) throws KeyNotFoundException {
         return voiceDroneRepository.findById(snowflakeId).orElseThrow(KeyNotFoundException::new);
     }
+
+    public VoiceDrone findByChatId(Long snowflakeId) throws KeyNotFoundException {
+        return voiceDroneRepository.findByChatId(snowflakeId);
+    }
 }

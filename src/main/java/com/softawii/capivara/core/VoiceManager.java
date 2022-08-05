@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class VoiceManager {
@@ -134,10 +135,14 @@ public class VoiceManager {
     }
 
     public void createControlPanel(VoiceChannel channel) throws KeyNotFoundException {
+        createControlPanel(channel, false);
+    }
+
+    public void createControlPanel(VoiceChannel channel, boolean forceSendInVoice) throws KeyNotFoundException {
         VoiceDrone drone =  voiceDroneService.find(channel.getIdLong());
         Member member    =  channel.getGuild().getMemberById(drone.getOwnerId());
         GuildMessageChannel text = channel.getGuild().getTextChannelById(drone.getChatId());
-        text = text != null ? text : channel;
+        text = text != null && !forceSendInVoice ? text : channel;
         createControlPanel(channel, text, drone, member);
     }
 
@@ -243,11 +248,9 @@ public class VoiceManager {
 
             if(online == 0) {
                 voiceDroneService.destroy(snowflakeId);
-                try {
-                    channel.getGuild().getTextChannelById(drone.getChatId()).delete().queue();
-                } catch (Exception e) {
-                    LOGGER.error("Error deleting chat: {}", e.getMessage());
-                }
+
+                TextChannel textChannel = channel.getGuild().getTextChannelById(drone.getChatId());
+                if(textChannel != null) textChannel.delete().queue();
                 channel.delete().queue();
             }
         } catch (KeyNotFoundException e) {

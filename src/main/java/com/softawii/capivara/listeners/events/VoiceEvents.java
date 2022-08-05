@@ -98,6 +98,10 @@ public class VoiceEvents extends ListenerAdapter {
             // Checking if the channel is a text channel
             // If it is a drone text channel, it will be deleted
             // Cancelled because if the channel was deleted, it was intentionally
+            if(event.getChannel().getType() == ChannelType.TEXT) {
+                // Checking if it is a drone text channel
+                droneManager.recreateControlPanel(event.getChannel().asTextChannel());
+            }
         } catch (Exception e) {
             LOGGER.error("Error on ChannelDeleteEvent", e);
         }

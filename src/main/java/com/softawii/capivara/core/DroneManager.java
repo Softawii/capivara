@@ -20,14 +20,16 @@ import java.util.Collection;
 public class DroneManager {
 
     private final VoiceDroneService voiceDroneService;
+    private final VoiceManager voiceManager;
 
     private final String renameDrone     = "drone-manager-rename";
     private final String limitDrone      = "drone-manager-limit";
     private final String connectDrone    = "drone-manager-connect";
     private final String visibilityDrone = "drone-manager-visibility";
 
-    public DroneManager(VoiceDroneService voiceDroneService) {
+    public DroneManager(VoiceDroneService voiceDroneService, VoiceManager voiceManager) {
         this.voiceDroneService = voiceDroneService;
+        this.voiceManager = voiceManager;
     }
 
     private boolean canConnect(VoiceChannel channel) {
@@ -118,6 +120,20 @@ public class DroneManager {
                 text.getManager().putRolePermissionOverride(member.getIdLong(), 0, Permission.VIEW_CHANNEL.getRawValue()).complete();
             } else if(voiceDrone.getOwnerId() != member.getIdLong()) {
                 text.getManager().removePermissionOverride(member.getIdLong()).complete();
+            }
+        } catch (KeyNotFoundException e) {
+            // Ignoring...
+        }
+    }
+
+    public void recreateControlPanel(TextChannel channel) {
+        VoiceDrone voiceDrone = null;
+        try {
+            voiceDrone = voiceDroneService.findByChatId(channel.getIdLong());
+
+            if(voiceDrone != null) {
+                VoiceChannel voiceChannel = channel.getGuild().getVoiceChannelById(voiceDrone.getChannelId());
+                if(voiceChannel != null) voiceManager.createControlPanel(voiceChannel, true);
             }
         } catch (KeyNotFoundException e) {
             // Ignoring...
