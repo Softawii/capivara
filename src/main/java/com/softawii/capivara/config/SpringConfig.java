@@ -1,11 +1,15 @@
 package com.softawii.capivara.config;
 
+import com.softawii.capivara.Main;
+import com.softawii.capivara.core.PackageManager;
 import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.capivara.listeners.TemplateGroup;
 import com.softawii.capivara.listeners.VoiceGroup;
+import com.softawii.capivara.listeners.events.VoiceEvents;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -45,7 +49,7 @@ public class SpringConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
-        em.setPackagesToScan("com.softawii.capivara.entity","com.softawii.capivara.repository", "com.softawii.capivara.services");
+        em.setPackagesToScan("com.softawii.capivara.entity","com.softawii.capivara.repository", "com.softawii.capivara.services", "com.softawii.capivara.listeners.events");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -58,7 +62,7 @@ public class SpringConfig {
     private String discordToken;
 
     @Bean
-    public JDA jda() {
+    public JDA jda(VoiceEvents voiceEvents) {
         JDA jda;
         try {
             JDABuilder builder = JDABuilder.create(discordToken, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS, GatewayIntent.GUILD_PRESENCES);
@@ -67,7 +71,7 @@ public class SpringConfig {
             builder.addEventListeners(
                     new PackageGroup.AutoCompleter(),
                     new TemplateGroup.AutoCompleter(),
-                    new VoiceGroup.Dynamic()
+                    voiceEvents
             );
             jda = builder.build();
             jda.awaitReady();
@@ -79,17 +83,14 @@ public class SpringConfig {
     }
 
     @Bean
-    public Curupira curupira() {
-        JDA jda = jda();
+    public Curupira curupira(JDA jda) {
         String pkg   = "com.softawii.capivara.listeners";
         String resetEnv = env.getProperty("curupira.reset", "false");
         boolean reset = Boolean.parseBoolean(resetEnv);
 
         System.out.println("Reset: " + reset);
 
-        Curupira curupira = new Curupira(jda, reset, null, pkg);
-
-        return curupira;
+        return new Curupira(jda, reset, null, pkg);
     }
 
 

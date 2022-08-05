@@ -50,10 +50,6 @@ public class VoiceGroup {
         public static final String generateConfigModal = "voice-dynamic-generate-config-modal";
 
         public static final String droneConfig     = "voice-dynamic-drone-config";
-        public static final String droneConnect    = "voice-dynamic-drone-private-public";
-        public static final String droneVisibility = "voice-dynamic-drone-visibility";
-        public static final String droneLimit      = "voice-dynamic-drone-limit";
-        public static final String droneName       = "voice-dynamic-drone-name";
 
         public static final String droneInvite = "voice-dynamic-drone-channel";
         public static final String droneKick   = "voice-dynamic-drone-kick";
@@ -343,7 +339,6 @@ public class VoiceGroup {
             voice.getManager().putPermissionOverride(to_ban, Collections.emptyList(), List.of(Permission.VIEW_CHANNEL, Permission.VOICE_CONNECT)).queue();
         }
 
-
         // endregion
 
         // region Discord Modals, Buttons and Menus
@@ -440,93 +435,6 @@ public class VoiceGroup {
                 event.reply("An error occurred while renaming the channel!").setEphemeral(true).queue();
             }
         }
-
-        //endregion
-
-
-        //region Voice Events
-
-        /**
-         * This event is used to verify if the user is in a drone voice channel, if so, it will check to delete the drone
-         *
-         * @param event : VoiceChannelCreateEvent
-         */
-        @Override
-        public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
-            VoiceChannel joined = (VoiceChannel) event.getChannelJoined();
-            VoiceChannel left   = (VoiceChannel) event.getChannelLeft();
-            Member       member = event.getMember();
-
-            if (joined != null) voiceManager.checkToCreateTemporary(joined, member);
-            if (left != null) voiceManager.checkToDeleteTemporary(left, member);
-        }
-
-        @Override
-        public void onChannelDelete(@NotNull ChannelDeleteEvent event) {
-            if (event.getChannel().getType() == ChannelType.CATEGORY) {
-                Category category = event.getChannel().asCategory();
-                if (voiceManager.isDynamicCategory(category)) {
-                    try {
-                        voiceManager.unsetDynamicCategory(category);
-                    } catch (KeyNotFoundException e) {
-                        // Ok... it's not a dynamic category
-                    }
-                }
-            }
-
-
-            if (event.getChannel().getType() == ChannelType.VOICE) {
-                VoiceChannel channel = event.getChannel().asVoiceChannel();
-                // Checking if it is a drone voice channel
-                voiceManager.checkToDeleteTemporary(channel, null);
-
-                // Checking if it is a hive voice channel
-                Category hive        = channel.getParentCategory();
-                long     snowflakeId = channel.getIdLong();
-
-                if (hive != null) {
-                    voiceManager.checkToDeleteHive(hive, snowflakeId);
-                }
-            }
-        }
-
-        @Override
-        public void onChannelUpdateParent(@NotNull ChannelUpdateParentEvent event) {
-            if (event.getChannelType() == ChannelType.VOICE) {
-                VoiceChannel hive         = event.getChannel().asVoiceChannel();
-                Category     hiveCategory = event.getOldValue();
-
-                if (hiveCategory != null) {
-                    try {
-                        VoiceHive dbHive = voiceManager.find(hiveCategory);
-
-                        if (dbHive.getVoiceId() == hive.getIdLong()) {
-                            hive.getManager().setParent(hiveCategory).queue(q -> {
-                            }, e -> {
-                            });
-                        }
-
-                    } catch (KeyNotFoundException e) {
-                        // The category is not a hive, just ignore it...
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void onGenericChannelUpdate(@NotNull GenericChannelUpdateEvent<?> event) {
-            if (event.getChannel().getType() == ChannelType.VOICE) {
-                VoiceChannel channel = event.getChannel().asVoiceChannel();
-
-                try {
-                    voiceManager.createControlPanel(channel);
-                } catch (KeyNotFoundException e) {
-                    // Not  Found...
-                    LOGGER.debug("onGenericChannelUpdate : error : " + e.getMessage());
-                }
-            }
-        }
-
 
         //endregion
     }
