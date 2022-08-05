@@ -48,9 +48,7 @@ public class VoiceGroup {
         // region constants
         public static final String configModal         = "voice-dynamic-config-modal";
         public static final String generateConfigModal = "voice-dynamic-generate-config-modal";
-
         public static final String droneConfig     = "voice-dynamic-drone-config";
-
         public static final String droneInvite = "voice-dynamic-drone-channel";
         public static final String droneKick   = "voice-dynamic-drone-kick";
         public static final String droneBan    = "voice-dynamic-drone-ban";
@@ -337,6 +335,27 @@ public class VoiceGroup {
 
             VoiceChannel voice = (VoiceChannel) channel;
             voice.getManager().putPermissionOverride(to_ban, Collections.emptyList(), List.of(Permission.VIEW_CHANNEL, Permission.VOICE_CONNECT)).queue();
+        }
+
+        @ICommand(name = "permanent", description = "Make channel permanent", permissions = {Permission.MANAGE_CHANNEL})
+        @IArgument(name = "status",
+                   description = "True to make permanent, False to make temporary",
+                   required = true, type = OptionType.BOOLEAN)
+        public static void permanent(SlashCommandInteractionEvent event) {
+            Member member = event.getMember();
+
+            AudioChannel channel = validateRequest(event, member);
+            if (channel == null) return;
+
+            VoiceChannel voice = (VoiceChannel) channel;
+
+            try {
+                voiceManager.makePermanent(voice, event.getOption("status").getAsBoolean());
+            } catch (KeyNotFoundException e) {
+                event.reply("You need to be in a temporary voice channel to use this command!").setEphemeral(true).queue();
+                return;
+            }
+            event.reply("Channel is now " + event.getOption("status").getAsBoolean()).setEphemeral(true).queue();
         }
 
         // endregion

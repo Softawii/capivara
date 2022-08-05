@@ -11,12 +11,10 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.managers.channel.concrete.VoiceChannelManager;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 @Component
 public class DroneManager {
@@ -107,5 +105,22 @@ public class DroneManager {
         else deny.add(Permission.VIEW_CHANNEL);
 
         voiceChannel.getManager().setName(newName).setUserLimit(newLimitDrone).putPermissionOverride(publicRole, give, deny).complete();
+    }
+
+    public void checkToChangeChatAccess(VoiceChannel channel, Member member, boolean joined) {
+        VoiceDrone voiceDrone = null;
+        try {
+            voiceDrone = voiceDroneService.find(channel.getIdLong());
+
+            TextChannel text = channel.getGuild().getTextChannelById(voiceDrone.getChatId());
+
+            if(joined) {
+                text.getManager().putRolePermissionOverride(member.getIdLong(), 0, Permission.VIEW_CHANNEL.getRawValue()).complete();
+            } else if(voiceDrone.getOwnerId() != member.getIdLong()) {
+                text.getManager().removePermissionOverride(member.getIdLong()).complete();
+            }
+        } catch (KeyNotFoundException e) {
+            // Ignoring...
+        }
     }
 }

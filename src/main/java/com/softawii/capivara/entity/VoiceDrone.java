@@ -14,24 +14,41 @@ public class VoiceDrone {
     private Long channelId;
 
     /**
+     *
+     */
+    @Column
+    private Long chatId;
+
+    /**
      * It is used to identify owner of the current worker
      * If it's "null", it means that the worker is not owned by anyone
      */
     @Column
     private Long ownerId;
 
+    /**
+     * It is used to identify the control panel of the current worker
+     */
     @Column
     private Long controlPanel;
+
+    /**
+     * It is used to verify if the drone will be deleted when the voice channel is empty or not
+     */
+    @Column
+    private Boolean permanent;
 
     // region Constructors
 
     public VoiceDrone() {
     }
 
-    public VoiceDrone(Long channelId, Long ownerId, Long controlPanel) {
+    public VoiceDrone(Long channelId, Long chatId, Long ownerId, Long controlPanel) {
         this.channelId = channelId;
         this.ownerId = ownerId;
+        this.chatId = chatId;
         this.controlPanel = controlPanel;
+        this.permanent = false;
     }
 
     // endregion
@@ -62,6 +79,25 @@ public class VoiceDrone {
         this.controlPanel = controlPanel;
     }
 
+    public Boolean getPermanent() {
+        return permanent;
+    }
+
+    public Boolean isPermanent() {
+        return permanent;
+    }
+
+    public void setPermanent(Boolean permanent) {
+        this.permanent = permanent;
+    }
+
+    public Long getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(Long chatId) {
+        this.chatId = chatId;
+    }
 
     // endregion
 }

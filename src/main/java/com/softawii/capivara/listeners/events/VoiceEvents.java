@@ -4,7 +4,6 @@ import com.softawii.capivara.core.DroneManager;
 import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
-import com.softawii.capivara.listeners.VoiceGroup;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Member;
@@ -41,77 +40,111 @@ public class VoiceEvents extends ListenerAdapter {
      */
     @Override
     public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
-        VoiceChannel joined = (VoiceChannel) event.getChannelJoined();
-        VoiceChannel left   = (VoiceChannel) event.getChannelLeft();
-        Member       member = event.getMember();
+        try {
+            VoiceChannel joined = (VoiceChannel) event.getChannelJoined();
+            VoiceChannel left   = (VoiceChannel) event.getChannelLeft();
+            Member       member = event.getMember();
 
-        if (joined != null) voiceManager.checkToCreateTemporary(joined, member);
-        if (left != null) voiceManager.checkToDeleteTemporary(left, member);
+            if (joined != null) {
+                // Check to Add Permissions!
+                droneManager.checkToChangeChatAccess(joined, member, true);
+                // Check to Delete!
+                voiceManager.checkToCreateTemporary(joined, member);
+            }
+            if (left != null) {
+                // Check to Remove Permissions!
+                droneManager.checkToChangeChatAccess(left, member, false);
+                // Check to Delete!
+                voiceManager.checkToDeleteTemporary(left, false);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error on onGuildVoiceUpdate", e);
+        }
     }
 
     @Override
     public void onChannelDelete(@NotNull ChannelDeleteEvent event) {
-        if (event.getChannel().getType() == ChannelType.CATEGORY) {
-            Category category = event.getChannel().asCategory();
-            if (voiceManager.isDynamicCategory(category)) {
-                try {
-                    voiceManager.unsetDynamicCategory(category);
-                } catch (KeyNotFoundException e) {
-                    // Ok... it's not a dynamic category
+        try {
+            // Checking if the channel is a category
+            // If it is a dynamic category, it will be deleted
+            if (event.getChannel().getType() == ChannelType.CATEGORY) {
+                Category category = event.getChannel().asCategory();
+                if (voiceManager.isDynamicCategory(category)) {
+                    try {
+                        voiceManager.unsetDynamicCategory(category);
+                    } catch (KeyNotFoundException e) {
+                        // Ok... it's not a dynamic category
+                    }
                 }
             }
-        }
 
+            // Checking if the channel is a voice channel
+            // If it is a drone voice channel, it will be deleted
+            // If it is a hive voice channel, it will be deleted
+            if (event.getChannel().getType() == ChannelType.VOICE) {
+                VoiceChannel channel = event.getChannel().asVoiceChannel();
+                // Checking if it is a drone voice channel
+                voiceManager.checkToDeleteTemporary(channel, true);
 
-        if (event.getChannel().getType() == ChannelType.VOICE) {
-            VoiceChannel channel = event.getChannel().asVoiceChannel();
-            // Checking if it is a drone voice channel
-            voiceManager.checkToDeleteTemporary(channel, null);
+                // Checking if it is a hive voice channel
+                Category hive        = channel.getParentCategory();
+                long     snowflakeId = channel.getIdLong();
 
-            // Checking if it is a hive voice channel
-            Category hive        = channel.getParentCategory();
-            long     snowflakeId = channel.getIdLong();
-
-            if (hive != null) {
-                voiceManager.checkToDeleteHive(hive, snowflakeId);
+                if (hive != null) {
+                    voiceManager.checkToDeleteHive(hive, snowflakeId);
+                }
             }
+
+            // Checking if the channel is a text channel
+            // If it is a drone text channel, it will be deleted
+            // Cancelled because if the channel was deleted, it was intentionally
+        } catch (Exception e) {
+            LOGGER.error("Error on ChannelDeleteEvent", e);
         }
     }
 
     @Override
     public void onChannelUpdateParent(@NotNull ChannelUpdateParentEvent event) {
-        if (event.getChannelType() == ChannelType.VOICE) {
-            VoiceChannel hive         = event.getChannel().asVoiceChannel();
-            Category     hiveCategory = event.getOldValue();
+        try {
+            if (event.getChannelType() == ChannelType.VOICE) {
+                VoiceChannel hive         = event.getChannel().asVoiceChannel();
+                Category     hiveCategory = event.getOldValue();
 
-            if (hiveCategory != null) {
-                try {
-                    VoiceHive dbHive = voiceManager.find(hiveCategory);
+                if (hiveCategory != null) {
+                    try {
+                        VoiceHive dbHive = voiceManager.find(hiveCategory);
 
-                    if (dbHive.getVoiceId() == hive.getIdLong()) {
-                        hive.getManager().setParent(hiveCategory).queue(q -> {
-                        }, e -> {
-                        });
+                        if (dbHive.getVoiceId() == hive.getIdLong()) {
+                            hive.getManager().setParent(hiveCategory).queue(q -> {
+                            }, e -> {
+                            });
+                        }
+
+                    } catch (KeyNotFoundException e) {
+                        // The category is not a hive, just ignore it...
                     }
-
-                } catch (KeyNotFoundException e) {
-                    // The category is not a hive, just ignore it...
                 }
             }
+        } catch (Exception e) {
+            LOGGER.error("Error on ChannelUpdateParentEvent", e);
         }
     }
 
     @Override
     public void onGenericChannelUpdate(@NotNull GenericChannelUpdateEvent<?> event) {
-        if (event.getChannel().getType() == ChannelType.VOICE) {
-            VoiceChannel channel = event.getChannel().asVoiceChannel();
+        try {
+            if (event.getChannel().getType() == ChannelType.VOICE) {
+                VoiceChannel channel = event.getChannel().asVoiceChannel();
 
-            try {
-                voiceManager.createControlPanel(channel);
-            } catch (KeyNotFoundException e) {
-                // Not  Found...
-                LOGGER.debug("onGenericChannelUpdate : error : " + e.getMessage());
+                try {
+                    voiceManager.createControlPanel(channel);
+                } catch (KeyNotFoundException e) {
+                    // Not  Found...
+                    LOGGER.debug("onGenericChannelUpdate : error : " + e.getMessage());
+                }
             }
+        } catch (Exception e) {
+            LOGGER.error("Error on GenericChannelUpdateEvent", e);
         }
     }
 

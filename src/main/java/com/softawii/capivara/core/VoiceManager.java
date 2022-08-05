@@ -17,12 +17,12 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
-import net.dv8tion.jda.api.managers.channel.concrete.VoiceChannelManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -106,15 +106,20 @@ public class VoiceManager {
 
             // Create voice
             VoiceChannel voice = hiveCategory.createVoiceChannel(droneName).complete();
+            TextChannel  text  = hiveCategory.createTextChannel(droneName).complete();
+
+            // Hiding channel
+            Role publicRole = channel.getGuild().getPublicRole();
+            text.getManager().putRolePermissionOverride(publicRole.getIdLong(), 0, Permission.VIEW_CHANNEL.getRawValue()).complete();
 
             // Move Member to Drone
             Guild guild = voice.getGuild();
             guild.moveVoiceMember(member, voice).queue();
 
             // Add voice to drone db
-            VoiceDrone drone = voiceDroneService.create(new VoiceDrone(voice.getIdLong(), member.getIdLong(), null));
+            VoiceDrone drone = voiceDroneService.create(new VoiceDrone(voice.getIdLong(), text.getIdLong(), member.getIdLong(), null));
 
-            this.createControlPanel(voice, voice, drone, member);
+            this.createControlPanel(voice, text, drone, member);
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");
         }
@@ -131,7 +136,9 @@ public class VoiceManager {
     public void createControlPanel(VoiceChannel channel) throws KeyNotFoundException {
         VoiceDrone drone =  voiceDroneService.find(channel.getIdLong());
         Member member    =  channel.getGuild().getMemberById(drone.getOwnerId());
-        createControlPanel(channel, channel, drone, member);
+        GuildMessageChannel text = channel.getGuild().getTextChannelById(drone.getChatId());
+        text = text != null ? text : channel;
+        createControlPanel(channel, text, drone, member);
     }
 
     private void createControlPanel(VoiceChannel voiceChannel, GuildMessageChannel textChannel, VoiceDrone drone, Member member) {
@@ -193,6 +200,12 @@ public class VoiceManager {
         }, ee -> LOGGER.error("Error creating control panel: {}", ee.getMessage()));
     }
 
+    public void makePermanent(VoiceChannel channel, boolean permanent) throws KeyNotFoundException {
+        VoiceDrone drone = voiceDroneService.find(channel.getIdLong());
+        drone.setPermanent(permanent);
+        voiceDroneService.update(drone);
+    }
+
     private String getDroneName(Member member, VoiceHive hive) {
         String droneName = configModal_idle;
         String username = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
@@ -216,20 +229,29 @@ public class VoiceManager {
         return droneName;
     }
 
-    public void checkToDeleteTemporary(VoiceChannel channel, Member member) {
+    public void checkToDeleteTemporary(VoiceChannel channel, boolean wasDeleted) {
         long snowflakeId = channel.getIdLong();
 
         try {
             VoiceDrone drone = voiceDroneService.find(snowflakeId);
 
+            if (drone.isPermanent() && !wasDeleted) {
+                return;
+            }
+
             int online = channel.getMembers().size();
 
             if(online == 0) {
                 voiceDroneService.destroy(snowflakeId);
+                try {
+                    channel.getGuild().getTextChannelById(drone.getChatId()).delete().queue();
+                } catch (Exception e) {
+                    LOGGER.error("Error deleting chat: {}", e.getMessage());
+                }
                 channel.delete().queue();
             }
         } catch (KeyNotFoundException e) {
-            LOGGER.debug("Key not found, ignoring...");
+            // Do nothing
         }
 
     }
@@ -242,7 +264,7 @@ public class VoiceManager {
                 voiceHiveService.destroy(voiceHive.getCategoryId());
             }
         } catch (KeyNotFoundException e) {
-            LOGGER.debug("Key not found, ignoring...");
+            // Do nothing
         }
     }
 
