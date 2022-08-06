@@ -38,6 +38,12 @@ public class VoiceDrone {
     @Column
     private Boolean permanent;
 
+    /**
+     * It is used when the owner leaves and there are still people on the voice channel
+     * If it's "null", it means that the drone has an active owned
+     */
+    private Long claimMessage;
+
     // region Constructors
 
     public VoiceDrone() {
@@ -97,6 +103,14 @@ public class VoiceDrone {
 
     public void setChatId(Long chatId) {
         this.chatId = chatId;
+    }
+
+    public Long getClaimMessage() {
+        return claimMessage;
+    }
+
+    public void setClaimMessage(Long claimMessage) {
+        this.claimMessage = claimMessage;
     }
 
     // endregion

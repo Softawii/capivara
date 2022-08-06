@@ -50,12 +50,14 @@ public class VoiceEvents extends ListenerAdapter {
                 droneManager.checkToCreateTemporary(joined, member);
                 // Check to Add Permissions!
                 droneManager.checkToChangeChatAccess(joined, member, true);
+                // Check to Remove Claim Message!
+                droneManager.checkToRemoveClaimMessage(joined, member);
             }
             if (left != null) {
                 // Check to Remove Permissions!
                 droneManager.checkToChangeChatAccess(left, member, false);
                 // Check to Delete!
-                droneManager.checkToDeleteTemporary(left, false);
+                droneManager.checkToDeleteTemporary(left, member, false);
             }
         } catch (Exception e) {
             LOGGER.error("Error on onGuildVoiceUpdate", e);
@@ -84,7 +86,7 @@ public class VoiceEvents extends ListenerAdapter {
             if (event.getChannel().getType() == ChannelType.VOICE) {
                 VoiceChannel channel = event.getChannel().asVoiceChannel();
                 // Checking if it is a drone voice channel
-                droneManager.checkToDeleteTemporary(channel, true);
+                droneManager.checkToDeleteTemporary(channel, null, true);
 
                 // Checking if it is a hive voice channel
                 Category hive        = channel.getParentCategory();

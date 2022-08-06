@@ -4,6 +4,8 @@ import com.softawii.capivara.entity.VoiceDrone;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.InvalidInputException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
+import com.softawii.capivara.exceptions.NotInTheDroneException;
+import com.softawii.capivara.exceptions.OwnerInTheChannelException;
 import com.softawii.capivara.listeners.VoiceGroup;
 import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.capivara.services.VoiceHiveService;
@@ -18,7 +20,6 @@ import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -148,7 +149,7 @@ public class DroneManager {
         if(textChannel != null) {
             action = action.and(textChannel.getManager().setName(newName));
         }
-        action.queue();
+        action.submit();
     }
 
     public void checkToChangeChatAccess(VoiceChannel channel, Member member, boolean joined) {
@@ -162,9 +163,9 @@ public class DroneManager {
 
             if(joined) {
                 text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL)
-                        .and(channel.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT)).queue();
+                        .and(channel.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT)).submit();
             } else if(voiceDrone.getOwnerId() != member.getIdLong()) {
-                text.getManager().removePermissionOverride(member).queue();
+                text.getManager().removePermissionOverride(member).submit();
             }
         } catch (KeyNotFoundException e) {
             // Ignoring...
@@ -185,7 +186,7 @@ public class DroneManager {
         }
     }
 
-    public void checkToDeleteTemporary(VoiceChannel channel, boolean wasDeleted) {
+    public void checkToDeleteTemporary(VoiceChannel channel, Member member, boolean wasDeleted) {
         long snowflakeId = channel.getIdLong();
 
         try {
@@ -195,19 +196,42 @@ public class DroneManager {
             if (drone.isPermanent() && !wasDeleted) return;
 
             int online = channel.getMembers().size();
+            TextChannel textChannel = channel.getGuild().getTextChannelById(drone.getChatId());
             if(online == 0) {
                 voiceDroneService.destroy(snowflakeId);
 
-                TextChannel textChannel = channel.getGuild().getTextChannelById(drone.getChatId());
                 if(textChannel != null) {
-                    textChannel.delete().and(channel.delete()).queue();
+                    textChannel.delete().and(channel.delete()).submit();
                 } else {
-                    channel.delete().queue();
+                    channel.delete().submit();
                 }
+            } else if(member != null && member.getIdLong() == drone.getOwnerId()) {
+                // Election Mode!
+                MessageEmbed embed = claimChat();
+                Button claim = Button.success(VoiceGroup.Dynamic.droneClaim, "Claim");
+
+                Message claimMessage;
+                if(textChannel != null) {
+                    claimMessage = textChannel.sendMessageEmbeds(embed).setActionRows(ActionRow.of(claim)).complete();
+                } else {
+                    claimMessage = channel.sendMessageEmbeds(embed).setActionRows(ActionRow.of(claim)).complete();
+                }
+
+                drone.setClaimMessage(claimMessage.getIdLong());
+                LOGGER.debug("Claim message: {}", claimMessage.getIdLong());
+                voiceDroneService.update(drone);
             }
         } catch (KeyNotFoundException e) {
             // Do nothing
         }
+    }
+
+    private MessageEmbed claimChat() {
+        EmbedBuilder builder = new EmbedBuilder();
+        builder.setTitle("The chat does not have an active owner!");
+        builder.setDescription("Click in the button to claim it to you!");
+        builder.setColor(Color.ORANGE);
+        return builder.build();
     }
 
     public void checkToCreateTemporary(VoiceChannel channel, Member member) {
@@ -234,7 +258,7 @@ public class DroneManager {
             text.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL)
                     .and(text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL))
                     .and(voice.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT))
-                    .and(guild.moveVoiceMember(member, voice)).queue();
+                    .and(guild.moveVoiceMember(member, voice)).submit();
 
             // Add voice to drone db
             voiceDroneService.create(new VoiceDrone(voice.getIdLong(), text.getIdLong(), member.getIdLong(), null));
@@ -363,16 +387,16 @@ public class DroneManager {
 
         Role publicRole = guild.getPublicRole();
 
-        if(!isVisible(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VIEW_CHANNEL).queue();
-        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL).queue();
+        if(!isVisible(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VIEW_CHANNEL).submit();
+        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL).submit();
     }
 
     public void toggleDronePublicPrivate(Guild guild, MessageChannelUnion channel, Member member) throws MissingPermissionsException, KeyNotFoundException {
         VoiceChannel voiceChannel = getVoiceChannel(guild, channel, member);
 
         Role publicRole = guild.getPublicRole();
-        if(!canConnect(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VOICE_CONNECT).queue();
-        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VOICE_CONNECT).queue();
+        if(!canConnect(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VOICE_CONNECT).submit();
+        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VOICE_CONNECT).submit();
     }
 
     @Nullable
@@ -400,5 +424,48 @@ public class DroneManager {
         drone.setPermanent(!drone.isPermanent());
         voiceDroneService.update(drone);
         createControlPanel(guild.getVoiceChannelById(drone.getChannelId()));
+    }
+
+    public void checkToRemoveClaimMessage(VoiceChannel joined, Member member) {
+        try {
+            VoiceDrone drone = voiceDroneService.find(joined.getIdLong());
+
+            LOGGER.debug("Claim message: {}", drone.getClaimMessage());
+
+            TextChannel text = joined.getGuild().getTextChannelById(drone.getChatId());
+
+            if(member.getIdLong() == drone.getOwnerId()) {
+
+                if(text != null) text.deleteMessageById(drone.getClaimMessage()).submit();
+                else             joined.deleteMessageById(drone.getClaimMessage()).submit();
+                drone.setClaimMessage(0L);
+                voiceDroneService.update(drone);
+            }
+        } catch (KeyNotFoundException e) {
+            // Ok!
+        }
+    }
+
+    public void claimDrone(Guild guild, MessageChannelUnion channel, Member member) throws KeyNotFoundException, OwnerInTheChannelException, NotInTheDroneException {
+        VoiceDrone drone;
+        if(channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
+        else                                       drone = voiceDroneService.findByChatId(channel.getIdLong());
+
+        VoiceChannel voiceChannel = guild.getVoiceChannelById(drone.getChannelId());
+        TextChannel  textChannel  = guild.getTextChannelById(drone.getChatId());
+
+        if(voiceChannel.getMembers().stream().anyMatch(m -> m.getIdLong() == drone.getOwnerId())) {
+            throw new OwnerInTheChannelException("You are already in the drone!");
+        }
+
+        if(!voiceChannel.getMembers().contains(member)) {
+            throw new NotInTheDroneException("You are not in the drone!");
+        }
+
+        if(textChannel != null) textChannel.getManager().removePermissionOverride(drone.getOwnerId()).submit();
+
+        drone.setOwnerId(member.getIdLong());
+        voiceDroneService.update(drone);
+        createControlPanel(voiceChannel);
     }
 }
