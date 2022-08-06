@@ -150,10 +150,12 @@ public class DroneManager {
 
             TextChannel text = channel.getGuild().getTextChannelById(voiceDrone.getChatId());
 
+            if(text == null) return;
+
             if(joined) {
-                text.getManager().putRolePermissionOverride(member.getIdLong(), 0, Permission.VIEW_CHANNEL.getRawValue()).complete();
+                text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL).queue();
             } else if(voiceDrone.getOwnerId() != member.getIdLong()) {
-                text.getManager().removePermissionOverride(member.getIdLong()).complete();
+                text.getManager().removePermissionOverride(member).queue();
             }
         } catch (KeyNotFoundException e) {
             // Ignoring...

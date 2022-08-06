@@ -437,7 +437,7 @@ public class VoiceGroup {
                 event.reply("This channel is not a temporary channel!").queue();
                 return;
             } catch (MissingPermissionsException e) {
-                event.reply("You don't have the required permissions to rename this channel!").queue();
+                event.reply("You don't have the required permissions to manage this channel!").queue();
                 return;
             }
             event.replyModal(modal).queue();
