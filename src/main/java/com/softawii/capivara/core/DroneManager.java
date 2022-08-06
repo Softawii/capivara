@@ -434,7 +434,7 @@ public class DroneManager {
 
             TextChannel text = joined.getGuild().getTextChannelById(drone.getChatId());
 
-            if(member.getIdLong() == drone.getOwnerId()) {
+            if(member.getIdLong() == drone.getOwnerId() && (drone.getClaimMessage() != 0L && drone.getClaimMessage() != null))  {
 
                 if(text != null) text.deleteMessageById(drone.getClaimMessage()).submit();
                 else             joined.deleteMessageById(drone.getClaimMessage()).submit();

@@ -280,7 +280,7 @@ public class VoiceGroup {
             });
         }
 
-        @ICommand(name = "kick", description = "Kick user from your channel")
+        @ICommand(name = "kick", description = "Kick user from your channel, it will remove permissions too")
         @IArgument(name = "user",
                    description = "User to kick",
                    required = true, type = OptionType.USER)
@@ -292,10 +292,12 @@ public class VoiceGroup {
             AudioChannel channel = validateRequest(event, member);
             if (channel == null) return;
 
+            VoiceChannel voice = (VoiceChannel) channel;
+            voice.getManager().removePermissionOverride(to_kick).submit();
+
             if(to_kick.getVoiceState().getChannel() != null) {
                 AudioChannel to_kick_channel = to_kick.getVoiceState().getChannel();
                 if(to_kick_channel.getIdLong() == channel.getIdLong()) {
-                    VoiceChannel voice = (VoiceChannel) channel;
                     event.getGuild().moveVoiceMember(to_kick, null).and(
                         event.reply("Kicked " + to_kick.getAsMention()).setEphemeral(true)
                             ).queue();
@@ -323,11 +325,12 @@ public class VoiceGroup {
             if(to_ban.getVoiceState().getChannel() != null) {
                 AudioChannel to_ban_channel = to_ban.getVoiceState().getChannel();
                 if(to_ban_channel.getIdLong() == channel.getIdLong()) {
-                    VoiceChannel voice = (VoiceChannel) channel;
                     event.getGuild().moveVoiceMember(to_ban, null).and(
                         event.reply("Banned " + to_ban.getAsMention()).setEphemeral(true)
                             ).queue();
                 }
+            } else {
+                event.reply("Banned " + to_ban.getAsMention()).setEphemeral(true).queue();
             }
 
             VoiceChannel voice = (VoiceChannel) channel;
