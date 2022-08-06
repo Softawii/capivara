@@ -163,7 +163,7 @@ public class DroneManager {
 
             if(joined) {
                 text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL)
-                        .and(channel.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT)).submit();
+                        .and(channel.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT, Permission.VIEW_CHANNEL)).submit();
             } else if(voiceDrone.getOwnerId() != member.getIdLong()) {
                 text.getManager().removePermissionOverride(member).submit();
             }
@@ -257,7 +257,7 @@ public class DroneManager {
             Guild guild = voice.getGuild();
             text.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL)
                     .and(text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL))
-                    .and(voice.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT))
+                    .and(voice.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT, Permission.VIEW_CHANNEL))
                     .and(guild.moveVoiceMember(member, voice)).submit();
 
             // Add voice to drone db

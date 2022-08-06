@@ -3,9 +3,7 @@ package com.softawii.capivara.listeners;
 import com.softawii.capivara.core.DroneManager;
 import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.entity.VoiceHive;
-import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
-import com.softawii.capivara.exceptions.InvalidInputException;
-import com.softawii.capivara.exceptions.KeyNotFoundException;
+import com.softawii.capivara.exceptions.*;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
 import com.softawii.curupira.exceptions.MissingPermissionsException;
@@ -13,10 +11,6 @@ import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
-import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
-import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
-import net.dv8tion.jda.api.events.channel.update.GenericChannelUpdateEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -26,7 +20,6 @@ import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -52,6 +45,7 @@ public class VoiceGroup {
         public static final String droneHideShow       = "voice-dynamic-drone-hide-show";
         public static final String dronePublicPrivate  = "voice-dynamic-drone-public-private";
         public static final String dronePermTemp       = "voice-dynamic-drone-permanent-temporary";
+        public static final String droneClaim          = "voice-dynamic-drone-claim";
 
         // endregion
 
@@ -510,6 +504,30 @@ public class VoiceGroup {
                 return;
             }
             event.reply("Drone persistence toggled!").setEphemeral(true).queue();
+        }
+
+        @IButton(id = droneClaim)
+        public static void droneClaim(ButtonInteractionEvent event) {
+            MessageChannelUnion channel = event.getChannel();
+            Member              member  = event.getMember();
+
+            try {
+                droneManager.claimDrone(event.getGuild(), channel, member);
+            } catch (KeyNotFoundException e) {
+                event.reply("This channel is not a temporary channel!").setEphemeral(true).queue();
+                return;
+            } catch(OwnerInTheChannelException e) {
+                event.reply("The owner is in the channel!").setEphemeral(true).queue();
+                return;
+            } catch(NotInTheDroneException e) {
+                event.reply("You are not in the channel!!!").setEphemeral(true).queue();
+                return;
+            } catch(Exception e)  {
+                LOGGER.error("droneClaim : " + e.getMessage());
+                event.reply("An error occurred while claiming the channel!").setEphemeral(true).queue();
+                return;
+            }
+            event.getMessage().delete().and(event.reply("Now the channel is yours!").setEphemeral(true)).submit();
         }
 
         //endregion
