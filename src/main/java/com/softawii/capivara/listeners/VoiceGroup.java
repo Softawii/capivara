@@ -353,7 +353,7 @@ public class VoiceGroup {
             VoiceChannel voice = (VoiceChannel) channel;
 
             try {
-                voiceManager.makePermanent(voice, event.getOption("status").getAsBoolean());
+                droneManager.makePermanent(voice, event.getOption("status").getAsBoolean());
             } catch (KeyNotFoundException e) {
                 event.reply("You need to be in a temporary voice channel to use this command!").setEphemeral(true).queue();
                 return;
@@ -465,7 +465,7 @@ public class VoiceGroup {
             Member              member  = event.getMember();
 
             try {
-                voiceManager.toggleDroneVisibility(event.getGuild(), channel, member);
+                droneManager.toggleDroneVisibility(event.getGuild(), channel, member);
             } catch (MissingPermissionsException e) {
                 event.reply("You don't have the required permissions to manage this channel!").setEphemeral(true).queue();
                 return;
@@ -483,7 +483,7 @@ public class VoiceGroup {
             Member              member  = event.getMember();
 
             try {
-                voiceManager.toggleDronePublicPrivate(event.getGuild(), channel, member);
+                droneManager.toggleDronePublicPrivate(event.getGuild(), channel, member);
             } catch (MissingPermissionsException e) {
                 event.reply("You don't have the required permissions to manage this channel!").setEphemeral(true).queue();
                 return;
@@ -501,9 +501,9 @@ public class VoiceGroup {
             Member              member  = event.getMember();
 
             try {
-                voiceManager.toggleDronePermTemp(event.getGuild(), channel, member);
+                droneManager.toggleDronePermTemp(event.getGuild(), channel, member);
             } catch (MissingPermissionsException e) {
-                event.reply("You don't have the required permissions to manage this channel!").setEphemeral(true).queue();
+                event.reply("You don't have the required permissions to make this channel permanent this channel!").setEphemeral(true).queue();
                 return;
             } catch (KeyNotFoundException e) {
                 event.reply("This channel is not a temporary channel!").setEphemeral(true).queue();

@@ -46,16 +46,16 @@ public class VoiceEvents extends ListenerAdapter {
             Member       member = event.getMember();
 
             if (joined != null) {
+                // Check to Delete!
+                droneManager.checkToCreateTemporary(joined, member);
                 // Check to Add Permissions!
                 droneManager.checkToChangeChatAccess(joined, member, true);
-                // Check to Delete!
-                voiceManager.checkToCreateTemporary(joined, member);
             }
             if (left != null) {
                 // Check to Remove Permissions!
                 droneManager.checkToChangeChatAccess(left, member, false);
                 // Check to Delete!
-                voiceManager.checkToDeleteTemporary(left, false);
+                droneManager.checkToDeleteTemporary(left, false);
             }
         } catch (Exception e) {
             LOGGER.error("Error on onGuildVoiceUpdate", e);
@@ -84,7 +84,7 @@ public class VoiceEvents extends ListenerAdapter {
             if (event.getChannel().getType() == ChannelType.VOICE) {
                 VoiceChannel channel = event.getChannel().asVoiceChannel();
                 // Checking if it is a drone voice channel
-                voiceManager.checkToDeleteTemporary(channel, true);
+                droneManager.checkToDeleteTemporary(channel, true);
 
                 // Checking if it is a hive voice channel
                 Category hive        = channel.getParentCategory();
@@ -143,7 +143,7 @@ public class VoiceEvents extends ListenerAdapter {
                 VoiceChannel voice = event.getChannel().asVoiceChannel();
 
                 try {
-                    voiceManager.createControlPanel(voice);
+                    droneManager.createControlPanel(voice);
                 } catch (KeyNotFoundException e) {
                     // Not  Found...
                     LOGGER.debug(method + " : error : " + e.getMessage());
@@ -161,7 +161,7 @@ public class VoiceEvents extends ListenerAdapter {
                 VoiceChannel channel = event.getChannel().asVoiceChannel();
 
                 try {
-                    voiceManager.createControlPanel(channel);
+                    droneManager.createControlPanel(channel);
                 } catch (KeyNotFoundException e) {
                     // Not  Found...
                     LOGGER.debug("onGenericChannelUpdate : error : " + e.getMessage());
