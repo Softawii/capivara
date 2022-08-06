@@ -316,6 +316,9 @@ public class VoiceGroup {
         }
 
         @ICommand(name = "ban", description = "Ban user from your channel")
+        @IArgument(name = "user",
+                   description = "User to kick",
+                   required = true, type = OptionType.USER)
         public static void ban(SlashCommandInteractionEvent event) {
             Member member = event.getMember();
             Member to_ban = event.getOption("user").getAsMember();
