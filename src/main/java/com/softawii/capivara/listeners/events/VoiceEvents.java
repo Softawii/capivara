@@ -4,13 +4,13 @@ import com.softawii.capivara.core.DroneManager;
 import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
-import net.dv8tion.jda.api.entities.Category;
-import net.dv8tion.jda.api.entities.ChannelType;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.VoiceChannel;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.unions.ChannelUnion;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
+import net.dv8tion.jda.api.events.channel.GenericChannelEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
 import net.dv8tion.jda.api.events.channel.update.GenericChannelUpdateEvent;
+import net.dv8tion.jda.api.events.guild.override.GenericPermissionOverrideEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.logging.log4j.LogManager;
@@ -131,6 +131,26 @@ public class VoiceEvents extends ListenerAdapter {
             }
         } catch (Exception e) {
             LOGGER.error("Error on ChannelUpdateParentEvent", e);
+        }
+    }
+
+    @Override
+    public void onGenericPermissionOverride(@NotNull GenericPermissionOverrideEvent event) {
+        GuildMessageChannel channel = event.getChannel().asGuildMessageChannel();
+        String              method  = "onGenericPermissionOverride";
+        try {
+            if (channel.getType() == ChannelType.VOICE) {
+                VoiceChannel voice = event.getChannel().asVoiceChannel();
+
+                try {
+                    voiceManager.createControlPanel(voice);
+                } catch (KeyNotFoundException e) {
+                    // Not  Found...
+                    LOGGER.debug(method + " : error : " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error on " + method, e);
         }
     }
 

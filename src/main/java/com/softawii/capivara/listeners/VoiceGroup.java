@@ -48,10 +48,10 @@ public class VoiceGroup {
         // region constants
         public static final String configModal         = "voice-dynamic-config-modal";
         public static final String generateConfigModal = "voice-dynamic-generate-config-modal";
-        public static final String droneConfig     = "voice-dynamic-drone-config";
-        public static final String droneInvite = "voice-dynamic-drone-channel";
-        public static final String droneKick   = "voice-dynamic-drone-kick";
-        public static final String droneBan    = "voice-dynamic-drone-ban";
+        public static final String droneConfig         = "voice-dynamic-drone-config";
+        public static final String droneHideShow       = "voice-dynamic-drone-hide-show";
+        public static final String dronePublicPrivate  = "voice-dynamic-drone-public-private";
+        public static final String dronePermTemp       = "voice-dynamic-drone-permanent-temporary";
 
         // endregion
 
@@ -453,6 +453,60 @@ public class VoiceGroup {
             } catch (Exception e) {
                 event.reply("An error occurred while changing the channel!").setEphemeral(true).queue();
             }
+        }
+
+        @IButton(id = droneHideShow)
+        @SuppressWarnings({"unused"})
+        public static void droneHideShow(ButtonInteractionEvent event) {
+            MessageChannelUnion channel = event.getChannel();
+            Member              member  = event.getMember();
+
+            try {
+                voiceManager.toggleDroneVisibility(event.getGuild(), channel, member);
+            } catch (MissingPermissionsException e) {
+                event.reply("You don't have the required permissions to manage this channel!").setEphemeral(true).queue();
+                return;
+            } catch (KeyNotFoundException e) {
+                event.reply("This channel is not a temporary channel!").setEphemeral(true).queue();
+                return;
+            }
+            event.reply("Drone visibility toggled!").setEphemeral(true).queue();
+        }
+
+        @IButton(id = dronePublicPrivate)
+        @SuppressWarnings({"unused"})
+        public static void dronePublicPrivate(ButtonInteractionEvent event) {
+            MessageChannelUnion channel = event.getChannel();
+            Member              member  = event.getMember();
+
+            try {
+                voiceManager.toggleDronePublicPrivate(event.getGuild(), channel, member);
+            } catch (MissingPermissionsException e) {
+                event.reply("You don't have the required permissions to manage this channel!").setEphemeral(true).queue();
+                return;
+            } catch (KeyNotFoundException e) {
+                event.reply("This channel is not a temporary channel!").setEphemeral(true).queue();
+                return;
+            }
+            event.reply("Drone privacy toggled!").setEphemeral(true).queue();
+        }
+
+        @IButton(id = dronePermTemp)
+        @SuppressWarnings({"unused"})
+        public static void dronePermTemp(ButtonInteractionEvent event) {
+            MessageChannelUnion channel = event.getChannel();
+            Member              member  = event.getMember();
+
+            try {
+                voiceManager.toggleDronePermTemp(event.getGuild(), channel, member);
+            } catch (MissingPermissionsException e) {
+                event.reply("You don't have the required permissions to manage this channel!").setEphemeral(true).queue();
+                return;
+            } catch (KeyNotFoundException e) {
+                event.reply("This channel is not a temporary channel!").setEphemeral(true).queue();
+                return;
+            }
+            event.reply("Drone persistence toggled!").setEphemeral(true).queue();
         }
 
         //endregion

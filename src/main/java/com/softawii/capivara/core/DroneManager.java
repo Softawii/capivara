@@ -136,7 +136,8 @@ public class DroneManager {
         if (newVisibilityDrone.equals("visible")) give.add(Permission.VIEW_CHANNEL);
         else deny.add(Permission.VIEW_CHANNEL);
 
-        Objects.requireNonNull(voiceChannel).getManager().setName(newName).setUserLimit(newLimitDrone).putPermissionOverride(publicRole, give, deny).queue();
+        voiceChannel.getManager().setName(newName).setUserLimit(newLimitDrone).queue();
+        voiceChannel.upsertPermissionOverride(publicRole).deny(deny).grant(give).queue();
         if(textChannel != null) {
             textChannel.getManager().setName(newName).queue();
         }

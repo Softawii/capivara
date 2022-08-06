@@ -7,9 +7,11 @@ import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.listeners.VoiceGroup;
 import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.capivara.services.VoiceHiveService;
+import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Modal;
@@ -19,13 +21,12 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -127,11 +128,11 @@ public class VoiceManager {
     }
 
     private boolean isVisible(VoiceChannel channel) {
-        return channel.getGuild().getPublicRole().getPermissions(channel).contains(Permission.VIEW_CHANNEL);
+        return channel.getGuild().getPublicRole().hasPermission(channel, Permission.VIEW_CHANNEL);
     }
 
     private boolean canConnect(VoiceChannel channel) {
-        return channel.getGuild().getPublicRole().getPermissions(channel).contains(Permission.VOICE_CONNECT);
+        return channel.getGuild().getPublicRole().hasPermission(channel, Permission.VOICE_CONNECT);
     }
 
     public void createControlPanel(VoiceChannel channel) throws KeyNotFoundException {
@@ -174,11 +175,10 @@ public class VoiceManager {
         // region Buttons
         // General Config
 
-        Button config     = Button.primary(VoiceGroup.Dynamic.droneConfig, "⚙ Settings");
-//        Button limit      = Button.primary("set-limit", "👥 Set User Limit");
-        Button visibility = Button.secondary(isVisible(voiceChannel) ? "hide" : "show", isVisible(voiceChannel) ? "👻 Hide" : "☀ Visible");
-        Button connect    = Button.secondary(canConnect(voiceChannel) ? "public" : "private", isVisible(voiceChannel) ? "📢 Public" : "🔒 Private");
-        Button permanent  = Button.danger(drone.isPermanent() ? "temporary" : "permanent", drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
+        Button config     = Button.primary(VoiceGroup.Dynamic.droneConfig           , "🔧 Settings");
+        Button visibility = Button.secondary(VoiceGroup.Dynamic.droneHideShow       , isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
+        Button connect    = Button.secondary(VoiceGroup.Dynamic.dronePublicPrivate  , canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
+        Button permanent  = Button.danger(VoiceGroup.Dynamic.dronePermTemp          , drone.isPermanent()     ? "⏳ Temporary" : "✨ Permanent");
 
         ActionRow general = ActionRow.of(config, visibility, connect, permanent);
         // endregion
@@ -311,5 +311,49 @@ public class VoiceManager {
         voiceHiveService.update(voiceHive);
 
         return voiceHive;
+    }
+
+    public void toggleDroneVisibility(Guild guild, MessageChannelUnion channel, Member member) throws MissingPermissionsException, KeyNotFoundException {
+        VoiceChannel voiceChannel = getVoiceChannel(guild, channel, member);
+
+        Role publicRole = guild.getPublicRole();
+
+        if(!isVisible(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VIEW_CHANNEL).queue();
+        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL).queue();
+    }
+
+    public void toggleDronePublicPrivate(Guild guild, MessageChannelUnion channel, Member member) throws MissingPermissionsException, KeyNotFoundException {
+        VoiceChannel voiceChannel = getVoiceChannel(guild, channel, member);
+
+        Role publicRole = guild.getPublicRole();
+        if(!canConnect(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VOICE_CONNECT).queue();
+        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VOICE_CONNECT).queue();
+    }
+
+    @Nullable
+    private VoiceChannel getVoiceChannel(Guild guild, MessageChannelUnion channel, Member member) throws KeyNotFoundException, MissingPermissionsException {
+        VoiceDrone drone;
+        if(channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
+        else                                       drone = voiceDroneService.findByChatId(channel.getIdLong());
+
+        if(drone.getOwnerId() != member.getIdLong() || !member.hasPermission(Permission.MANAGE_CHANNEL)) {
+            throw new MissingPermissionsException();
+        }
+
+        VoiceChannel voiceChannel = channel.getType() == ChannelType.VOICE ? channel.asVoiceChannel() : guild.getVoiceChannelById(drone.getChannelId());
+        return voiceChannel;
+    }
+
+    public void toggleDronePermTemp(Guild guild, MessageChannelUnion channel, Member member) throws MissingPermissionsException, KeyNotFoundException {
+        VoiceDrone drone;
+        if(channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
+        else                                       drone = voiceDroneService.findByChatId(channel.getIdLong());
+
+        if(drone.getOwnerId() != member.getIdLong() || !member.hasPermission(Permission.MANAGE_CHANNEL)) {
+            throw new MissingPermissionsException();
+        }
+        drone.setPermanent(!drone.isPermanent());
+        voiceDroneService.update(drone);
+        createControlPanel(guild.getVoiceChannelById(drone.getChannelId()));
     }
 }
