@@ -33,7 +33,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-@IGroup(name = "Voice", description = "Voice", hidden = true)
+@IGroup(name = "Voice", description = "Voice")
 public class VoiceGroup {
 
     private static final Logger LOGGER = LogManager.getLogger(VoiceGroup.class);
@@ -429,7 +429,7 @@ public class VoiceGroup {
 
             Modal modal;
             try {
-                modal = droneManager.checkConfigDrone(event.getGuild(), channel.asVoiceChannel(), event.getMember(), droneConfig);
+                modal = droneManager.checkConfigDrone(event.getGuild(), channel, event.getMember(), droneConfig);
             } catch (KeyNotFoundException e) {
                 event.reply("This channel is not a temporary channel!").queue();
                 return;
@@ -451,7 +451,7 @@ public class VoiceGroup {
             } catch (NumberFormatException e) {
                 event.reply("Invalid input! You need to pass a number!").setEphemeral(true).queue();
             } catch (Exception e) {
-                event.reply("An error occurred while renaming the channel!").setEphemeral(true).queue();
+                event.reply("An error occurred while changing the channel!").setEphemeral(true).queue();
             }
         }
 

@@ -158,6 +158,12 @@ public class VoiceManager {
         builder.addField("User Limit", voiceChannel.getUserLimit() == 0 ? "No Limits" : String.valueOf(voiceChannel.getUserLimit()), true);
         builder.addField("Visible", isVisible(voiceChannel) ? "Yes" : "No", true);
         builder.addField("Connectable", canConnect(voiceChannel) ? "Yes" : "No", true);
+        builder.addField("Status", drone.isPermanent() ? "Permanent" : "Temporary", true);
+
+        // Tutorials
+        builder.addField("Invite User", "/dynamic invite @user to invite someone to your channel", false);
+        builder.addField("Kick User", "/dynamic kick @user to kick someone from your channel", false);
+        builder.addField("Ban User", "/dynamic ban @user to ban someone from your channel", false);
 
         // Other things
         builder.setColor(Color.YELLOW);
@@ -168,12 +174,13 @@ public class VoiceManager {
         // region Buttons
         // General Config
 
-        Button config  = Button.primary(VoiceGroup.Dynamic.droneConfig, "Settings");
-        Button invite = Button.primary(VoiceGroup.Dynamic.droneInvite, "Invite User");
-        Button kick   = Button.secondary(VoiceGroup.Dynamic.droneKick, "Kick User");
-        Button ban    = Button.danger(VoiceGroup.Dynamic.droneBan, "Ban User");
+        Button config     = Button.primary(VoiceGroup.Dynamic.droneConfig, "⚙ Settings");
+//        Button limit      = Button.primary("set-limit", "👥 Set User Limit");
+        Button visibility = Button.secondary(isVisible(voiceChannel) ? "hide" : "show", isVisible(voiceChannel) ? "👻 Hide" : "☀ Visible");
+        Button connect    = Button.secondary(canConnect(voiceChannel) ? "public" : "private", isVisible(voiceChannel) ? "📢 Public" : "🔒 Private");
+        Button permanent  = Button.danger(drone.isPermanent() ? "temporary" : "permanent", drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
 
-        ActionRow general = ActionRow.of(config, invite, kick, ban);
+        ActionRow general = ActionRow.of(config, visibility, connect, permanent);
         // endregion
 
         // Send the message
@@ -240,12 +247,10 @@ public class VoiceManager {
         try {
             VoiceDrone drone = voiceDroneService.find(snowflakeId);
 
-            if (drone.isPermanent() && !wasDeleted) {
-                return;
-            }
+            // Rule 1: If permanent, the drone will not be deleted
+            if (drone.isPermanent() && !wasDeleted) return;
 
             int online = channel.getMembers().size();
-
             if(online == 0) {
                 voiceDroneService.destroy(snowflakeId);
 

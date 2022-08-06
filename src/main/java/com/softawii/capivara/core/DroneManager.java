@@ -7,6 +7,7 @@ import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 
 @Component
 public class DroneManager {
@@ -46,27 +48,36 @@ public class DroneManager {
         return drone.getOwnerId() == member.getIdLong() || member.hasPermission(Permission.MANAGE_CHANNEL);
     }
 
-    public Modal checkConfigDrone(Guild guild, VoiceChannel channel, Member member, String customId) throws KeyNotFoundException, MissingPermissionsException {
-        VoiceDrone voiceDrone = voiceDroneService.find(channel.getIdLong());
+    public Modal checkConfigDrone(Guild guild, MessageChannelUnion channel, Member member, String customId) throws KeyNotFoundException, MissingPermissionsException {
+        VoiceDrone voiceDrone;
+        VoiceChannel voice;
+        if(channel.getType() == ChannelType.VOICE) {
+            voiceDrone = voiceDroneService.find(channel.getIdLong());
+            voice      = channel.asVoiceChannel();
+        }
+        else {
+            voiceDrone = voiceDroneService.findByChatId(channel.getIdLong());
+            voice      = guild.getVoiceChannelById(voiceDrone.getChannelId());
+        }
 
         if (voiceDrone.getOwnerId().equals(member.getIdLong()) || member.hasPermission(Permission.MANAGE_CHANNEL)) {
             Modal.Builder builder = Modal.create(customId, "Rename Room");
-            builder.setTitle("Settings of " + channel.getName() + "!")
+            builder.setTitle("Settings of " + voice.getName() + "!")
                     .addActionRow(
                             TextInput.create(renameDrone, "Room Name", TextInputStyle.SHORT)
-                                    .setValue(channel.getName())
+                                    .setValue(voice.getName())
                                     .setMaxLength(256).build()
                     ).addActionRow(
                             TextInput.create(limitDrone, "Limit of Users (Number)", TextInputStyle.SHORT)
-                                    .setValue(String.valueOf(channel.getUserLimit()))
+                                    .setValue(String.valueOf(voice.getUserLimit()))
                                     .setMaxLength(10).build()
                     ).addActionRow(
                             TextInput.create(connectDrone, "Private or Public", TextInputStyle.SHORT)
-                                    .setValue(canConnect(channel) ? "Public" : "Private")
+                                    .setValue(canConnect(voice) ? "Public" : "Private")
                                     .setMaxLength(10).build()
                     ).addActionRow(
                             TextInput.create(visibilityDrone, "Hidden or Visible", TextInputStyle.SHORT)
-                                    .setValue(isVisible(channel) ? "Visible" : "Hidden")
+                                    .setValue(isVisible(voice) ? "Visible" : "Hidden")
                                     .setMaxLength(10).build()
                     );
             return builder.build();
@@ -93,7 +104,26 @@ public class DroneManager {
             newLimitDrone = 0;
         }
 
-        VoiceChannel voiceChannel = event.getChannel().asVoiceChannel();
+        MessageChannelUnion channel     = event.getChannel();
+        VoiceChannel voiceChannel       = null;
+        TextChannel  textChannel        = null;
+        if(channel.getType() == ChannelType.VOICE) {
+            voiceChannel = event.getChannel().asVoiceChannel();
+            try {
+                Long id = voiceDroneService.find(channel.getIdLong()).getChatId();
+                textChannel = event.getGuild().getTextChannelById(id);
+            } catch (KeyNotFoundException e) {
+                // It's ok! The chat was deleted
+            }
+        } else {
+            try {
+                Long id = voiceDroneService.findByChatId(channel.getIdLong()).getChannelId();
+                voiceChannel = event.getGuild().getVoiceChannelById(id);
+                textChannel = channel.asTextChannel();
+            } catch (KeyNotFoundException e) {
+                // Impossible... but just in case
+            }
+        }
 
         Role publicRole = event.getGuild().getPublicRole();
 
@@ -106,7 +136,10 @@ public class DroneManager {
         if (newVisibilityDrone.equals("visible")) give.add(Permission.VIEW_CHANNEL);
         else deny.add(Permission.VIEW_CHANNEL);
 
-        voiceChannel.getManager().setName(newName).setUserLimit(newLimitDrone).putPermissionOverride(publicRole, give, deny).complete();
+        Objects.requireNonNull(voiceChannel).getManager().setName(newName).setUserLimit(newLimitDrone).putPermissionOverride(publicRole, give, deny).queue();
+        if(textChannel != null) {
+            textChannel.getManager().setName(newName).queue();
+        }
     }
 
     public void checkToChangeChatAccess(VoiceChannel channel, Member member, boolean joined) {
