@@ -257,109 +257,6 @@ public class VoiceGroup {
 
         // endregion
 
-        // User Commands
-
-        @ICommand(name = "invite", description = "Invite user to your channel")
-        @IArgument(name = "user",
-                   description = "User to invite",
-                   required = true, type = OptionType.USER)
-        @SuppressWarnings({"unused"})
-        public static void invite(SlashCommandInteractionEvent event) {
-            Member member  = event.getMember();
-            Member invited = event.getOption("user").getAsMember();
-
-            AudioChannel channel = validateRequest(event, member);
-            if (channel == null) return;
-
-            VoiceChannel voice = (VoiceChannel) channel;
-            voice.createInvite().setUnique(true).deadline(System.currentTimeMillis() + inviteDeadline).queue(q -> {
-                voice.getManager().putPermissionOverride(invited, List.of(Permission.VIEW_CHANNEL, Permission.VOICE_CONNECT), Collections.emptyList()).queue();
-                String name = member.getEffectiveName() + (member.getNickname() != null ? " (" + member.getNickname() + ")" : "");
-                invited.getUser().openPrivateChannel().queue(chn -> chn.sendMessage(name + "invited you to join in a channel!\n" + q.getUrl()).queue());
-                event.reply("Invite sent to " + invited.getAsMention()).setEphemeral(true).queue();
-            });
-        }
-
-        @ICommand(name = "kick", description = "Kick user from your channel, it will remove permissions too")
-        @IArgument(name = "user",
-                   description = "User to kick",
-                   required = true, type = OptionType.USER)
-        @SuppressWarnings({"unused"})
-        public static void kick(SlashCommandInteractionEvent event) {
-            Member member = event.getMember();
-            Member to_kick = event.getOption("user").getAsMember();
-
-            AudioChannel channel = validateRequest(event, member);
-            if (channel == null) return;
-
-            VoiceChannel voice = (VoiceChannel) channel;
-            voice.getManager().removePermissionOverride(to_kick).submit();
-
-            if(to_kick.getVoiceState().getChannel() != null) {
-                AudioChannel to_kick_channel = to_kick.getVoiceState().getChannel();
-                if(to_kick_channel.getIdLong() == channel.getIdLong()) {
-                    event.getGuild().moveVoiceMember(to_kick, null).and(
-                        event.reply("Kicked " + to_kick.getAsMention()).setEphemeral(true)
-                            ).queue();
-                } else {
-                    event.reply("User is not in your channel!").setEphemeral(true).queue();
-                    return;
-                }
-            } else {
-                event.reply("User is not in a voice channel!").setEphemeral(true).queue();
-                return;
-            }
-        }
-
-        @ICommand(name = "ban", description = "Ban user from your channel")
-        @IArgument(name = "user",
-                   description = "User to kick",
-                   required = true, type = OptionType.USER)
-        public static void ban(SlashCommandInteractionEvent event) {
-            Member member = event.getMember();
-            Member to_ban = event.getOption("user").getAsMember();
-
-            AudioChannel channel = validateRequest(event, member);
-            if (channel == null) return;
-
-            if(to_ban.getVoiceState().getChannel() != null) {
-                AudioChannel to_ban_channel = to_ban.getVoiceState().getChannel();
-                if(to_ban_channel.getIdLong() == channel.getIdLong()) {
-                    event.getGuild().moveVoiceMember(to_ban, null).and(
-                        event.reply("Banned " + to_ban.getAsMention()).setEphemeral(true)
-                            ).queue();
-                }
-            } else {
-                event.reply("Banned " + to_ban.getAsMention()).setEphemeral(true).queue();
-            }
-
-            VoiceChannel voice = (VoiceChannel) channel;
-            voice.getManager().putPermissionOverride(to_ban, Collections.emptyList(), List.of(Permission.VIEW_CHANNEL, Permission.VOICE_CONNECT)).queue();
-        }
-
-        @ICommand(name = "permanent", description = "Make channel permanent", permissions = {Permission.MANAGE_CHANNEL})
-        @IArgument(name = "status",
-                   description = "True to make permanent, False to make temporary",
-                   required = true, type = OptionType.BOOLEAN)
-        public static void permanent(SlashCommandInteractionEvent event) {
-            Member member = event.getMember();
-
-            AudioChannel channel = validateRequest(event, member);
-            if (channel == null) return;
-
-            VoiceChannel voice = (VoiceChannel) channel;
-
-            try {
-                droneManager.makePermanent(voice, event.getOption("status").getAsBoolean());
-            } catch (KeyNotFoundException e) {
-                event.reply("You need to be in a temporary voice channel to use this command!").setEphemeral(true).queue();
-                return;
-            }
-            event.reply("Channel is now " + event.getOption("status").getAsBoolean()).setEphemeral(true).queue();
-        }
-
-        // endregion
-
         // region Discord Modals, Buttons and Menus
 
         @IButton(id = generateConfigModal)
@@ -535,5 +432,108 @@ public class VoiceGroup {
 
         //endregion
     }
+
+    // User Commands
+
+    @ICommand(name = "invite", description = "Invite user to your channel")
+    @IArgument(name = "user",
+               description = "User to invite",
+               required = true, type = OptionType.USER)
+    @SuppressWarnings({"unused"})
+    public static void invite(SlashCommandInteractionEvent event) {
+        Member member  = event.getMember();
+        Member invited = event.getOption("user").getAsMember();
+
+        AudioChannel channel = Dynamic.validateRequest(event, member);
+        if (channel == null) return;
+
+        VoiceChannel voice = (VoiceChannel) channel;
+        voice.createInvite().setUnique(true).deadline(System.currentTimeMillis() + Dynamic.inviteDeadline).queue(q -> {
+            voice.getManager().putPermissionOverride(invited, List.of(Permission.VIEW_CHANNEL, Permission.VOICE_CONNECT), Collections.emptyList()).queue();
+            String name = member.getEffectiveName() + (member.getNickname() != null ? " (" + member.getNickname() + ")" : "");
+            invited.getUser().openPrivateChannel().queue(chn -> chn.sendMessage(name + "invited you to join in a channel!\n" + q.getUrl()).queue());
+            event.reply("Invite sent to " + invited.getAsMention()).setEphemeral(true).queue();
+        });
+    }
+
+    @ICommand(name = "kick", description = "Kick user from your channel, it will remove permissions too")
+    @IArgument(name = "user",
+               description = "User to kick",
+               required = true, type = OptionType.USER)
+    @SuppressWarnings({"unused"})
+    public static void kick(SlashCommandInteractionEvent event) {
+        Member member = event.getMember();
+        Member to_kick = event.getOption("user").getAsMember();
+
+        AudioChannel channel = Dynamic.validateRequest(event, member);
+        if (channel == null) return;
+
+        VoiceChannel voice = (VoiceChannel) channel;
+        voice.getManager().removePermissionOverride(to_kick).submit();
+
+        if(to_kick.getVoiceState().getChannel() != null) {
+            AudioChannel to_kick_channel = to_kick.getVoiceState().getChannel();
+            if(to_kick_channel.getIdLong() == channel.getIdLong()) {
+                event.getGuild().moveVoiceMember(to_kick, null).and(
+                        event.reply("Kicked " + to_kick.getAsMention()).setEphemeral(true)
+                ).queue();
+            } else {
+                event.reply("User is not in your channel!").setEphemeral(true).queue();
+                return;
+            }
+        } else {
+            event.reply("User is not in a voice channel!").setEphemeral(true).queue();
+            return;
+        }
+    }
+
+    @ICommand(name = "ban", description = "Ban user from your channel")
+    @IArgument(name = "user",
+               description = "User to kick",
+               required = true, type = OptionType.USER)
+    public static void ban(SlashCommandInteractionEvent event) {
+        Member member = event.getMember();
+        Member to_ban = event.getOption("user").getAsMember();
+
+        AudioChannel channel = Dynamic.validateRequest(event, member);
+        if (channel == null) return;
+
+        if(to_ban.getVoiceState().getChannel() != null) {
+            AudioChannel to_ban_channel = to_ban.getVoiceState().getChannel();
+            if(to_ban_channel.getIdLong() == channel.getIdLong()) {
+                event.getGuild().moveVoiceMember(to_ban, null).and(
+                        event.reply("Banned " + to_ban.getAsMention()).setEphemeral(true)
+                ).queue();
+            }
+        } else {
+            event.reply("Banned " + to_ban.getAsMention()).setEphemeral(true).queue();
+        }
+
+        VoiceChannel voice = (VoiceChannel) channel;
+        voice.getManager().putPermissionOverride(to_ban, Collections.emptyList(), List.of(Permission.VIEW_CHANNEL, Permission.VOICE_CONNECT)).queue();
+    }
+
+    @ICommand(name = "permanent", description = "Make channel permanent", permissions = {Permission.MANAGE_CHANNEL})
+    @IArgument(name = "status",
+               description = "True to make permanent, False to make temporary",
+               required = true, type = OptionType.BOOLEAN)
+    public static void permanent(SlashCommandInteractionEvent event) {
+        Member member = event.getMember();
+
+        AudioChannel channel = Dynamic.validateRequest(event, member);
+        if (channel == null) return;
+
+        VoiceChannel voice = (VoiceChannel) channel;
+
+        try {
+            Dynamic.droneManager.makePermanent(voice, event.getOption("status").getAsBoolean());
+        } catch (KeyNotFoundException e) {
+            event.reply("You need to be in a temporary voice channel to use this command!").setEphemeral(true).queue();
+            return;
+        }
+        event.reply("Channel is now " + event.getOption("status").getAsBoolean()).setEphemeral(true).queue();
+    }
+
+    // endregion
 
 }
