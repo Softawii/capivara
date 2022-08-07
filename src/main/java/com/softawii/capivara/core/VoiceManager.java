@@ -91,11 +91,11 @@ public class VoiceManager {
             VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
 
             Modal.Builder builder = Modal.create(id + ":" + category.getIdLong(), category.getName().substring(0, category.getName().length() > 45 ? 44 : category.getName().length())).addActionRow(
-                    TextInput.create(configModal_fieldIdle, "Channel Name when Idle", TextInputStyle.SHORT).setValue(voiceHive.getIdle()).build()
+                    TextInput.create(configModal_fieldIdle, "Channel Name when Idle", TextInputStyle.SHORT).setValue(voiceHive.getIdle().isBlank() ? null : voiceHive.getIdle()).build()
             ).addActionRow(
-                    TextInput.create(configModal_fieldPlaying, "Channel Name when Playing", TextInputStyle.SHORT).setValue(voiceHive.getPlaying()).setRequired(false).build()
+                    TextInput.create(configModal_fieldPlaying, "Channel Name when Playing", TextInputStyle.SHORT).setValue(voiceHive.getPlaying().isBlank() ? null : voiceHive.getPlaying()).setRequired(false).build()
             ).addActionRow(
-                    TextInput.create(configModal_fieldStreaming, "Channel Name when Streaming", TextInputStyle.SHORT).setValue(voiceHive.getStreaming()).setRequired(false).build()
+                    TextInput.create(configModal_fieldStreaming, "Channel Name when Streaming", TextInputStyle.SHORT).setValue(voiceHive.getStreaming().isBlank() ? null : voiceHive.getStreaming()).setRequired(false).build()
             );
 
             return builder.build();
