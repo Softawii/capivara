@@ -90,7 +90,7 @@ public class VoiceManager {
         try {
             VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
 
-            Modal.Builder builder = Modal.create(id + ":" + category.getIdLong(), category.getName().substring(0, 45)).addActionRow(
+            Modal.Builder builder = Modal.create(id + ":" + category.getIdLong(), category.getName().substring(0, category.getName().length() > 45 ? 44 : category.getName().length())).addActionRow(
                     TextInput.create(configModal_fieldIdle, "Channel Name when Idle", TextInputStyle.SHORT).setValue(voiceHive.getIdle()).build()
             ).addActionRow(
                     TextInput.create(configModal_fieldPlaying, "Channel Name when Playing", TextInputStyle.SHORT).setValue(voiceHive.getPlaying()).setRequired(false).build()
