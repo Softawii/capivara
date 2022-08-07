@@ -3,6 +3,7 @@ package com.softawii.capivara.config;
 import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.capivara.listeners.TemplateGroup;
 import com.softawii.capivara.listeners.events.VoiceEvents;
+import com.softawii.capivara.utils.CapivaraExceptionHandler;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -86,7 +87,8 @@ public class SpringConfig {
 
         System.out.println("Reset: " + reset);
 
-        return new Curupira(jda, reset, null, pkg);
+        CapivaraExceptionHandler exceptionHandler = new CapivaraExceptionHandler(env.getProperty("log.channel.id"));
+        return new Curupira(jda, reset, exceptionHandler, pkg);
     }
 
 
