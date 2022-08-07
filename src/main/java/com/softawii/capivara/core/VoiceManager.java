@@ -3,9 +3,9 @@ package com.softawii.capivara.core;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
-import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.capivara.services.VoiceHiveService;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Category;
+import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -15,18 +15,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class VoiceManager {
 
-    private final VoiceHiveService  voiceHiveService;
-    private final Logger LOGGER = LogManager.getLogger(VoiceManager.class);
+    private final VoiceHiveService voiceHiveService;
+    private final Logger           LOGGER = LogManager.getLogger(VoiceManager.class);
 
-    public static final String configModal_idle       = "%OWNER% Channel";
-    public static final String configModal_playing    = "\uD83C\uDFAE %PLAYING%";
-    public static final String configModal_streaming  = "\uD83D\uDCFA %CHANNEL%";
+    public static final String configModal_idle      = "%OWNER% Channel";
+    public static final String configModal_playing   = "\uD83C\uDFAE %PLAYING%";
+    public static final String configModal_streaming = "\uD83D\uDCFA %CHANNEL%";
 
     public static final String configModal_fieldIdle      = "set-idle";
     public static final String configModal_fieldPlaying   = "set-playing";
@@ -49,8 +49,8 @@ public class VoiceManager {
         VoiceChannel hive = category.createVoiceChannel("➕ Create a New Channel").complete();
 
         // DB Keys
-        long categoryId           = category.getIdLong();
-        long guildId              = category.getGuild().getIdLong();
+        long categoryId = category.getIdLong();
+        long guildId    = category.getGuild().getIdLong();
 
         // Returns the hive
         return voiceHiveService.create(new VoiceHive(categoryId, guildId, hive.getIdLong(), configModal_idle, configModal_playing, configModal_streaming));
@@ -78,7 +78,7 @@ public class VoiceManager {
         try {
             VoiceHive voiceHive = voiceHiveService.find(hive.getIdLong());
 
-            if(voiceHive.getVoiceId() == snowflakeId) {
+            if (voiceHive.getVoiceId() == snowflakeId) {
                 voiceHiveService.destroy(voiceHive.getCategoryId());
             }
         } catch (KeyNotFoundException e) {
@@ -110,12 +110,12 @@ public class VoiceManager {
         VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
 
         // Set the new values
-        for(ModalMapping mapping : event.getValues()) {
-            if(mapping.getId().equals(configModal_fieldIdle))
+        for (ModalMapping mapping : event.getValues()) {
+            if (mapping.getId().equals(configModal_fieldIdle))
                 voiceHive.setIdle(mapping.getAsString());
-            else if(mapping.getId().equals(configModal_fieldPlaying))
+            else if (mapping.getId().equals(configModal_fieldPlaying))
                 voiceHive.setPlaying(mapping.getAsString());
-            else if(mapping.getId().equals(configModal_fieldStreaming))
+            else if (mapping.getId().equals(configModal_fieldStreaming))
                 voiceHive.setStreaming(mapping.getAsString());
         }
         voiceHiveService.update(voiceHive);

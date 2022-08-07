@@ -5,9 +5,7 @@ import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.entities.channel.unions.ChannelUnion;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
-import net.dv8tion.jda.api.events.channel.GenericChannelEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
 import net.dv8tion.jda.api.events.channel.update.GenericChannelUpdateEvent;
 import net.dv8tion.jda.api.events.guild.override.GenericPermissionOverrideEvent;
@@ -100,7 +98,7 @@ public class VoiceEvents extends ListenerAdapter {
             // Checking if the channel is a text channel
             // If it is a drone text channel, it will be deleted
             // Cancelled because if the channel was deleted, it was intentionally
-            if(event.getChannel().getType() == ChannelType.TEXT) {
+            if (event.getChannel().getType() == ChannelType.TEXT) {
                 // Checking if it is a drone text channel
                 droneManager.recreateControlPanel(event.getChannel().asTextChannel());
             }

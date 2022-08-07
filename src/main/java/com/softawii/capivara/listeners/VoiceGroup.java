@@ -416,13 +416,13 @@ public class VoiceGroup {
             } catch (KeyNotFoundException e) {
                 event.reply("This channel is not a temporary channel!").setEphemeral(true).queue();
                 return;
-            } catch(OwnerInTheChannelException e) {
+            } catch (OwnerInTheChannelException e) {
                 event.reply("The owner is in the channel!").setEphemeral(true).queue();
                 return;
-            } catch(NotInTheDroneException e) {
+            } catch (NotInTheDroneException e) {
                 event.reply("You are not in the channel!!!").setEphemeral(true).queue();
                 return;
-            } catch(Exception e)  {
+            } catch (Exception e) {
                 LOGGER.error("droneClaim : " + e.getMessage());
                 event.reply("An error occurred while claiming the channel!").setEphemeral(true).queue();
                 return;
@@ -462,7 +462,7 @@ public class VoiceGroup {
                required = true, type = OptionType.USER)
     @SuppressWarnings({"unused"})
     public static void kick(SlashCommandInteractionEvent event) {
-        Member member = event.getMember();
+        Member member  = event.getMember();
         Member to_kick = event.getOption("user").getAsMember();
 
         AudioChannel channel = Dynamic.validateRequest(event, member);
@@ -471,9 +471,9 @@ public class VoiceGroup {
         VoiceChannel voice = (VoiceChannel) channel;
         voice.getManager().removePermissionOverride(to_kick).submit();
 
-        if(to_kick.getVoiceState().getChannel() != null) {
+        if (to_kick.getVoiceState().getChannel() != null) {
             AudioChannel to_kick_channel = to_kick.getVoiceState().getChannel();
-            if(to_kick_channel.getIdLong() == channel.getIdLong()) {
+            if (to_kick_channel.getIdLong() == channel.getIdLong()) {
                 event.getGuild().moveVoiceMember(to_kick, null).and(
                         event.reply("Kicked " + to_kick.getAsMention()).setEphemeral(true)
                 ).queue();
@@ -498,9 +498,9 @@ public class VoiceGroup {
         AudioChannel channel = Dynamic.validateRequest(event, member);
         if (channel == null) return;
 
-        if(to_ban.getVoiceState().getChannel() != null) {
+        if (to_ban.getVoiceState().getChannel() != null) {
             AudioChannel to_ban_channel = to_ban.getVoiceState().getChannel();
-            if(to_ban_channel.getIdLong() == channel.getIdLong()) {
+            if (to_ban_channel.getIdLong() == channel.getIdLong()) {
                 event.getGuild().moveVoiceMember(to_ban, null).and(
                         event.reply("Banned " + to_ban.getAsMention()).setEphemeral(true)
                 ).queue();

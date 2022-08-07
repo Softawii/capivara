@@ -1,15 +1,11 @@
 package com.softawii.capivara.config;
 
-import com.softawii.capivara.Main;
-import com.softawii.capivara.core.PackageManager;
 import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.capivara.listeners.TemplateGroup;
-import com.softawii.capivara.listeners.VoiceGroup;
 import com.softawii.capivara.listeners.events.VoiceEvents;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -49,7 +45,7 @@ public class SpringConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
-        em.setPackagesToScan("com.softawii.capivara.entity","com.softawii.capivara.repository", "com.softawii.capivara.services", "com.softawii.capivara.listeners.events");
+        em.setPackagesToScan("com.softawii.capivara.entity", "com.softawii.capivara.repository", "com.softawii.capivara.services", "com.softawii.capivara.listeners.events");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -84,9 +80,9 @@ public class SpringConfig {
 
     @Bean
     public Curupira curupira(JDA jda) {
-        String pkg   = "com.softawii.capivara.listeners";
-        String resetEnv = env.getProperty("curupira.reset", "false");
-        boolean reset = Boolean.parseBoolean(resetEnv);
+        String  pkg      = "com.softawii.capivara.listeners";
+        String  resetEnv = env.getProperty("curupira.reset", "false");
+        boolean reset    = Boolean.parseBoolean(resetEnv);
 
         System.out.println("Reset: " + reset);
 

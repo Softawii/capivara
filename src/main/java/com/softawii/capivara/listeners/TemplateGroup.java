@@ -33,33 +33,35 @@ import java.util.stream.Collectors;
 @IGroup(name = "Template", description = "Criar, aplicar e apagar templates de categorias", hidden = false)
 public class TemplateGroup {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    public static TemplateManager templateManager;
+    private static final ObjectMapper    OBJECT_MAPPER = new ObjectMapper();
+    public static        TemplateManager templateManager;
 
     public static final String confirmAction = "template-confirm-action";
-    public static final String removeAction = "template-remove-action";
-    public static final String cancelAction = "template-cancel-action";
+    public static final String removeAction  = "template-remove-action";
+    public static final String cancelAction  = "template-cancel-action";
 
-    @ICommand(name = "create", description = "Criar um template a partir de uma categoria", permissions = {Permission.ADMINISTRATOR})
+    @ICommand(name = "create", description = "Criar um template a partir de uma categoria",
+              permissions = {Permission.ADMINISTRATOR})
     @IArgument(name = "name", description = "O nome template a ser criado", type = OptionType.STRING, required = true)
-    @IArgument(name = "category", description = "A categoria que será escaneada", type = OptionType.CHANNEL, required = true)
+    @IArgument(name = "category", description = "A categoria que será escaneada", type = OptionType.CHANNEL,
+               required = true)
     public static void create(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
-        if(name.contains(":")) {
+        if (name.contains(":")) {
             event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
             return;
         }
 
-        GuildChannel channel = event.getOption("category").getAsChannel().asGuildMessageChannel();
-        ChannelType channelType = channel.getType();
+        GuildChannel channel     = event.getOption("category").getAsChannel().asGuildMessageChannel();
+        ChannelType  channelType = channel.getType();
         if (channelType != ChannelType.CATEGORY) {
             event.replyEmbeds(TemplateUtil.channelIsNotCategory()).queue();
             return;
         }
 
         Category category = (Category) channel;
-        Guild guild = event.getGuild();
-        boolean exists = templateManager.existsById(guild.getIdLong(), name);
+        Guild    guild    = event.getGuild();
+        boolean  exists   = templateManager.existsById(guild.getIdLong(), name);
         if (exists) {
             MessageEmbed embed = Utils.simpleEmbed(
                     "Sinto muito",
@@ -75,9 +77,9 @@ public class TemplateGroup {
             }
 
             try {
-                String jsonString = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(channelMap);
-                Template template = templateManager.create(guild.getIdLong(), name, jsonString);
-                MessageEmbed embed = Utils.simpleEmbed("Supimpa", String.format("Template '%s' criado com sucesso", name), Color.GREEN);
+                String       jsonString = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(channelMap);
+                Template     template   = templateManager.create(guild.getIdLong(), name, jsonString);
+                MessageEmbed embed      = Utils.simpleEmbed("Supimpa", String.format("Template '%s' criado com sucesso", name), Color.GREEN);
                 event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
@@ -92,9 +94,10 @@ public class TemplateGroup {
         }
     }
 
-    @ICommand(name = "list", description = "Lista todos os templates do servidor", permissions = {Permission.ADMINISTRATOR})
+    @ICommand(name = "list", description = "Lista todos os templates do servidor",
+              permissions = {Permission.ADMINISTRATOR})
     public static void list(SlashCommandInteractionEvent event) {
-        Guild guild = event.getGuild();
+        Guild          guild     = event.getGuild();
         List<Template> templates = templateManager.findAllByGuildId(guild.getIdLong());
 
         if (templates.isEmpty()) {
@@ -112,7 +115,7 @@ public class TemplateGroup {
             return name1.compareTo(name2);
         }).forEach(template -> {
             StringBuilder stringBuilder = new StringBuilder();
-            String json = template.getJson();
+            String        json          = template.getJson();
             try {
                 @SuppressWarnings("unchecked")
                 Map<String, Integer> map = OBJECT_MAPPER.readValue(json, Map.class);
@@ -132,27 +135,30 @@ public class TemplateGroup {
         event.replyEmbeds(embed).setEphemeral(true).queue();
     }
 
-    @ICommand(name = "update", description = "Atualiza um template a partir de uma categoria", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name = "name", description = "O nome template que será atualizado", type = OptionType.STRING, required = true, hasAutoComplete = true)
-    @IArgument(name = "category", description = "A categoria que será escaneada", type = OptionType.CHANNEL, required = true)
+    @ICommand(name = "update", description = "Atualiza um template a partir de uma categoria",
+              permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name = "name", description = "O nome template que será atualizado", type = OptionType.STRING,
+               required = true, hasAutoComplete = true)
+    @IArgument(name = "category", description = "A categoria que será escaneada", type = OptionType.CHANNEL,
+               required = true)
     public static void update(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
-        if(name.contains(":")) {
+        if (name.contains(":")) {
             event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
             return;
         }
 
-        GuildChannel channel = event.getOption("category").getAsChannel().asGuildMessageChannel();
-        ChannelType channelType = channel.getType();
+        GuildChannel channel     = event.getOption("category").getAsChannel().asGuildMessageChannel();
+        ChannelType  channelType = channel.getType();
         if (channelType != ChannelType.CATEGORY) {
             event.replyEmbeds(TemplateUtil.channelIsNotCategory()).queue();
             return;
         }
 
         Category category = (Category) channel;
-        Guild guild = event.getGuild();
+        Guild    guild    = event.getGuild();
         try {
-            Template manager = templateManager.findById(guild.getIdLong(), name);
+            Template             manager = templateManager.findById(guild.getIdLong(), name);
             Map<String, Integer> channelMap;
 
             try {
@@ -163,9 +169,9 @@ public class TemplateGroup {
             }
 
             try {
-                String jsonString = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(channelMap);
-                Template template = templateManager.update(guild.getIdLong(), name, jsonString);
-                MessageEmbed embed = Utils.simpleEmbed("Magnífico", String.format("Template '%s' atualizado com sucesso", name), Color.GREEN);
+                String       jsonString = OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(channelMap);
+                Template     template   = templateManager.update(guild.getIdLong(), name, jsonString);
+                MessageEmbed embed      = Utils.simpleEmbed("Magnífico", String.format("Template '%s' atualizado com sucesso", name), Color.GREEN);
                 event.replyEmbeds(embed).setEphemeral(true).queue();
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
@@ -187,10 +193,11 @@ public class TemplateGroup {
     }
 
     @ICommand(name = "destroy", description = "Apaga um template", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name = "name", description = "O nome template que será destruído", type = OptionType.STRING, required = true, hasAutoComplete = true)
+    @IArgument(name = "name", description = "O nome template que será destruído", type = OptionType.STRING,
+               required = true, hasAutoComplete = true)
     public static void destroy(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
-        if(name.contains(":")) {
+        if (name.contains(":")) {
             event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
             return;
         }
@@ -199,8 +206,8 @@ public class TemplateGroup {
         String cancelId  = cancelAction;
 
         MessageEmbed embed = Utils.simpleEmbed("Você tem certeza disso?",
-                "Você realmente quer deletar o template '" + name + "'?",
-                Color.ORANGE);
+                                               "Você realmente quer deletar o template '" + name + "'?",
+                                               Color.ORANGE);
 
         Button successButton = Button.success(confirmId, "Sim! Pode continuar!");
         Button cancelButton  = Button.danger(cancelId, "Não, Deus me livre!!");
@@ -208,11 +215,13 @@ public class TemplateGroup {
         event.replyEmbeds(embed).addActionRow(successButton, cancelButton).setEphemeral(true).queue();
     }
 
-    @ICommand(name = "apply", description = "Cria uma categoria a partir de um template", permissions = {Permission.ADMINISTRATOR})
-    @IArgument(name = "name", description = "O nome template que utilizado", type = OptionType.STRING, required = true, hasAutoComplete = true)
+    @ICommand(name = "apply", description = "Cria uma categoria a partir de um template",
+              permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name = "name", description = "O nome template que utilizado", type = OptionType.STRING, required = true,
+               hasAutoComplete = true)
     public static void apply(SlashCommandInteractionEvent event) {
         String name = event.getOption("name").getAsString();
-        if(name.contains(":")) {
+        if (name.contains(":")) {
             event.replyEmbeds(Utils.nameContainsColon("O nome do template")).setEphemeral(true).queue();
             return;
         }
@@ -253,7 +262,7 @@ public class TemplateGroup {
     }
 
     // SECTION BUTTON
-    @IButton(id=confirmAction)
+    @IButton(id = confirmAction)
     public static void confirm(ButtonInteractionEvent event) {
         System.out.println("Received confirm: " + event.getComponentId());
 
@@ -270,9 +279,9 @@ public class TemplateGroup {
             return;
         }
 
-        String actionId = args[1];
+        String actionId     = args[1];
         String templateName = args[2];
-        Guild guild = event.getGuild();
+        Guild  guild        = event.getGuild();
 
         if (actionId.equals(removeAction)) {
             try {
@@ -288,7 +297,7 @@ public class TemplateGroup {
         }
     }
 
-    @IButton(id=cancelAction)
+    @IButton(id = cancelAction)
     public static void cancel(ButtonInteractionEvent event) {
         MessageEmbed embed = Utils.simpleEmbed("Cancelado", "Cancelado com sucesso!! Não tente isso de novo heinn...", Color.RED);
 
@@ -307,7 +316,7 @@ public class TemplateGroup {
             System.out.println(String.format("AutoCompleter: %s : %s", eventPath, event.getFocusedOption().getName()));
 
             if (eventPath.equals("template/apply") || eventPath.equals("template/destroy") || eventPath.equals("template/update")) {
-                String focusedKey = event.getFocusedOption().getName();
+                String focusedKey   = event.getFocusedOption().getName();
                 String focusedValue = event.getFocusedOption().getValue();
 
                 if (focusedKey.equals("name")) {
