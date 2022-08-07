@@ -6,20 +6,12 @@ plugins {
 }
 
 group 'com.softwaii.capivara'
-
 version '1.0.4.0'
 
 
 repositories {
     mavenCentral()
     maven { url 'https://jitpack.io/' }
-    maven {
-        url 'https://maven.pkg.github.com/Softawii/curupira'
-        credentials {
-            username = System.getenv("GITHUB_USER")
-            password = System.getenv("GITHUB_TOKEN")
-        }
-    }
 }
 
 application {
@@ -28,19 +20,6 @@ application {
 
 springBoot {
     buildInfo()
-}
-
-def urlFile = { url, name ->
-    File file = new File("$buildDir/download/${name}.jar")
-    file.parentFile.mkdirs()
-    if (!file.exists()) {
-        new URL(url).withInputStream { downloadStream ->
-            file.withOutputStream { fileOut ->
-                fileOut << downloadStream
-            }
-        }
-    }
-    files(file.absolutePath)
 }
 
 dependencies {
@@ -58,8 +37,17 @@ dependencies {
 
     implementation("com.github.Softawii:curupira:v0.2.6")
     implementation("com.github.Softawii:curupira:v0.2.6:all")
-
     implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
+}
+
+task deploy() {
+    jar {
+        enabled = false
+    }
+    shadowJar {
+        archiveName("CapivaraBot.jar")
+    }
+    dependsOn 'shadowJar'
 }
 
 test {
