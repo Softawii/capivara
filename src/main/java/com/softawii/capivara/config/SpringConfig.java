@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
+import java.nio.file.Path;
 import java.util.Properties;
 
 @Configuration
@@ -41,7 +42,7 @@ public class SpringConfig {
     private static final Logger      LOGGER = LogManager.getLogger(SpringConfig.class);
     private final        Environment env;
     @Value("${token}")
-    private String discordToken;
+    private              String      discordToken;
 
     public SpringConfig(Environment env) {
         this.env = env;
@@ -91,7 +92,17 @@ public class SpringConfig {
         boolean reset    = Boolean.parseBoolean(resetEnv);
         LOGGER.info("curupira.reset: " + reset);
 
-        CapivaraExceptionHandler exceptionHandler = new CapivaraExceptionHandler(env.getProperty("log.channel.id"));
+
+        CapivaraExceptionHandler exceptionHandler = null;
+        String                   logChannelId     = env.getProperty("log.channel.id");
+        String logDirectory = env.getProperty("log_directory");
+        if (logChannelId != null) {
+            Path   logPath = null;
+            if (logDirectory != null) {
+                logPath  = Path.of(logDirectory);
+            }
+            exceptionHandler = new CapivaraExceptionHandler(logChannelId, logPath);
+        }
         return new Curupira(jda, reset, exceptionHandler, pkg);
     }
 

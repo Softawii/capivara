@@ -6,48 +6,63 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.interactions.Interaction;
+import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 
 public class CapivaraExceptionHandler implements ExceptionHandler {
 
-    private String channelId;
+    private final Logger LOGGER = LogManager.getLogger(CapivaraExceptionHandler.class);
+    private       String channelId;
+    private       Path   logDirectory;
 
-    public CapivaraExceptionHandler(String channelId) {
+    public CapivaraExceptionHandler(String channelId, Path logDirectory) {
         this.channelId = channelId;
+        this.logDirectory = logDirectory;
     }
 
     @Override
     public void handle(Throwable throwable, Interaction interaction) {
+        InputStream logFileBytes = null;
+        if (logDirectory != null) {
+            Path logFile = logDirectory.resolve("capivara.log");
+            if (Files.isDirectory(logDirectory) && Files.exists(logFile) && Files.isRegularFile(logFile)) {
+                try {
+                    logFileBytes = Files.newInputStream(logFile);
+                } catch (IOException e) {
+                    LOGGER.warn(e.getMessage(), e);
+                }
+            }
+        }
         JDA         jda     = interaction.getJDA();
         TextChannel channel = jda.getTextChannelById(channelId);
         if (channel != null) {
             String       stackTrace         = getStackTrace(throwable);
-            String       fileName           = String.format("capivara-%s.log", OffsetDateTime.now(ZoneId.of("America/Sao_Paulo")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+            String       now                = OffsetDateTime.now(ZoneId.of("America/Sao_Paulo")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            String       stackTraceFileName = String.format("capivara-stacktrace-%s.log", now);
+            String       logFileName        = String.format("capivara-log-%s.log", now);
             MessageEmbed interactionContext = getInteractionContext(interaction);
             try {
-                channel.sendFile(stackTrace.getBytes(StandardCharsets.UTF_8), fileName)
-                        .setEmbeds(interactionContext)
-                        .queue();
+                MessageAction messageAction = channel.sendFile(stackTrace.getBytes(StandardCharsets.UTF_8), stackTraceFileName).setEmbeds(interactionContext);
+                if (logFileBytes != null) {
+                    messageAction = messageAction.addFile(logFileBytes, logFileName);
+                }
+                messageAction.submit();
             } catch (IllegalArgumentException e) {
-                channel.sendMessage("Parece que o LOG é muito grande, vou diminuir pela metade").submit()
-                        .thenCompose(message -> {
-                            byte[] stackTraceHalfArray = Arrays.copyOfRange(stackTrace.getBytes(StandardCharsets.UTF_8), 0, stackTrace.getBytes(StandardCharsets.UTF_8).length / 2);
-                            return channel.sendFile(stackTraceHalfArray, fileName)
-                                    .setEmbeds(interactionContext)
-                                    .submit();
-                        }).whenComplete((message, t) -> {
-                            if (e != null) {
-                                e.printStackTrace();
-                            }
-                        });
+                LOGGER.warn(e.getMessage(), e);
+                channel.sendMessage(getStackTrace(e)).submit();
             }
         }
     }
