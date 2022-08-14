@@ -10,6 +10,8 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +38,10 @@ import java.util.Properties;
 @PropertySource(value = "${spring.config.location}", ignoreResourceNotFound = true)
 public class SpringConfig {
 
-    private final Environment env;
+    private static final Logger      LOGGER = LogManager.getLogger(SpringConfig.class);
+    private final        Environment env;
+    @Value("${token}")
+    private String discordToken;
 
     public SpringConfig(Environment env) {
         this.env = env;
@@ -46,7 +51,10 @@ public class SpringConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
-        em.setPackagesToScan("com.softawii.capivara.entity", "com.softawii.capivara.repository", "com.softawii.capivara.services", "com.softawii.capivara.listeners.events");
+        em.setPackagesToScan("com.softawii.capivara.entity",
+                             "com.softawii.capivara.repository",
+                             "com.softawii.capivara.services",
+                             "com.softawii.capivara.listeners.events");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -54,9 +62,6 @@ public class SpringConfig {
 
         return em;
     }
-
-    @Value("${token}")
-    private String discordToken;
 
     @Bean
     public JDA jda(VoiceEvents voiceEvents) {
@@ -84,8 +89,7 @@ public class SpringConfig {
         String  pkg      = "com.softawii.capivara.listeners";
         String  resetEnv = env.getProperty("curupira.reset", "false");
         boolean reset    = Boolean.parseBoolean(resetEnv);
-
-        System.out.println("Reset: " + reset);
+        LOGGER.info("curupira.reset: " + reset);
 
         CapivaraExceptionHandler exceptionHandler = new CapivaraExceptionHandler(env.getProperty("log.channel.id"));
         return new Curupira(jda, reset, exceptionHandler, pkg);
