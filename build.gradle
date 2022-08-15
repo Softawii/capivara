@@ -38,8 +38,8 @@ dependencies {
         exclude module: 'opus-java'
     }
 
-    implementation("com.github.Softawii:curupira:v0.2.7")
-    implementation("com.github.Softawii:curupira:v0.2.7:all")
+    implementation("com.github.Softawii:curupira:v0.2.8")
+    implementation("com.github.Softawii:curupira:v0.2.8:all")
     implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
 }
 
