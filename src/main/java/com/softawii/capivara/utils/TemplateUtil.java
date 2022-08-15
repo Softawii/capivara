@@ -13,7 +13,7 @@ import java.util.Map;
 public class TemplateUtil {
     public static Map<String, Integer> scanCategory(Category category) throws CategoryIsEmptyException {
         Map<String, Integer> channelMap = new HashMap<>();
-        List<GuildChannel> channels = category.getChannels();
+        List<GuildChannel>   channels   = category.getChannels();
 
         if (channels.isEmpty()) throw new CategoryIsEmptyException();
 

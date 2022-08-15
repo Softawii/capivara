@@ -27,16 +27,18 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class DroneManager {
 
-    private final Logger LOGGER = LogManager.getLogger(VoiceManager.class);
+    private final Logger            LOGGER = LogManager.getLogger(VoiceManager.class);
     private final VoiceDroneService voiceDroneService;
     private final VoiceHiveService  voiceHiveService;
-    private final VoiceManager voiceManager;
+    private final VoiceManager      voiceManager;
 
     private final String renameDrone     = "drone-manager-rename";
     private final String limitDrone      = "drone-manager-limit";
@@ -57,15 +59,14 @@ public class DroneManager {
     }
 
     public Modal checkConfigDrone(Guild guild, MessageChannelUnion channel, Member member, String customId) throws KeyNotFoundException, MissingPermissionsException {
-        VoiceDrone voiceDrone;
+        VoiceDrone   voiceDrone;
         VoiceChannel voice;
-        if(channel.getType() == ChannelType.VOICE) {
+        if (channel.getType() == ChannelType.VOICE) {
             voiceDrone = voiceDroneService.find(channel.getIdLong());
-            voice      = channel.asVoiceChannel();
-        }
-        else {
+            voice = channel.asVoiceChannel();
+        } else {
             voiceDrone = voiceDroneService.findByChatId(channel.getIdLong());
-            voice      = guild.getVoiceChannelById(voiceDrone.getChannelId());
+            voice = guild.getVoiceChannelById(voiceDrone.getChannelId());
         }
 
         if (voiceDrone.getOwnerId().equals(member.getIdLong()) || member.hasPermission(Permission.MANAGE_CHANNEL)) {
@@ -106,16 +107,16 @@ public class DroneManager {
         if (!newVisibilityDrone.matches("visible|hidden")) {
             throw new InvalidInputException("visible|hidden");
         }
-        if(newLimitDrone > 99) {
+        if (newLimitDrone > 99) {
             newLimitDrone = 99;
-        } else if(newLimitDrone < 0) {
+        } else if (newLimitDrone < 0) {
             newLimitDrone = 0;
         }
 
-        MessageChannelUnion channel     = event.getChannel();
-        VoiceChannel voiceChannel       = null;
-        TextChannel  textChannel        = null;
-        if(channel.getType() == ChannelType.VOICE) {
+        MessageChannelUnion channel      = event.getChannel();
+        VoiceChannel        voiceChannel = null;
+        TextChannel         textChannel  = null;
+        if (channel.getType() == ChannelType.VOICE) {
             voiceChannel = event.getChannel().asVoiceChannel();
             try {
                 Long id = voiceDroneService.find(channel.getIdLong()).getChatId();
@@ -146,7 +147,7 @@ public class DroneManager {
 
         RestAction<Void> action = voiceChannel.getManager().setName(newName).setUserLimit(newLimitDrone)
                 .and(voiceChannel.upsertPermissionOverride(publicRole).deny(deny).grant(give));
-        if(textChannel != null) {
+        if (textChannel != null) {
             action = action.and(textChannel.getManager().setName(newName));
         }
         action.submit();
@@ -159,12 +160,12 @@ public class DroneManager {
 
             TextChannel text = channel.getGuild().getTextChannelById(voiceDrone.getChatId());
 
-            if(text == null) return;
+            if (text == null) return;
 
-            if(joined) {
+            if (joined) {
                 text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL)
                         .and(channel.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT, Permission.VIEW_CHANNEL)).submit();
-            } else if(voiceDrone.getOwnerId() != member.getIdLong()) {
+            } else if (voiceDrone.getOwnerId() != member.getIdLong()) {
                 text.getManager().removePermissionOverride(member).submit();
             }
         } catch (KeyNotFoundException e) {
@@ -177,9 +178,9 @@ public class DroneManager {
         try {
             voiceDrone = voiceDroneService.findByChatId(channel.getIdLong());
 
-            if(voiceDrone != null) {
+            if (voiceDrone != null) {
                 VoiceChannel voiceChannel = channel.getGuild().getVoiceChannelById(voiceDrone.getChannelId());
-                if(voiceChannel != null) this.createControlPanel(voiceChannel, true);
+                if (voiceChannel != null) this.createControlPanel(voiceChannel, true);
             }
         } catch (KeyNotFoundException e) {
             // Ignoring...
@@ -195,23 +196,23 @@ public class DroneManager {
             // Rule 1: If permanent, the drone will not be deleted
             if (drone.isPermanent() && !wasDeleted) return;
 
-            int online = channel.getMembers().size();
+            int         online      = channel.getMembers().size();
             TextChannel textChannel = channel.getGuild().getTextChannelById(drone.getChatId());
-            if(online == 0) {
+            if (online == 0) {
                 voiceDroneService.destroy(snowflakeId);
 
-                if(textChannel != null) {
+                if (textChannel != null) {
                     textChannel.delete().and(channel.delete()).submit();
                 } else {
                     channel.delete().submit();
                 }
-            } else if(member != null && member.getIdLong() == drone.getOwnerId()) {
+            } else if (member != null && member.getIdLong() == drone.getOwnerId()) {
                 // Election Mode!
                 MessageEmbed embed = claimChat();
-                Button claim = Button.success(VoiceGroup.Dynamic.droneClaim, "Claim");
+                Button       claim = Button.success(VoiceGroup.Dynamic.droneClaim, "Claim");
 
                 Message claimMessage;
-                if(textChannel != null) {
+                if (textChannel != null) {
                     claimMessage = textChannel.sendMessageEmbeds(embed).setActionRows(ActionRow.of(claim)).complete();
                 } else {
                     claimMessage = channel.sendMessageEmbeds(embed).setActionRows(ActionRow.of(claim)).complete();
@@ -242,19 +243,19 @@ public class DroneManager {
             // Checking if the current category is a dynamic category
             VoiceHive hive = voiceHiveService.find(snowflakeId);
 
-            if(channel.getIdLong() != hive.getVoiceId()) return;
+            if (channel.getIdLong() != hive.getVoiceId()) return;
 
             // Creating the voice drone
             Category hiveCategory = channel.getParentCategory();
-            String droneName = this.getDroneName(member, hive);
+            String   droneName    = this.getDroneName(member, hive);
 
             // Create voice
             VoiceChannel voice = hiveCategory.createVoiceChannel(droneName).complete();
             TextChannel  text  = hiveCategory.createTextChannel(droneName).complete();
 
             // Hiding channel
-            Role publicRole = channel.getGuild().getPublicRole();
-            Guild guild = voice.getGuild();
+            Role  publicRole = channel.getGuild().getPublicRole();
+            Guild guild      = voice.getGuild();
             text.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL)
                     .and(text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL))
                     .and(voice.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT, Permission.VIEW_CHANNEL))
@@ -281,9 +282,9 @@ public class DroneManager {
     }
 
     public void createControlPanel(VoiceChannel channel, boolean forceSendInVoice) throws KeyNotFoundException {
-        VoiceDrone drone =  voiceDroneService.find(channel.getIdLong());
-        Member member    =  channel.getGuild().getMemberById(drone.getOwnerId());
-        GuildMessageChannel text = channel.getGuild().getTextChannelById(drone.getChatId());
+        VoiceDrone          drone  = voiceDroneService.find(channel.getIdLong());
+        Member              member = channel.getGuild().getMemberById(drone.getOwnerId());
+        GuildMessageChannel text   = channel.getGuild().getTextChannelById(drone.getChatId());
         text = text != null && !forceSendInVoice ? text : channel;
         createControlPanel(channel, text, drone, member);
     }
@@ -316,10 +317,10 @@ public class DroneManager {
         // region Buttons
         // General Config
 
-        net.dv8tion.jda.api.interactions.components.buttons.Button config     = net.dv8tion.jda.api.interactions.components.buttons.Button.primary(VoiceGroup.Dynamic.droneConfig           , "🔧 Settings");
-        net.dv8tion.jda.api.interactions.components.buttons.Button visibility = net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(VoiceGroup.Dynamic.droneHideShow       , isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
-        net.dv8tion.jda.api.interactions.components.buttons.Button connect    = net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(VoiceGroup.Dynamic.dronePublicPrivate  , canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
-        net.dv8tion.jda.api.interactions.components.buttons.Button permanent  = Button.danger(VoiceGroup.Dynamic.dronePermTemp          , drone.isPermanent()     ? "⏳ Temporary" : "✨ Permanent");
+        net.dv8tion.jda.api.interactions.components.buttons.Button config     = net.dv8tion.jda.api.interactions.components.buttons.Button.primary(VoiceGroup.Dynamic.droneConfig, "🔧 Settings");
+        net.dv8tion.jda.api.interactions.components.buttons.Button visibility = net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(VoiceGroup.Dynamic.droneHideShow, isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
+        net.dv8tion.jda.api.interactions.components.buttons.Button connect    = net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(VoiceGroup.Dynamic.dronePublicPrivate, canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
+        net.dv8tion.jda.api.interactions.components.buttons.Button permanent  = Button.danger(VoiceGroup.Dynamic.dronePermTemp, drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
 
         ActionRow general = ActionRow.of(config, visibility, connect, permanent);
         // endregion
@@ -330,7 +331,7 @@ public class DroneManager {
 
     private void sendControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, java.util.List<ActionRow> actionRows) {
         // We already have a message, so we need to update it
-        if(drone.getControlPanel() != null) {
+        if (drone.getControlPanel() != null) {
             channel.editMessageEmbedsById(drone.getControlPanel(), builder.build()).setActionRows(actionRows).queue(q -> { /* It's ok! */}, e -> {
                 LOGGER.error("Error updating control panel: {}", e.getMessage());
                 // If error, we need to create a new one
@@ -361,19 +362,19 @@ public class DroneManager {
 
     private String getDroneName(Member member, VoiceHive hive) {
         String droneName = VoiceManager.configModal_idle;
-        String username = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
+        String username  = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
 
         Optional<Activity> streaming = member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.STREAMING).findFirst();
         Optional<Activity> playing   = member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.PLAYING).findFirst();
 
-        if(streaming.isPresent() && !hive.getStreaming().isBlank()) {
+        if (streaming.isPresent() && !hive.getStreaming().isBlank()) {
             droneName = hive.getStreaming().replaceAll("%CHANNEL%", streaming.get().getName());
         }
-        if(playing.isPresent() && !hive.getPlaying().isBlank()) {
-            if(streaming.isEmpty()) droneName = hive.getPlaying().replaceAll("%PLAYING%", playing.get().getName());
-            else                    droneName = droneName.replaceAll("%PLAYING%", streaming.get().getName());
+        if (playing.isPresent() && !hive.getPlaying().isBlank()) {
+            if (streaming.isEmpty()) droneName = hive.getPlaying().replaceAll("%PLAYING%", playing.get().getName());
+            else droneName = droneName.replaceAll("%PLAYING%", streaming.get().getName());
         }
-        if(playing.isEmpty() && streaming.isEmpty()) {
+        if (playing.isEmpty() && streaming.isEmpty()) {
             droneName = hive.getIdle();
         }
 
@@ -387,25 +388,27 @@ public class DroneManager {
 
         Role publicRole = guild.getPublicRole();
 
-        if(!isVisible(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VIEW_CHANNEL).submit();
-        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL).submit();
+        if (!isVisible(voiceChannel))
+            voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VIEW_CHANNEL).submit();
+        else voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL).submit();
     }
 
     public void toggleDronePublicPrivate(Guild guild, MessageChannelUnion channel, Member member) throws MissingPermissionsException, KeyNotFoundException {
         VoiceChannel voiceChannel = getVoiceChannel(guild, channel, member);
 
         Role publicRole = guild.getPublicRole();
-        if(!canConnect(voiceChannel)) voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VOICE_CONNECT).submit();
-        else                          voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VOICE_CONNECT).submit();
+        if (!canConnect(voiceChannel))
+            voiceChannel.upsertPermissionOverride(publicRole).grant(Permission.VOICE_CONNECT).submit();
+        else voiceChannel.upsertPermissionOverride(publicRole).deny(Permission.VOICE_CONNECT).submit();
     }
 
     @Nullable
     private VoiceChannel getVoiceChannel(Guild guild, MessageChannelUnion channel, Member member) throws KeyNotFoundException, MissingPermissionsException {
         VoiceDrone drone;
-        if(channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
-        else                                       drone = voiceDroneService.findByChatId(channel.getIdLong());
+        if (channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
+        else drone = voiceDroneService.findByChatId(channel.getIdLong());
 
-        if(!drone.getOwnerId().equals(member.getIdLong()) && !member.hasPermission(Permission.MANAGE_CHANNEL)) {
+        if (!drone.getOwnerId().equals(member.getIdLong()) && !member.hasPermission(Permission.MANAGE_CHANNEL)) {
             throw new MissingPermissionsException();
         }
 
@@ -415,10 +418,10 @@ public class DroneManager {
 
     public void toggleDronePermTemp(Guild guild, MessageChannelUnion channel, Member member) throws MissingPermissionsException, KeyNotFoundException {
         VoiceDrone drone;
-        if(channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
-        else                                       drone = voiceDroneService.findByChatId(channel.getIdLong());
+        if (channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
+        else drone = voiceDroneService.findByChatId(channel.getIdLong());
 
-        if(!member.hasPermission(Permission.MANAGE_CHANNEL)) {
+        if (!member.hasPermission(Permission.MANAGE_CHANNEL)) {
             throw new MissingPermissionsException();
         }
         drone.setPermanent(!drone.isPermanent());
@@ -434,10 +437,10 @@ public class DroneManager {
 
             TextChannel text = joined.getGuild().getTextChannelById(drone.getChatId());
 
-            if(member.getIdLong() == drone.getOwnerId() && (drone.getClaimMessage() != 0L && drone.getClaimMessage() != null))  {
+            if (member.getIdLong() == drone.getOwnerId() && (drone.getClaimMessage() != 0L && drone.getClaimMessage() != null)) {
 
-                if(text != null) text.deleteMessageById(drone.getClaimMessage()).submit();
-                else             joined.deleteMessageById(drone.getClaimMessage()).submit();
+                if (text != null) text.deleteMessageById(drone.getClaimMessage()).submit();
+                else joined.deleteMessageById(drone.getClaimMessage()).submit();
                 drone.setClaimMessage(0L);
                 voiceDroneService.update(drone);
             }
@@ -448,21 +451,21 @@ public class DroneManager {
 
     public void claimDrone(Guild guild, MessageChannelUnion channel, Member member) throws KeyNotFoundException, OwnerInTheChannelException, NotInTheDroneException {
         VoiceDrone drone;
-        if(channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
-        else                                       drone = voiceDroneService.findByChatId(channel.getIdLong());
+        if (channel.getType() == ChannelType.VOICE) drone = voiceDroneService.find(channel.getIdLong());
+        else drone = voiceDroneService.findByChatId(channel.getIdLong());
 
         VoiceChannel voiceChannel = guild.getVoiceChannelById(drone.getChannelId());
         TextChannel  textChannel  = guild.getTextChannelById(drone.getChatId());
 
-        if(voiceChannel.getMembers().stream().anyMatch(m -> m.getIdLong() == drone.getOwnerId())) {
+        if (voiceChannel.getMembers().stream().anyMatch(m -> m.getIdLong() == drone.getOwnerId())) {
             throw new OwnerInTheChannelException("You are already in the drone!");
         }
 
-        if(!voiceChannel.getMembers().contains(member)) {
+        if (!voiceChannel.getMembers().contains(member)) {
             throw new NotInTheDroneException("You are not in the drone!");
         }
 
-        if(textChannel != null) textChannel.getManager().removePermissionOverride(drone.getOwnerId()).submit();
+        if (textChannel != null) textChannel.getManager().removePermissionOverride(drone.getOwnerId()).submit();
 
         drone.setOwnerId(member.getIdLong());
         voiceDroneService.update(drone);

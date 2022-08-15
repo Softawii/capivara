@@ -13,7 +13,7 @@ import java.util.Optional;
 public class RoleService {
 
     private PackageRepository packageRepository;
-    private RoleRepository roleRepository;
+    private RoleRepository    roleRepository;
 
     public RoleService(PackageRepository packageRepository, RoleRepository roleRepository) {
         this.packageRepository = packageRepository;
@@ -36,13 +36,13 @@ public class RoleService {
 
     public void remove(Package.PackageKey packageKey, String name) throws RoleDoesNotExistException {
         Role.RoleKey key = new Role.RoleKey(packageKey, name);
-        if(!roleRepository.existsById(key)) throw new RoleDoesNotExistException("Role does not exist");
+        if (!roleRepository.existsById(key)) throw new RoleDoesNotExistException("Role does not exist");
         roleRepository.deleteById(key);
     }
 
     public void update(Role role) throws RoleDoesNotExistException {
         Role.RoleKey key = role.getRoleKey();
-        if(!roleRepository.existsById(key)) throw new RoleDoesNotExistException("Role does not exist");
+        if (!roleRepository.existsById(key)) throw new RoleDoesNotExistException("Role does not exist");
         roleRepository.save(role);
     }
 }

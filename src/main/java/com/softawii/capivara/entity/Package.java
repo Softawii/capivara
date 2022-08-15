@@ -136,10 +136,10 @@ public class Package implements Serializable {
     }
 
     public void addRole(Role role) throws RoleAlreadyAddedException, KeyAlreadyInPackageException {
-        if(roles.stream().anyMatch(r -> r.getRoleKey().equals(role.getRoleKey())))
+        if (roles.stream().anyMatch(r -> r.getRoleKey().equals(role.getRoleKey())))
             throw new KeyAlreadyInPackageException();
 
-        if(roles.stream().anyMatch(r -> r.getRoleId().equals(role.getRoleId())))
+        if (roles.stream().anyMatch(r -> r.getRoleId().equals(role.getRoleId())))
             throw new RoleAlreadyAddedException();
 
         roles.add(role);

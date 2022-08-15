@@ -17,17 +17,17 @@ public class VoiceDroneService {
     }
 
     public VoiceDrone create(VoiceDrone voiceDrone) {
-        if(voiceDroneRepository.existsById(voiceDrone.getChannelId())) throw new KeyAlreadyExistsException();
+        if (voiceDroneRepository.existsById(voiceDrone.getChannelId())) throw new KeyAlreadyExistsException();
         return voiceDroneRepository.save(voiceDrone);
     }
 
     public void destroy(Long SnowflakeId) throws KeyNotFoundException {
-        if(!voiceDroneRepository.existsById(SnowflakeId)) throw new KeyNotFoundException();
+        if (!voiceDroneRepository.existsById(SnowflakeId)) throw new KeyNotFoundException();
         voiceDroneRepository.deleteById(SnowflakeId);
     }
 
     public void update(VoiceDrone drone) throws KeyNotFoundException {
-        if(!voiceDroneRepository.existsById(drone.getChannelId())) throw new KeyNotFoundException();
+        if (!voiceDroneRepository.existsById(drone.getChannelId())) throw new KeyNotFoundException();
         voiceDroneRepository.save(drone);
     }
 

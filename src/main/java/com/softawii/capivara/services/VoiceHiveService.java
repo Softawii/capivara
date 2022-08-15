@@ -2,7 +2,6 @@ package com.softawii.capivara.services;
 
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
-import com.softawii.capivara.exceptions.KeyAlreadyInPackageException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.repository.VoiceHiveRepository;
 import org.springframework.stereotype.Service;

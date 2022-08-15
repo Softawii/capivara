@@ -1,18 +1,17 @@
 package com.softawii.capivara.config;
 
-import com.softawii.capivara.Main;
-import com.softawii.capivara.core.PackageManager;
 import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.capivara.listeners.TemplateGroup;
-import com.softawii.capivara.listeners.VoiceGroup;
 import com.softawii.capivara.listeners.events.VoiceEvents;
+import com.softawii.capivara.utils.CapivaraExceptionHandler;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +29,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
+import java.nio.file.Path;
 import java.util.Properties;
 
 @Configuration
@@ -39,7 +39,10 @@ import java.util.Properties;
 @PropertySource(value = "${spring.config.location}", ignoreResourceNotFound = true)
 public class SpringConfig {
 
-    private final Environment env;
+    private static final Logger      LOGGER = LogManager.getLogger(SpringConfig.class);
+    private final        Environment env;
+    @Value("${token}")
+    private              String      discordToken;
 
     public SpringConfig(Environment env) {
         this.env = env;
@@ -49,7 +52,10 @@ public class SpringConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource());
-        em.setPackagesToScan("com.softawii.capivara.entity","com.softawii.capivara.repository", "com.softawii.capivara.services", "com.softawii.capivara.listeners.events");
+        em.setPackagesToScan("com.softawii.capivara.entity",
+                             "com.softawii.capivara.repository",
+                             "com.softawii.capivara.services",
+                             "com.softawii.capivara.listeners.events");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -57,9 +63,6 @@ public class SpringConfig {
 
         return em;
     }
-
-    @Value("${token}")
-    private String discordToken;
 
     @Bean
     public JDA jda(VoiceEvents voiceEvents) {
@@ -84,13 +87,23 @@ public class SpringConfig {
 
     @Bean
     public Curupira curupira(JDA jda) {
-        String pkg   = "com.softawii.capivara.listeners";
-        String resetEnv = env.getProperty("curupira.reset", "false");
-        boolean reset = Boolean.parseBoolean(resetEnv);
+        String  pkg      = "com.softawii.capivara.listeners";
+        String  resetEnv = env.getProperty("curupira.reset", "false");
+        boolean reset    = Boolean.parseBoolean(resetEnv);
+        LOGGER.info("curupira.reset: " + reset);
 
-        System.out.println("Reset: " + reset);
 
-        return new Curupira(jda, reset, null, pkg);
+        CapivaraExceptionHandler exceptionHandler = null;
+        String                   logChannelId     = env.getProperty("log.channel.id");
+        String logDirectory = env.getProperty("log_directory");
+        if (logChannelId != null) {
+            Path   logPath = null;
+            if (logDirectory != null) {
+                logPath  = Path.of(logDirectory);
+            }
+            exceptionHandler = new CapivaraExceptionHandler(logChannelId, logPath);
+        }
+        return new Curupira(jda, reset, exceptionHandler, pkg);
     }
 
 

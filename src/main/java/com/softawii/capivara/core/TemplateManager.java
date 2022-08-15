@@ -41,7 +41,7 @@ public class TemplateManager {
         return templateService.findById(new TemplateKey(guildId, name));
     }
 
-    public boolean existsById(Long guildId, String name)  {
+    public boolean existsById(Long guildId, String name) {
         return templateService.existsById(new TemplateKey(guildId, name));
     }
 

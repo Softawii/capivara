@@ -25,7 +25,7 @@ public class Utils {
                 .setDescription(description)
                 .setColor(color);
 
-        if(fields.length != 0) {
+        if (fields.length != 0) {
             for (MessageEmbed.Field field : fields) {
                 embedBuilder.addField(field);
             }
@@ -35,12 +35,11 @@ public class Utils {
     }
 
 
-
     public static List<String> extractEmojis(String text) {
         List<String> emojis = EmojiParser.extractEmojis(text);
 
         Pattern discordEmojiPattern = Pattern.compile("<:\\S*:\\d*>");
-        Matcher matcher = discordEmojiPattern.matcher(text);
+        Matcher matcher             = discordEmojiPattern.matcher(text);
 
         matcher.results().map(MatchResult::group).forEach(emojis::add);
 
@@ -48,12 +47,12 @@ public class Utils {
     }
 
     public static Pair<String, Boolean> getEmoji(String raw) throws MultipleEmojiMessageException {
-        String emoji = "";
+        String  emoji     = "";
         boolean isUnicode = true;
 
-        if(!raw.isBlank()) {
+        if (!raw.isBlank()) {
             List<String> emojis = Utils.extractEmojis(raw);
-            if(emojis.size() > 1) {
+            if (emojis.size() > 1) {
                 throw new MultipleEmojiMessageException();
             }
             emoji = emojis.get(0);
