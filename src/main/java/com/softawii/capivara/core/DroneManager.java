@@ -9,6 +9,7 @@ import com.softawii.capivara.exceptions.OwnerInTheChannelException;
 import com.softawii.capivara.listeners.VoiceGroup;
 import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.capivara.services.VoiceHiveService;
+import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
@@ -71,11 +72,11 @@ public class DroneManager {
 
         if (voiceDrone.getOwnerId().equals(member.getIdLong()) || member.hasPermission(Permission.MANAGE_CHANNEL)) {
             Modal.Builder builder = Modal.create(customId, "Rename Room");
-            builder.setTitle("Settings of " + voice.getName() + "!")
+            builder.setTitle(Utils.getProperString("Settings of " + voice.getName() + "!", Modal.MAX_TITLE_LENGTH))
                     .addActionRow(
                             TextInput.create(renameDrone, "Room Name", TextInputStyle.SHORT)
                                     .setValue(voice.getName())
-                                    .setMaxLength(256).build()
+                                    .setMaxLength(100).build()
                     ).addActionRow(
                             TextInput.create(limitDrone, "Limit of Users (Number)", TextInputStyle.SHORT)
                                     .setValue(String.valueOf(voice.getUserLimit()))
@@ -251,18 +252,25 @@ public class DroneManager {
 
             // Create voice
             VoiceChannel voice = hiveCategory.createVoiceChannel(droneName).complete();
-            TextChannel  text  = hiveCategory.createTextChannel(droneName).complete();
+            TextChannel  text  = hive.getCreateTextChannel() ? hiveCategory.createTextChannel(droneName).complete() : null;
 
             // Hiding channel
             Role  publicRole = channel.getGuild().getPublicRole();
             Guild guild      = voice.getGuild();
-            text.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL)
-                    .and(text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL))
-                    .and(voice.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT, Permission.VIEW_CHANNEL))
-                    .and(guild.moveVoiceMember(member, voice)).submit();
+
+            RestAction<Void> actions = guild.moveVoiceMember(member, voice)
+                    .and(voice.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT, Permission.VIEW_CHANNEL));
+
+            if(text != null) {
+                actions.and(text.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL))
+                        .and(text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL))
+                        .submit();
+            } else {
+                actions.submit();
+            }
 
             // Add voice to drone db
-            voiceDroneService.create(new VoiceDrone(voice.getIdLong(), text.getIdLong(), member.getIdLong(), null));
+            voiceDroneService.create(new VoiceDrone(voice.getIdLong(), text != null ? text.getIdLong() : 0L, member.getIdLong(), null));
             LOGGER.debug("Creating New Channel!");
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");
@@ -304,9 +312,9 @@ public class DroneManager {
         builder.addField("Status", drone.isPermanent() ? "Permanent" : "Temporary", true);
 
         // Tutorials
-        builder.addField("Invite User", "/dynamic invite @user to invite someone to your channel", false);
-        builder.addField("Kick User", "/dynamic kick @user to kick someone from your channel", false);
-        builder.addField("Ban User", "/dynamic ban @user to ban someone from your channel", false);
+        builder.addField("Invite User", "/invite @user to invite someone to your channel", false);
+        builder.addField("Kick User", "/kick @user to kick someone from your channel", false);
+        builder.addField("Ban User", "/ban @user to ban someone from your channel", false);
 
         // Other things
         builder.setColor(Color.YELLOW);
@@ -332,7 +340,11 @@ public class DroneManager {
     private void sendControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, java.util.List<ActionRow> actionRows) {
         // We already have a message, so we need to update it
         if (drone.getControlPanel() != null) {
-            channel.editMessageEmbedsById(drone.getControlPanel(), builder.build()).setActionRows(actionRows).queue(q -> { /* It's ok! */}, e -> {
+            Member owner = channel.getGuild().getMemberById(drone.getOwnerId());
+            channel.editMessageById(drone.getControlPanel(), owner != null ? owner.getAsMention() : "Hello!")
+                    .setEmbeds(builder.build())
+                    .setActionRows(actionRows)
+                    .queue(q -> { /* It's ok! */}, e -> {
                 LOGGER.error("Error updating control panel: {}", e.getMessage());
                 // If error, we need to create a new one
                 sendNewControlPanel(channel, drone, builder, actionRows);
@@ -343,7 +355,8 @@ public class DroneManager {
     }
 
     private void sendNewControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
-        channel.sendMessageEmbeds(builder.build()).setActionRows(actionRows).queue(q -> {
+        Member owner = channel.getGuild().getMemberById(drone.getOwnerId());
+        channel.sendMessage(owner != null ? owner.getAsMention() : "Hello!").setEmbeds(builder.build()).setActionRows(actionRows).queue(q -> {
             drone.setControlPanel(q.getIdLong());
             try {
                 voiceDroneService.update(drone);
@@ -437,7 +450,7 @@ public class DroneManager {
 
             TextChannel text = joined.getGuild().getTextChannelById(drone.getChatId());
 
-            if (member.getIdLong() == drone.getOwnerId() && (drone.getClaimMessage() != 0L && drone.getClaimMessage() != null)) {
+            if (member.getIdLong() == drone.getOwnerId() && (drone.getClaimMessage() != null && drone.getClaimMessage() != 0L)) {
 
                 if (text != null) text.deleteMessageById(drone.getClaimMessage()).submit();
                 else joined.deleteMessageById(drone.getClaimMessage()).submit();

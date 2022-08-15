@@ -38,21 +38,24 @@ public class VoiceHive {
     @Column
     private String streaming;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private Boolean createTextChannel;
+
     // region Constructors
 
     public VoiceHive() {
     }
 
-    public VoiceHive(Long categoryId, Long guildId, long voiceId, String idle, String playing, String streaming) {
+    public VoiceHive(Long categoryId, Long guildId, long voiceId, String idle, String playing, String streaming, Boolean createTextChannel) {
         this.categoryId = categoryId;
         this.guildId = guildId;
         this.voiceId = voiceId;
+        this.createTextChannel = createTextChannel;
 
         // Temporary names
         this.idle = idle;
         this.playing = playing;
         this.streaming = streaming;
-
     }
 
     // endregion
@@ -122,6 +125,14 @@ public class VoiceHive {
 
     public void setStreaming(String streaming) {
         this.streaming = streaming;
+    }
+
+    public Boolean getCreateTextChannel() {
+        return createTextChannel;
+    }
+
+    public void setCreateTextChannel(Boolean createTextChannel) {
+        this.createTextChannel = createTextChannel;
     }
 
     // endregion

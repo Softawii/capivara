@@ -82,4 +82,17 @@ public class Utils {
                         "Poderia tentar novamente?", Color.ORANGE);
     }
 
+    /**
+     * @param text Text to be parsed
+     * @param length Max length of the text to be returned
+     *
+     * @return Text with max length or less
+     */
+    public static String getProperString(String text, int length) {
+        if (text.length() >= length) {
+            return text.substring(0, length - 3) + "...";
+        }
+        return text;
+    }
+
 }
