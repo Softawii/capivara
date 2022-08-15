@@ -1,0 +1,97 @@
+name: homolog-deploy
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: "deploy-homolog"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    environment: PUB
+    env:
+      GITHUB_USER: ${{ secrets._GITHUB_USER }}
+      GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v2
+
+      - name: 'Download latest JDK 17'
+        run: wget https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz
+
+      - name: 'Set up JDK'
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'jdkfile'
+          jdkFile: jdk-17_linux-x64_bin.tar.gz
+          cache: 'gradle'
+
+      - name: 'Grant execute permission for gradlew'
+        run: chmod +x gradlew
+
+      - name: 'Build and Generate JAR'
+        run: ./gradlew build deployHomolog
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: build-libs
+          path: build/libs/CapivaraBotHomolog.jar
+          retention-days: 1
+
+  deploy:
+    needs: build
+    environment: PUB
+    env:
+      GITHUB_USER: ${{ secrets._GITHUB_USER }}
+      GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@master
+        with:
+          name: build-libs
+          path: build/libs/
+
+      - name: 'Wait for SSH'
+        run: |
+          while ! nc -w5 -z ${{ secrets.INSTANCE_IP }} 22; do
+                  sleep 5
+                  echo "SSH not available..."
+          done; echo "SSH ready!"
+
+      - name: 'Stop and Delete Previous App'
+        uses: appleboy/ssh-action@master
+        continue-on-error: true
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            sudo pkill -f 'java -jar .*CapivaraBotHomolog.*\.jar'
+            rm -rf ~/capivara-homolog/CapivaraBotHomolog.jar
+
+      - name: 'Push Repo'
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          source: "./build/libs/CapivaraBotHomolog.jar"
+          target: /home/${{ secrets.SSH_USERNAME }}/capivara-homolog/
+          strip_components: 3
+
+      - name: 'Start BOT'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            nohup java -jar ~/capivara-homolog/CapivaraBotHomolog.jar --spring.config.location=file:/home/${{ secrets.SSH_USERNAME }}/capivara-homolog/config/main.properties --curupira.reset=true> nohup.out 2> nohup.err < /dev/null &

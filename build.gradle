@@ -50,6 +50,16 @@ task deploy() {
     dependsOn 'shadowJar'
 }
 
+task deployHomolog() {
+    jar {
+        enabled = false
+    }
+    shadowJar {
+        archiveName("CapivaraBotHomolog.jar")
+    }
+    dependsOn 'shadowJar'
+}
+
 test {
     useJUnitPlatform()
 }
