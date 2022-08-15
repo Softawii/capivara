@@ -43,7 +43,7 @@ dependencies {
     implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
 }
 
-task deploy() {
+tasks.register('deploy') {
     jar {
         enabled = false
     }
@@ -53,7 +53,7 @@ task deploy() {
     dependsOn 'shadowJar'
 }
 
-task deployHomolog() {
+tasks.register('homolog') {
     jar {
         enabled = false
     }
