@@ -4,6 +4,7 @@ import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.services.VoiceHiveService;
+import com.softawii.capivara.utils.Utils;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -32,6 +33,8 @@ public class VoiceManager {
     public static final String configModal_fieldPlaying   = "set-playing";
     public static final String configModal_fieldStreaming = "set-streaming";
 
+    public static final String configModal_createText = "set-text";
+
     public VoiceManager(VoiceHiveService voiceHiveService) {
         this.voiceHiveService = voiceHiveService;
     }
@@ -53,7 +56,7 @@ public class VoiceManager {
         long guildId    = category.getGuild().getIdLong();
 
         // Returns the hive
-        return voiceHiveService.create(new VoiceHive(categoryId, guildId, hive.getIdLong(), configModal_idle, configModal_playing, configModal_streaming));
+        return voiceHiveService.create(new VoiceHive(categoryId, guildId, hive.getIdLong(), configModal_idle, configModal_playing, configModal_streaming, false));
     }
 
     public void unsetDynamicCategory(Category category) throws KeyNotFoundException {
@@ -90,12 +93,14 @@ public class VoiceManager {
         try {
             VoiceHive voiceHive = voiceHiveService.find(category.getIdLong());
 
-            Modal.Builder builder = Modal.create(id + ":" + category.getIdLong(), category.getName().substring(0, category.getName().length() > 45 ? 44 : category.getName().length())).addActionRow(
+            Modal.Builder builder = Modal.create(id + ":" + category.getIdLong(), Utils.getProperString(category.getName(), Modal.MAX_TITLE_LENGTH)).addActionRow(
                     TextInput.create(configModal_fieldIdle, "Channel Name when Idle", TextInputStyle.SHORT).setValue(voiceHive.getIdle().isBlank() ? null : voiceHive.getIdle()).build()
             ).addActionRow(
                     TextInput.create(configModal_fieldPlaying, "Channel Name when Playing", TextInputStyle.SHORT).setValue(voiceHive.getPlaying().isBlank() ? null : voiceHive.getPlaying()).setRequired(false).build()
             ).addActionRow(
                     TextInput.create(configModal_fieldStreaming, "Channel Name when Streaming", TextInputStyle.SHORT).setValue(voiceHive.getStreaming().isBlank() ? null : voiceHive.getStreaming()).setRequired(false).build()
+            ).addActionRow(
+                    TextInput.create(configModal_createText, "Create Text Channel", TextInputStyle.SHORT).setValue(voiceHive.getCreateTextChannel().toString()).setRequired(true).build()
             );
 
             return builder.build();
@@ -117,6 +122,8 @@ public class VoiceManager {
                 voiceHive.setPlaying(mapping.getAsString());
             else if (mapping.getId().equals(configModal_fieldStreaming))
                 voiceHive.setStreaming(mapping.getAsString());
+            else if(mapping.getId().equals(configModal_createText))
+                voiceHive.setCreateTextChannel(mapping.getAsString().equalsIgnoreCase("true"));
         }
         voiceHiveService.update(voiceHive);
 
