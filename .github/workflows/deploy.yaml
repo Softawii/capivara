@@ -34,7 +34,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: 'Build and Generate JAR'
-        run: ./gradlew build deploy
+        run: ./gradlew build deploy -P version=${{github.ref_name}}
 
       - uses: actions/upload-artifact@master
         with:
