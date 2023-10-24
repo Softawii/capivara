@@ -1,0 +1,123 @@
+name: deploy-prod
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: "deploy"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment: prod-aws-folclore
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v3
+
+      - name: 'Set up JDK'
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: 'Grant execute permission for gradlew'
+        run: chmod +x gradlew
+
+      - name: 'Build and Generate JAR'
+        run: ./gradlew build deploy --no-daemon -P version=${{github.ref_name}}
+
+      - name: 'Wait for SSH'
+        run: |
+          SLEEP=1
+          TRIES=0
+          MAX_TRIES=10
+          while ! nc -w5 -z $INSTANCE_IP 22; do
+            echo "SSH not available..."
+            if [[ $TRIES -eq $MAX_TRIES ]]; then
+              echo "Max tries reached, exiting"
+              exit 1
+            fi
+            ((TRIES += 1))
+            sleep $SLEEP
+          done; echo "SSH ready!"
+        env:
+          INSTANCE_IP: ${{ secrets.INSTANCE_IP }}
+
+      - name: 'Stop and Delete Previous App'
+        uses: appleboy/ssh-action@v0.1.4
+        continue-on-error: true
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            pkill -f 'java .* -jar .*CapivaraBot.*\.jar'
+            rm -rf /home/${{ secrets.SSH_USERNAME }}/capivara/CapivaraBot.jar
+
+      - name: 'Push Repo'
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          source: "./build/libs/CapivaraBot.jar"
+          target: /home/${{ secrets.SSH_USERNAME }}/capivara/
+          strip_components: 3
+
+      - name: 'Create main.properties'
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ secrets.SSH_USERNAME }}/capivara
+            
+            echo 'spring.datasource.url=jdbc:postgresql://localhost:5432/capivara' > main.properties
+            echo 'spring.datasource.driverClassName=org.postgresql.Driver' >> main.properties
+            echo 'spring.jpa.database-platform=org.hibernate.dialect.PostgreSQL95Dialect' >> main.properties
+            echo 'spring.datasource.username=${{ secrets.DATABASE_USERNAME }}' >> main.properties
+            echo 'spring.datasource.password=${{ secrets.DATABASE_PASSWORD }}' >> main.properties
+            echo 'hibernate.hbm2ddl.auto=update' >> main.properties
+            echo 'token=${{ secrets.DISCORD_BOT_TOKEN }}' >> main.properties
+            echo 'log.channel.id=${{ secrets.DISCORD_LOG_CHANNEL_ID }}' >> main.properties
+            echo 'log.directory=/home/${{ secrets.SSH_USERNAME }}/capivara/logs/' >> main.properties
+
+      - name: 'Create start.sh'
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ secrets.SSH_USERNAME }}/capivara
+
+            echo '#!/bin/bash' > start.sh
+            echo 'source "/home/${{ secrets.SSH_USERNAME }}/.sdkman/bin/sdkman-init.sh"' >> start.sh
+            
+            echo 'DIRECTORY=/home/${{ secrets.SSH_USERNAME }}/capivara' >> start.sh
+            echo 'FILENAME=CapivaraBot.jar' >> start.sh
+            echo 'FULLPATH=${DIRECTORY}/${FILENAME}' >> start.sh
+            echo 'JAVA_ARGS=-Xmx300M' >> start.sh
+            
+            echo 'cd $DIRECTORY' >> start.sh
+
+            echo 'java $JAVA_ARGS -jar $FULLPATH --spring.config.location=file:/home/${{ secrets.SSH_USERNAME }}/capivara/main.properties --curupira.reset=${1-true}' >> start.sh
+
+      - name: 'Start BOT'
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.INSTANCE_IP }}
+          username: ${{ secrets.SSH_USERNAME }}
+          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ secrets.SSH_USERNAME }}/capivara
+            nohup bash start.sh > nohup.out 2> nohup.err < /dev/null &
