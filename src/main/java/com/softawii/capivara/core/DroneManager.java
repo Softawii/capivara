@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class DroneManager {
@@ -46,11 +48,14 @@ public class DroneManager {
     private final String connectDrone    = "drone-manager-connect";
     private final String visibilityDrone = "drone-manager-visibility";
 
+    private final Pattern digdinRegex;
+
 
     public DroneManager(VoiceDroneService voiceDroneService, VoiceHiveService voiceHiveService, VoiceManager voiceManager) {
         this.voiceDroneService = voiceDroneService;
         this.voiceHiveService = voiceHiveService;
         this.voiceManager = voiceManager;
+        this.digdinRegex = Pattern.compile("(?<nome>\\w+mente).+(Digdin)");
     }
 
     public boolean canInteract(VoiceChannel channel, Member member) throws KeyNotFoundException {
@@ -305,7 +310,7 @@ public class DroneManager {
         builder.setTitle("⚙️ Control Panel - " + voiceChannel.getName());
         builder.setDescription("Here, you can control your private voiceChannel.");
         // Fields to Show
-        builder.addField("Owner", voiceChannel.getGuild().getMemberById(drone.getOwnerId()).getAsMention(), true);
+        builder.addField("Owner", voiceChannel.getGuild().getMemberById(drone.getOwnerId()).getNickname(), true);
         builder.addField("User Limit", voiceChannel.getUserLimit() == 0 ? "No Limits" : String.valueOf(voiceChannel.getUserLimit()), true);
         builder.addField("Visible", isVisible(voiceChannel) ? "Yes" : "No", true);
         builder.addField("Connectable", canConnect(voiceChannel) ? "Yes" : "No", true);
@@ -341,7 +346,7 @@ public class DroneManager {
         // We already have a message, so we need to update it
         if (drone.getControlPanel() != null) {
             Member owner = channel.getGuild().getMemberById(drone.getOwnerId());
-            channel.editMessageById(drone.getControlPanel(), owner != null ? owner.getAsMention() : "Hello!")
+            channel.editMessageById(drone.getControlPanel(), "Hello!")
                     .setEmbeds(builder.build())
                     .setActionRows(actionRows)
                     .queue(q -> { /* It's ok! */}, e -> {
@@ -356,7 +361,7 @@ public class DroneManager {
 
     private void sendNewControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
         Member owner = channel.getGuild().getMemberById(drone.getOwnerId());
-        channel.sendMessage(owner != null ? owner.getAsMention() : "Hello!").setEmbeds(builder.build()).setActionRows(actionRows).queue(q -> {
+        channel.sendMessage("Hello!").setEmbeds(builder.build()).setActionRows(actionRows).queue(q -> {
             drone.setControlPanel(q.getIdLong());
             try {
                 voiceDroneService.update(drone);
@@ -376,6 +381,13 @@ public class DroneManager {
     private String getDroneName(Member member, VoiceHive hive) {
         String droneName = VoiceManager.configModal_idle;
         String username  = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
+        String digdin    = "";
+
+        Matcher menteMatcher = this.digdinRegex.matcher(username);
+
+        if(menteMatcher.find()) {
+            digdin = menteMatcher.group("nome");
+        }
 
         Optional<Activity> streaming = member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.STREAMING).findFirst();
         Optional<Activity> playing   = member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.PLAYING).findFirst();
@@ -392,6 +404,7 @@ public class DroneManager {
         }
 
         droneName = droneName.replaceAll("%OWNER%", username);
+        droneName = droneName.replaceAll("%DIGDIN%", digdin.isEmpty() ? username : digdin);
 
         return droneName;
     }
