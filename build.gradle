@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.springframework.boot' version '2.7.0'
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group 'com.softwaii.capivara'
@@ -33,12 +33,12 @@ dependencies {
     implementation 'com.h2database:h2:2.1.212'
     implementation 'org.postgresql:postgresql:42.3.6'
 
-    implementation("net.dv8tion:JDA:5.0.0-alpha.15") {
+    implementation("net.dv8tion:JDA:5.0.0-beta.16") {
         exclude module: 'opus-java'
     }
 
-    implementation("com.github.Softawii:curupira:v0.2.10")
-    implementation("com.github.Softawii:curupira:v0.2.10:all")
+    implementation("com.github.Softawii:curupira:v0.3.0")
+    implementation("com.github.Softawii:curupira:v0.3.0:all")
     implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
 }
 
@@ -47,7 +47,7 @@ tasks.register('deploy') {
         enabled = false
     }
     shadowJar {
-        archiveName("CapivaraBot.jar")
+        archiveFileName = "CapivaraBot.jar"
     }
     dependsOn 'shadowJar'
 }
@@ -57,7 +57,7 @@ tasks.register('homolog') {
         enabled = false
     }
     shadowJar {
-        archiveName("CapivaraBotHomolog.jar")
+        archiveFileName = "CapivaraBotHomolog.jar"
     }
     dependsOn 'shadowJar'
 }

@@ -5,12 +5,12 @@ import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.services.VoiceHiveService;
 import com.softawii.capivara.utils.Utils;
-import net.dv8tion.jda.api.entities.Category;
-import net.dv8tion.jda.api.entities.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,18 +22,15 @@ import java.util.Objects;
 @Component
 public class VoiceManager {
 
-    private final VoiceHiveService voiceHiveService;
-    private final Logger           LOGGER = LogManager.getLogger(VoiceManager.class);
-
     public static final String configModal_idle      = "%OWNER% Channel";
     public static final String configModal_playing   = "\uD83C\uDFAE %PLAYING%";
     public static final String configModal_streaming = "\uD83D\uDCFA %CHANNEL%";
-
     public static final String configModal_fieldIdle      = "set-idle";
     public static final String configModal_fieldPlaying   = "set-playing";
     public static final String configModal_fieldStreaming = "set-streaming";
-
     public static final String configModal_createText = "set-text";
+    private final VoiceHiveService voiceHiveService;
+    private final Logger           LOGGER = LogManager.getLogger(VoiceManager.class);
 
     public VoiceManager(VoiceHiveService voiceHiveService) {
         this.voiceHiveService = voiceHiveService;
@@ -122,7 +119,7 @@ public class VoiceManager {
                 voiceHive.setPlaying(mapping.getAsString());
             else if (mapping.getId().equals(configModal_fieldStreaming))
                 voiceHive.setStreaming(mapping.getAsString());
-            else if(mapping.getId().equals(configModal_createText))
+            else if (mapping.getId().equals(configModal_createText))
                 voiceHive.setCreateTextChannel(mapping.getAsString().equalsIgnoreCase("true"));
         }
         voiceHiveService.update(voiceHive);

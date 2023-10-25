@@ -4,8 +4,8 @@ import com.softawii.capivara.exceptions.FieldLengthException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.exceptions.UrlException;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.GuildChannel;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +14,32 @@ import java.util.stream.Collectors;
 
 @Component
 public class EmbedManager {
+
+    private Map<String, EmbedHandler> embeds;
+
+    public EmbedManager() {
+        this.embeds = new HashMap<>();
+    }
+
+    public Map.Entry<String, EmbedHandler> init() {
+        EmbedHandler handler = new EmbedHandler();
+        String       uuid    = UUID.randomUUID().toString();
+
+        // It's in the map? Reset that shit bro
+        while (this.embeds.containsKey(uuid)) uuid = UUID.randomUUID().toString();
+
+        this.embeds.put(uuid, handler);
+        return Map.entry(uuid, handler);
+    }
+
+    public EmbedHandler get(String key) throws KeyNotFoundException {
+        if (!this.embeds.containsKey(key)) throw new KeyNotFoundException();
+        return this.embeds.get(key);
+    }
+
+    public void destroy(String key) {
+        if (this.embeds.containsKey(key)) this.embeds.remove(key);
+    }
 
     public static class EmbedHandler {
         private EmbedBuilder             builder;
@@ -25,10 +51,6 @@ public class EmbedManager {
         public EmbedHandler() {
             this.builder = new EmbedBuilder().setTitle("Titulo muito legal!").setDescription("Descrição sensacional");
             this.fields = new ArrayList<>();
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
         }
 
         public void setTitle(String title) throws FieldLengthException {
@@ -93,6 +115,10 @@ public class EmbedManager {
             return this.message;
         }
 
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
         public MessageEmbed build() {
             EmbedBuilder builder = new EmbedBuilder(this.builder);
 
@@ -102,31 +128,5 @@ public class EmbedManager {
 
             return builder.build();
         }
-    }
-
-    private Map<String, EmbedHandler> embeds;
-
-    public EmbedManager() {
-        this.embeds = new HashMap<>();
-    }
-
-    public Map.Entry<String, EmbedHandler> init() {
-        EmbedHandler handler = new EmbedHandler();
-        String       uuid    = UUID.randomUUID().toString();
-
-        // It's in the map? Reset that shit bro
-        while (this.embeds.containsKey(uuid)) uuid = UUID.randomUUID().toString();
-
-        this.embeds.put(uuid, handler);
-        return Map.entry(uuid, handler);
-    }
-
-    public EmbedHandler get(String key) throws KeyNotFoundException {
-        if (!this.embeds.containsKey(key)) throw new KeyNotFoundException();
-        return this.embeds.get(key);
-    }
-
-    public void destroy(String key) {
-        if (this.embeds.containsKey(key)) this.embeds.remove(key);
     }
 }

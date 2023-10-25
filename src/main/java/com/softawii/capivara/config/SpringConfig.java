@@ -25,7 +25,6 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.security.auth.login.LoginException;
 import javax.sql.DataSource;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -74,7 +73,7 @@ public class SpringConfig {
             );
             jda = builder.build();
             jda.awaitReady();
-        } catch (LoginException | InterruptedException e) {
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
@@ -91,11 +90,11 @@ public class SpringConfig {
 
         CapivaraExceptionHandler exceptionHandler = null;
         String                   logChannelId     = env.getProperty("log.channel.id");
-        String logDirectory = env.getProperty("log_directory");
+        String                   logDirectory     = env.getProperty("log_directory");
         if (logChannelId != null) {
-            Path   logPath = null;
+            Path logPath = null;
             if (logDirectory != null) {
-                logPath  = Path.of(logDirectory);
+                logPath = Path.of(logDirectory);
             }
             exceptionHandler = new CapivaraExceptionHandler(logChannelId, logPath);
         }
