@@ -1,7 +1,5 @@
 package com.softawii.capivara.config;
 
-import com.softawii.capivara.listeners.CategoryGroup.TemplateGroup;
-import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.capivara.listeners.events.VoiceEvents;
 import com.softawii.capivara.utils.CapivaraExceptionHandler;
 import com.softawii.curupira.core.Curupira;
@@ -72,8 +70,6 @@ public class SpringConfig {
             builder.setMemberCachePolicy(MemberCachePolicy.ALL);
             builder.enableCache(CacheFlag.EMOJI, CacheFlag.ROLE_TAGS, CacheFlag.MEMBER_OVERRIDES, CacheFlag.STICKER);
             builder.addEventListeners(
-                    new PackageGroup.AutoCompleter(),
-                    new TemplateGroup.AutoCompleter(),
                     voiceEvents
             );
             jda = builder.build();

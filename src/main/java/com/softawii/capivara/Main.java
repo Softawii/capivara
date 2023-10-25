@@ -1,9 +1,9 @@
 package com.softawii.capivara;
 
-import com.softawii.capivara.core.*;
-import com.softawii.capivara.listeners.CategoryGroup.TemplateGroup;
+import com.softawii.capivara.core.DroneManager;
+import com.softawii.capivara.core.EmbedManager;
+import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.listeners.EchoGroup;
-import com.softawii.capivara.listeners.PackageGroup;
 import com.softawii.capivara.listeners.VoiceGroup.Dynamic;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
@@ -28,10 +28,7 @@ public class Main {
         LOGGER.info(buildProperties.getVersion() + " Bot is ready as " + jda.getSelfUser().getName());
 
         // Beans
-        PackageGroup.packageManager = context.getBean(PackageManager.class);
         EchoGroup.embedManager = context.getBean(EmbedManager.class);
-        PackageGroup.embedManager = EchoGroup.embedManager;
-        TemplateGroup.templateManager = context.getBean(TemplateManager.class);
         Dynamic.voiceManager = context.getBean(VoiceManager.class);
         Dynamic.droneManager = context.getBean(DroneManager.class);
     }
