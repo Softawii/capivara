@@ -10,20 +10,24 @@ import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.SelectMenuInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,38 +39,33 @@ import java.util.Map;
 @IGroup(name = "echo", description = "Echo Group")
 public class EchoGroup {
 
+    public static final String buttonEditMessage = "echo-edit-message";
+    public static final String modalEditMessage  = "echo-edit-message-modal";
+    //endregion
+    public static final String buttonRemoveMessage = "echo-remove-message";
     //region Send/Cancel Constants
     private static final String buttonSend = "echo-send";
     private static final String buttonDeny = "echo-deny";
-    //endregion
-
     //region Title/Description Constants
     private static final String buttonTitle = "echo-title";
+
+    //endregion
     private static final String modalTitle  = "echo-title-modal";
     private static final String buttonImage = "echo-image";
     private static final String modalImage  = "echo-image-modal";
-
-    //endregion
-
     //region Fields Constants
     private static final String buttonNewField    = "echo-new-field";
     private static final String modalNewField     = "echo-new-field-modal";
     private static final String buttonRemoveField = "echo-remove-field";
     private static final String menuRemoveField   = "echo-remove-field-menu";
-    private static final String buttonEditField   = "echo-edit-field";
-    private static final String menuEditField     = "echo-edit-field-menu";
-    private static final String modalEditField    = "echo-edit-field-modal";
     //endregion Constants
 
     //region Message Constants
-
-    public static final String buttonEditMessage = "echo-edit-message";
-    public static final String modalEditMessage  = "echo-edit-message-modal";
-
-    public static final String buttonRemoveMessage = "echo-remove-message";
+    private static final String buttonEditField   = "echo-edit-field";
+    private static final String menuEditField     = "echo-edit-field-menu";
+    private static final String modalEditField    = "echo-edit-field-modal";
 
     //endregion
-
     private static final Logger LOGGER = LogManager.getLogger(EchoGroup.class);
 
     public static EmbedManager embedManager;
@@ -98,12 +97,12 @@ public class EchoGroup {
         if (message != null) {
             event.reply(message)
                     .addEmbeds(init.getValue().build())
-                    .addActionRows(EchoGroup.embedEditor(init.getKey()))
+                    .setComponents(EchoGroup.embedEditor(init.getKey()))
                     .setEphemeral(true)
                     .queue();
         } else {
             event.replyEmbeds(init.getValue().build())
-                    .addActionRows(EchoGroup.embedEditor(init.getKey()))
+                    .setComponents(EchoGroup.embedEditor(init.getKey()))
                     .setEphemeral(true)
                     .queue();
         }
@@ -128,7 +127,7 @@ public class EchoGroup {
 
         GuildChannel target = embedHandler.getTarget();
 
-        MessageAction messageAction;
+        MessageCreateAction messageAction;
         if (target instanceof TextChannel textChannel) {
             if (embedHandler.getMessage() != null)
                 messageAction = textChannel.sendMessage(embedHandler.getMessage()).setEmbeds(embedHandler.build());
@@ -144,12 +143,12 @@ public class EchoGroup {
         }
 
         if (embedHandler.getActiveRows() != null && !embedHandler.getActiveRows().isEmpty()) {
-            messageAction.setActionRows(embedHandler.getActiveRows());
+            messageAction.setComponents(embedHandler.getActiveRows());
         }
         messageAction.queue();
 
         MessageEmbed embed = Utils.simpleEmbed("Embed enviado!", "Embed enviado com sucesso!", Color.GREEN);
-        event.editMessage("Tudo ok!").setEmbeds(embed).setActionRows().queue();
+        event.editMessage("Tudo ok!").setEmbeds(embed).setComponents().queue();
     }
 
     @IButton(id = buttonDeny)
@@ -162,7 +161,7 @@ public class EchoGroup {
         embedManager.destroy(id);
 
         MessageEmbed embed = Utils.simpleEmbed("Embed cancelado!", "Embed cancelado com sucesso!", Color.GREEN);
-        event.editMessage("Cancelei!!").setEmbeds(embed).setActionRows().queue();
+        event.editMessage("Cancelei!!").setEmbeds(embed).setComponents().queue();
     }
 
     //region Title / Description
@@ -227,7 +226,7 @@ public class EchoGroup {
             return;
         }
 
-        event.editMessageEmbeds(embedHandler.build()).setActionRows(EchoGroup.embedEditor(id)).queue();
+        event.editMessageEmbeds(embedHandler.build()).setComponents(EchoGroup.embedEditor(id)).queue();
     }
 
     //endregion
@@ -284,7 +283,7 @@ public class EchoGroup {
             event.replyEmbeds(embed).setEphemeral(true).queue();
             return;
         }
-        event.editMessageEmbeds(embedHandler.build()).setActionRows(EchoGroup.embedEditor(id)).queue();
+        event.editMessageEmbeds(embedHandler.build()).setComponents(EchoGroup.embedEditor(id)).queue();
     }
 
     //endregion
@@ -346,7 +345,7 @@ public class EchoGroup {
             event.replyEmbeds(embed).setEphemeral(true).queue();
             return;
         }
-        event.editMessageEmbeds(embedHandler.build()).setActionRows(EchoGroup.embedEditor(id)).queue();
+        event.editMessageEmbeds(embedHandler.build()).setComponents(EchoGroup.embedEditor(id)).queue();
     }
 
     //endregion
@@ -357,7 +356,7 @@ public class EchoGroup {
     public static void editField(ButtonInteractionEvent event) {
         String id = event.getComponentId().split(":")[1];
 
-        SelectMenu.Builder builder;
+        StringSelectMenu.Builder builder;
         try {
             builder = EchoGroup.embedField(id, menuEditField);
             builder.setRequiredRange(1, 1);
@@ -371,7 +370,7 @@ public class EchoGroup {
     }
 
     @IMenu(id = menuEditField)
-    public static void editFieldMenu(SelectMenuInteractionEvent event) {
+    public static void editFieldMenu(StringSelectInteractionEvent event) {
         SelectOption selectOption = event.getSelectedOptions().get(0);
         String       id           = event.getComponentId().split(":")[1];
 
@@ -427,7 +426,7 @@ public class EchoGroup {
         MessageEmbed.Field editedField = new MessageEmbed.Field(name, value, false);
         embedHandler.setField(editedField, index);
 
-        event.editMessageEmbeds(embedHandler.build()).setActionRows(EchoGroup.embedEditor(id)).queue();
+        event.editMessageEmbeds(embedHandler.build()).setComponents(EchoGroup.embedEditor(id)).queue();
     }
 
     //endregion
@@ -438,7 +437,7 @@ public class EchoGroup {
     public static void removeFieldButton(ButtonInteractionEvent event) {
         String id = event.getComponentId().split(":")[1];
 
-        SelectMenu.Builder builder;
+        StringSelectMenu.Builder builder;
         try {
             builder = EchoGroup.embedField(id, menuRemoveField);
             builder.setRequiredRange(1, 1);
@@ -452,7 +451,7 @@ public class EchoGroup {
     }
 
     @IMenu(id = menuRemoveField)
-    public static void removeFieldMenu(SelectMenuInteractionEvent event) {
+    public static void removeFieldMenu(StringSelectInteractionEvent event) {
         SelectOption selectOption = event.getSelectedOptions().get(0);
         String       id           = event.getComponentId().split(":")[1];
 
@@ -468,7 +467,7 @@ public class EchoGroup {
                 event.replyEmbeds(embed).setEphemeral(true).queue();
                 return;
             }
-            event.editMessageEmbeds(embedHandler.build()).setActionRows(EchoGroup.embedEditor(id)).queue();
+            event.editMessageEmbeds(embedHandler.build()).setComponents(EchoGroup.embedEditor(id)).queue();
         } else {
             event.editComponents(EchoGroup.embedEditor(id)).queue();
         }
@@ -561,8 +560,8 @@ public class EchoGroup {
         return actionRows;
     }
 
-    public static SelectMenu.Builder embedField(String id, String menuId) throws KeyNotFoundException {
-        SelectMenu.Builder        builder      = SelectMenu.create(menuId + ":" + id);
+    public static StringSelectMenu.Builder embedField(String id, String menuId) throws KeyNotFoundException {
+        StringSelectMenu.Builder  builder      = StringSelectMenu.create(menuId + ":" + id);
         EmbedManager.EmbedHandler embedHandler = embedManager.get(id);
 
         List<String> options = embedHandler.getFieldNames().stream().map(name -> {

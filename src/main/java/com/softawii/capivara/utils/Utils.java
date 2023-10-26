@@ -27,9 +27,8 @@ public class Utils {
     }
 
     /**
-     * @param text Text to be parsed
+     * @param text   Text to be parsed
      * @param length Max length of the text to be returned
-     *
      * @return Text with max length or less
      */
     public static String getProperString(String text, int length) {

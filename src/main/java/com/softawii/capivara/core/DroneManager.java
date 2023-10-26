@@ -14,13 +14,18 @@ import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +35,6 @@ import org.springframework.stereotype.Component;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -219,9 +223,9 @@ public class DroneManager {
 
                 Message claimMessage;
                 if (textChannel != null) {
-                    claimMessage = textChannel.sendMessageEmbeds(embed).setActionRows(ActionRow.of(claim)).complete();
+                    claimMessage = textChannel.sendMessageEmbeds(embed).setActionRow(claim).complete();
                 } else {
-                    claimMessage = channel.sendMessageEmbeds(embed).setActionRows(ActionRow.of(claim)).complete();
+                    claimMessage = channel.sendMessageEmbeds(embed).setActionRow(claim).complete();
                 }
 
                 drone.setClaimMessage(claimMessage.getIdLong());
@@ -266,7 +270,7 @@ public class DroneManager {
             RestAction<Void> actions = guild.moveVoiceMember(member, voice)
                     .and(voice.upsertPermissionOverride(member).grant(Permission.VOICE_CONNECT, Permission.VIEW_CHANNEL));
 
-            if(text != null) {
+            if (text != null) {
                 actions.and(text.upsertPermissionOverride(publicRole).deny(Permission.VIEW_CHANNEL))
                         .and(text.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL))
                         .submit();
@@ -330,46 +334,49 @@ public class DroneManager {
         // region Buttons
         // General Config
 
-        net.dv8tion.jda.api.interactions.components.buttons.Button config     = net.dv8tion.jda.api.interactions.components.buttons.Button.primary(VoiceGroup.Dynamic.droneConfig, "🔧 Settings");
-        net.dv8tion.jda.api.interactions.components.buttons.Button visibility = net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(VoiceGroup.Dynamic.droneHideShow, isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
-        net.dv8tion.jda.api.interactions.components.buttons.Button connect    = net.dv8tion.jda.api.interactions.components.buttons.Button.secondary(VoiceGroup.Dynamic.dronePublicPrivate, canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
-        net.dv8tion.jda.api.interactions.components.buttons.Button permanent  = Button.danger(VoiceGroup.Dynamic.dronePermTemp, drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
-
-        ActionRow general = ActionRow.of(config, visibility, connect, permanent);
+        Button    config     = Button.primary(VoiceGroup.Dynamic.droneConfig, "🔧 Settings");
+        Button    visibility = Button.secondary(VoiceGroup.Dynamic.droneHideShow, isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
+        Button    connect    = Button.secondary(VoiceGroup.Dynamic.dronePublicPrivate, canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
+        Button    permanent  = Button.danger(VoiceGroup.Dynamic.dronePermTemp, drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
+        ActionRow general    = ActionRow.of(config, visibility, connect, permanent);
         // endregion
 
         // Send the message
-        sendControlPanel(textChannel, drone, builder, java.util.List.of(general));
+        sendControlPanel(textChannel, drone, builder, general);
     }
 
-    private void sendControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, java.util.List<ActionRow> actionRows) {
+    private void sendControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, ActionRow actionRow) {
         // We already have a message, so we need to update it
         if (drone.getControlPanel() != null) {
             Member owner = channel.getGuild().getMemberById(drone.getOwnerId());
             channel.editMessageById(drone.getControlPanel(), "Hello!")
                     .setEmbeds(builder.build())
-                    .setActionRows(actionRows)
+                    .setComponents(actionRow)
                     .queue(q -> { /* It's ok! */}, e -> {
-                LOGGER.error("Error updating control panel: {}", e.getMessage());
-                // If error, we need to create a new one
-                sendNewControlPanel(channel, drone, builder, actionRows);
-            });
+                        LOGGER.error("Error updating control panel: {}", e.getMessage());
+                        // If error, we need to create a new one
+                        sendNewControlPanel(channel, drone, builder, actionRow);
+                    });
         } else {
-            sendNewControlPanel(channel, drone, builder, actionRows);
+            sendNewControlPanel(channel, drone, builder, actionRow);
         }
     }
 
-    private void sendNewControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, List<ActionRow> actionRows) {
+    private void sendNewControlPanel(GuildMessageChannel channel, VoiceDrone drone, EmbedBuilder builder, ActionRow actionRow) {
         Member owner = channel.getGuild().getMemberById(drone.getOwnerId());
-        channel.sendMessage("Hello!").setEmbeds(builder.build()).setActionRows(actionRows).queue(q -> {
-            drone.setControlPanel(q.getIdLong());
-            try {
-                voiceDroneService.update(drone);
-            } catch (KeyNotFoundException ex) {
-                // WTF????
-                throw new RuntimeException(ex);
-            }
-        }, ee -> LOGGER.error("Error creating control panel: {}", ee.getMessage()));
+        channel.sendMessage("Hello!")
+                .setEmbeds(builder.build())
+                .setComponents(actionRow)
+                .setSuppressedNotifications(true)
+                .queue(q -> {
+                    drone.setControlPanel(q.getIdLong());
+                    try {
+                        voiceDroneService.update(drone);
+                    } catch (KeyNotFoundException ex) {
+                        // WTF????
+                        throw new RuntimeException(ex);
+                    }
+                }, ee -> LOGGER.error("Error creating control panel: {}", ee.getMessage()));
     }
 
     public void makePermanent(VoiceChannel channel, boolean permanent) throws KeyNotFoundException {
@@ -385,7 +392,7 @@ public class DroneManager {
 
         Matcher menteMatcher = this.digdinRegex.matcher(username);
 
-        if(menteMatcher.find()) {
+        if (menteMatcher.find()) {
             digdin = menteMatcher.group("nome");
         }
 

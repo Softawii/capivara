@@ -4,9 +4,10 @@ import com.softawii.curupira.core.ExceptionHandler;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.interactions.Interaction;
-import net.dv8tion.jda.api.requests.restaction.MessageAction;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
+import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,9 +56,9 @@ public class CapivaraExceptionHandler implements ExceptionHandler {
             String       logFileName        = String.format("capivara-log-%s.log", now);
             MessageEmbed interactionContext = getInteractionContext(interaction);
             try {
-                MessageAction messageAction = channel.sendFile(stackTrace.getBytes(StandardCharsets.UTF_8), stackTraceFileName).setEmbeds(interactionContext);
+                MessageCreateAction messageAction = channel.sendFiles(FileUpload.fromData(stackTrace.getBytes(StandardCharsets.UTF_8), stackTraceFileName)).setEmbeds(interactionContext);
                 if (logFileBytes != null) {
-                    messageAction = messageAction.addFile(logFileBytes, logFileName);
+                    messageAction = messageAction.addFiles(FileUpload.fromData(logFileBytes, logFileName));
                 }
                 messageAction.submit();
             } catch (IllegalArgumentException e) {

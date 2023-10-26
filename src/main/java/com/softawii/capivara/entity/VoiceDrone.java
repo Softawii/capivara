@@ -89,12 +89,12 @@ public class VoiceDrone {
         return permanent;
     }
 
-    public Boolean isPermanent() {
-        return permanent;
-    }
-
     public void setPermanent(Boolean permanent) {
         this.permanent = permanent;
+    }
+
+    public Boolean isPermanent() {
+        return permanent;
     }
 
     public Long getChatId() {

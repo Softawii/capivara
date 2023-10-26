@@ -22,7 +22,7 @@ public class Main {
 
     public static void main(String[] args) {
         context = SpringApplication.run(Main.class, args);
-        JDA jda = context.getBean(JDA.class);
+        JDA             jda             = context.getBean(JDA.class);
         BuildProperties buildProperties = context.getBean(BuildProperties.class);
         jda.getPresence().setPresence(Activity.of(Activity.ActivityType.PLAYING, buildProperties.getVersion()), true);
         LOGGER.info(buildProperties.getVersion() + " Bot is ready as " + jda.getSelfUser().getName());
