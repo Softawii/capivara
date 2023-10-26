@@ -40,6 +40,7 @@ podman run -d \
     --memory 200M \
     --name $CONTAINER_NAME \
     --restart always \
+    --network slirp4netns:allow_host_loopback=true \
     $CONTAINER_REPOSITORY || { echo 'Failed to start container failed'; exit 1; }
 
 
