@@ -46,7 +46,7 @@ podman run -d \
 
 SLEEP=10
 CHECKS=0
-MAX_CHECKS=3
+MAX_CHECKS=6
 echo "Starting 'healthcheck'"
 while true; do
     NEW_CONTAINER_ID=$(podman ps --quiet --filter "name=$CONTAINER_NAME")

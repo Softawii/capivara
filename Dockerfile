@@ -37,5 +37,5 @@ ENTRYPOINT java ${JAVA_ARGS} -jar CapivaraBot.jar \
     --spring.datasource.driverClassName=${DATABASE_DRIVER} \
     --spring.jpa.database-platform=${DATABASE_DIALECT} \
     --spring.datasource.url=${DATABASE_URL} \
-    --spring.datasource.username=${DATABASE_URL} \
-    --spring.datasource.password=${DATABASE_URL}
+    --spring.datasource.username=${DATABASE_USERNAME} \
+    --spring.datasource.password=${DATABASE_PASSWORD}
