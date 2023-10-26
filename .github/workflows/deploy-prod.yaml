@@ -27,7 +27,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: 'Build and Generate JAR'
-        run: ./gradlew build deploy --no-daemon -P version=${{github.ref_name}}
+        run: ./gradlew deploy --no-daemon -P version=${{github.ref_name}}
 
       - name: 'Wait for SSH'
         run: |

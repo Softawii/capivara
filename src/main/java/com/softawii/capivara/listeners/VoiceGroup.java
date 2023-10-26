@@ -27,6 +27,8 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.Collections;
@@ -139,6 +141,7 @@ public class VoiceGroup {
     }
 
     @ISubGroup(name = "Dynamic", description = "Dynamic")
+    @Component
     public static class Dynamic extends ListenerAdapter {
 
         public static final long   inviteDeadline      = 1000L * 10L * 60L; // 600000 ms = 10 minutes
@@ -150,8 +153,18 @@ public class VoiceGroup {
         public static final String dronePublicPrivate  = "voice-dynamic-drone-public-private";
         public static final String dronePermTemp       = "voice-dynamic-drone-permanent-temporary";
         public static final String droneClaim          = "voice-dynamic-drone-claim";
-        public static VoiceManager voiceManager;
-        public static DroneManager droneManager;
+        private static      VoiceManager voiceManager;
+        private static      DroneManager droneManager;
+
+        @Autowired
+        public void setVoiceManager(VoiceManager voiceManager) {
+            Dynamic.voiceManager = voiceManager;
+        }
+
+        @Autowired
+        public void setDroneManager(DroneManager droneManager) {
+            Dynamic.droneManager = droneManager;
+        }
 
         // endregion
 

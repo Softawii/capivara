@@ -45,7 +45,6 @@ public class DroneManager {
     private final Logger            LOGGER = LogManager.getLogger(VoiceManager.class);
     private final VoiceDroneService voiceDroneService;
     private final VoiceHiveService  voiceHiveService;
-    private final VoiceManager      voiceManager;
 
     private final String renameDrone     = "drone-manager-rename";
     private final String limitDrone      = "drone-manager-limit";
@@ -54,11 +53,9 @@ public class DroneManager {
 
     private final Pattern digdinRegex;
 
-
-    public DroneManager(VoiceDroneService voiceDroneService, VoiceHiveService voiceHiveService, VoiceManager voiceManager) {
+    public DroneManager(VoiceDroneService voiceDroneService, VoiceHiveService voiceHiveService) {
         this.voiceDroneService = voiceDroneService;
         this.voiceHiveService = voiceHiveService;
-        this.voiceManager = voiceManager;
         this.digdinRegex = Pattern.compile("(?<nome>\\w+mente).+(Digdin)");
     }
 
