@@ -1,7 +1,6 @@
 package com.softawii.capivara.listeners;
 
 
-import com.softawii.capivara.Main;
 import com.softawii.capivara.core.EmbedManager;
 import com.softawii.capivara.exceptions.FieldLengthException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
@@ -30,6 +29,8 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 @IGroup(name = "echo", description = "Echo Group")
+@Component
 public class EchoGroup {
 
     public static final String buttonEditMessage = "echo-edit-message";
@@ -68,7 +70,18 @@ public class EchoGroup {
     //endregion
     private static final Logger LOGGER = LogManager.getLogger(EchoGroup.class);
 
-    public static EmbedManager embedManager;
+    private static EmbedManager embedManager;
+    private static Curupira     curupira;
+
+    @Autowired
+    public void setCurupira(Curupira curupira) {
+        EchoGroup.curupira = curupira;
+    }
+
+    @Autowired
+    public void setEmbedManager(EmbedManager embedManager) {
+        EchoGroup.embedManager = embedManager;
+    }
 
     @ICommand(name = "echo",
               description = "Quer enviar uma mensagem para o canal como se fosse o bot? Um anúncio? Pode me usar!",
@@ -182,7 +195,6 @@ public class EchoGroup {
         }
 
         // Generating Embed Model
-        Curupira      curupira = Main.context.getBean(Curupira.class);
         Modal.Builder modal    = curupira.getModal(modalTitle);
         modal.setId(modal.getId() + ":" + id);
 
@@ -247,7 +259,6 @@ public class EchoGroup {
         }
 
         // Generating Embed Model
-        Curupira      curupira = Main.context.getBean(Curupira.class);
         Modal.Builder modal    = curupira.getModal(modalImage);
         modal.setId(modal.getId() + ":" + id);
 
@@ -304,7 +315,6 @@ public class EchoGroup {
         }
 
         // Generating Embed Model
-        Curupira      curupira = Main.context.getBean(Curupira.class);
         Modal.Builder modal    = curupira.getModal(modalNewField);
         modal.setId(modal.getId() + ":" + id);
 
@@ -386,7 +396,6 @@ public class EchoGroup {
                 return;
             }
 
-            Curupira      curupira = Main.context.getBean(Curupira.class);
             Modal.Builder modal    = curupira.getModal(modalEditField);
             modal.setId(modal.getId() + ":" + id + ":" + index);
 
@@ -481,7 +490,6 @@ public class EchoGroup {
     @IButton(id = buttonEditMessage)
     public static void editMessage(ButtonInteractionEvent event) {
         String        id       = event.getComponentId().split(":")[1];
-        Curupira      curupira = Main.context.getBean(Curupira.class);
         Modal.Builder builder  = curupira.getModal(modalEditMessage).setId(modalEditMessage + ":" + id);
         event.replyModal(builder.build()).queue();
     }
