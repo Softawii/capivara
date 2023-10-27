@@ -12,6 +12,7 @@ import com.softawii.capivara.services.VoiceHiveService;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -45,6 +46,7 @@ public class DroneManager {
     private final Logger            LOGGER = LogManager.getLogger(VoiceManager.class);
     private final VoiceDroneService voiceDroneService;
     private final VoiceHiveService  voiceHiveService;
+    private final JDA jda;
 
     private final String renameDrone     = "drone-manager-rename";
     private final String limitDrone      = "drone-manager-limit";
@@ -53,10 +55,14 @@ public class DroneManager {
 
     private final Pattern digdinRegex;
 
-    public DroneManager(VoiceDroneService voiceDroneService, VoiceHiveService voiceHiveService) {
+    public DroneManager(JDA jda, VoiceDroneService voiceDroneService, VoiceHiveService voiceHiveService) {
         this.voiceDroneService = voiceDroneService;
         this.voiceHiveService = voiceHiveService;
+        this.jda = jda;
         this.digdinRegex = Pattern.compile("(?<nome>\\w+mente).+(Digdin)");
+
+        // Checking if some channel is pending
+        checkEmptyDrones();
     }
 
     public boolean canInteract(VoiceChannel channel, Member member) throws KeyNotFoundException {
@@ -205,7 +211,12 @@ public class DroneManager {
 
             int         online      = channel.getMembers().size();
             TextChannel textChannel = channel.getGuild().getTextChannelById(drone.getChatId());
-            if (online == 0) {
+            if (wasDeleted) {
+                voiceDroneService.destroy(snowflakeId);
+                if (textChannel != null) {
+                    textChannel.delete().submit();
+                }
+            } else if (online == 0) {
                 voiceDroneService.destroy(snowflakeId);
 
                 if (textChannel != null) {
@@ -213,7 +224,7 @@ public class DroneManager {
                 } else {
                     channel.delete().submit();
                 }
-            } else if (member != null && member.getIdLong() == drone.getOwnerId()) {
+            } else if (member == null || member.getIdLong() == drone.getOwnerId()) {
                 // Election Mode!
                 MessageEmbed embed = claimChat();
                 Button       claim = Button.success(VoiceGroup.Dynamic.droneClaim, "Claim");
@@ -500,5 +511,30 @@ public class DroneManager {
         drone.setOwnerId(member.getIdLong());
         voiceDroneService.update(drone);
         createControlPanel(voiceChannel);
+    }
+
+    public void checkEmptyDrones() {
+        LOGGER.debug("Checking current hives and drones...");
+        // Checking if some channel needs to be removed
+        this.voiceDroneService.findAll().forEach(drone -> {
+            VoiceChannel channel = this.jda.getVoiceChannelById(drone.getChannelId());
+            TextChannel  text = null;
+
+            if(drone.getChatId() != 0L) text = this.jda.getTextChannelById(drone.getChatId());
+
+            if (channel == null) {
+                try {
+                    LOGGER.info("Removing drone from DB: {}", drone.getChannelId());
+                    voiceDroneService.destroy(drone.getChannelId());
+                    if(text != null) text.delete().submit();
+                } catch (KeyNotFoundException e) {
+                    // Ok
+                }
+            } else {
+                Optional<Member> ownerOpt = channel.getMembers().stream().filter(member -> member.getIdLong() == drone.getOwnerId()).findFirst();
+                LOGGER.info("Checking to remove drone: {}", drone.getChannelId());
+                if(ownerOpt.isEmpty()) this.checkToDeleteTemporary(channel, null, false);
+            }
+        });
     }
 }

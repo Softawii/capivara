@@ -6,6 +6,7 @@ import com.softawii.capivara.repository.VoiceDroneRepository;
 import org.springframework.stereotype.Service;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
+import java.util.List;
 
 @Service
 public class VoiceDroneService {
@@ -41,5 +42,9 @@ public class VoiceDroneService {
 
     public VoiceDrone findByChatId(Long snowflakeId) throws KeyNotFoundException {
         return voiceDroneRepository.findByChatId(snowflakeId);
+    }
+
+    public List<VoiceDrone> findAll() {
+        return voiceDroneRepository.findAll();
     }
 }

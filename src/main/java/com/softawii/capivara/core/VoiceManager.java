@@ -5,6 +5,7 @@ import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.services.VoiceHiveService;
 import com.softawii.capivara.utils.Utils;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -30,10 +31,12 @@ public class VoiceManager {
     public static final String configModal_fieldStreaming = "set-streaming";
     public static final String configModal_createText = "set-text";
     private final VoiceHiveService voiceHiveService;
+    private final JDA jda;
     private final Logger           LOGGER = LogManager.getLogger(VoiceManager.class);
 
-    public VoiceManager(VoiceHiveService voiceHiveService) {
+    public VoiceManager(JDA jda, VoiceHiveService voiceHiveService) {
         this.voiceHiveService = voiceHiveService;
+        this.jda = jda;
     }
 
     public boolean isDynamicCategory(Category category) {
@@ -125,5 +128,30 @@ public class VoiceManager {
         voiceHiveService.update(voiceHive);
 
         return voiceHive;
+    }
+
+    public void checkRemovedHives() {
+        this.voiceHiveService.findAll().forEach(voiceHive -> {
+            Category category = this.jda.getCategoryById(voiceHive.getCategoryId());
+            if (category == null) {
+                try {
+                    LOGGER.info("Deleting removed hive 1: {}", voiceHive.getCategoryId());
+                    voiceHiveService.destroy(voiceHive.getCategoryId());
+                } catch (KeyNotFoundException e) {
+                    LOGGER.debug("Key not found, ignoring...");
+                }
+            } else {
+                VoiceChannel channel = this.jda.getVoiceChannelById(voiceHive.getVoiceId());
+
+                if(channel == null || channel.getParentCategoryIdLong() != voiceHive.getCategoryId()) {
+                    try {
+                        LOGGER.info("Deleting removed hive 2: {}", voiceHive.getCategoryId());
+                        voiceHiveService.destroy(voiceHive.getCategoryId());
+                    } catch (KeyNotFoundException e) {
+                        LOGGER.debug("Key not found, ignoring...");
+                    }
+                }
+            }
+        });
     }
 }

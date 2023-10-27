@@ -48,4 +48,8 @@ public class VoiceHiveService {
         Optional<VoiceHive> voiceHive = voiceHiveRepository.findById(SnowflakeId);
         return voiceHive.orElseThrow(KeyNotFoundException::new);
     }
+
+    public List<VoiceHive> findAll() {
+        return voiceHiveRepository.findAll();
+    }
 }

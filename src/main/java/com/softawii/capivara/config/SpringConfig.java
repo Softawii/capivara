@@ -62,15 +62,12 @@ public class SpringConfig {
     }
 
     @Bean
-    public JDA jda(VoiceEvents voiceEvents) {
+    public JDA jda() {
         JDA jda;
         try {
             JDABuilder builder = JDABuilder.create(discordToken, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS, GatewayIntent.GUILD_PRESENCES);
             builder.setMemberCachePolicy(MemberCachePolicy.ALL);
             builder.enableCache(CacheFlag.EMOJI, CacheFlag.ROLE_TAGS, CacheFlag.MEMBER_OVERRIDES, CacheFlag.STICKER);
-            builder.addEventListeners(
-                    voiceEvents
-            );
             jda = builder.build();
             jda.awaitReady();
         } catch (InterruptedException e) {
