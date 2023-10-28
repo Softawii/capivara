@@ -542,7 +542,7 @@ public class DroneManager {
                 voiceDroneService.destroy(drone.getChannelId());
                 if(text != null) text.delete().submit();
             } catch (KeyNotFoundException e) {
-                // Ok
+                LOGGER.info("Key not found, ignoring...");
             }
         } else {
             Optional<Member> ownerOpt = channel.getMembers().stream().filter(member -> member.getIdLong() == drone.getOwnerId()).findFirst();
