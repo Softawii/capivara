@@ -34,9 +34,9 @@ public class VoiceEvents extends ListenerAdapter {
         this.voiceManager = voiceManager;
         this.droneManager = droneManager;
         this.jda = jda;
-        this.jda.addEventListener(this);
         this.droneManager.checkEmptyDrones();
         this.voiceManager.checkRemovedHives();
+        this.jda.addEventListener(this);
     }
 
     //region Voice Events

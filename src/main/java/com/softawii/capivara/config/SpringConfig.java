@@ -1,6 +1,5 @@
 package com.softawii.capivara.config;
 
-import com.softawii.capivara.listeners.events.VoiceEvents;
 import com.softawii.capivara.utils.CapivaraExceptionHandler;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
