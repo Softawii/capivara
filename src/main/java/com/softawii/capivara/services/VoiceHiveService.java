@@ -4,6 +4,8 @@ import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.repository.VoiceHiveRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,5 +49,9 @@ public class VoiceHiveService {
     public VoiceHive find(Long SnowflakeId) throws KeyNotFoundException {
         Optional<VoiceHive> voiceHive = voiceHiveRepository.findById(SnowflakeId);
         return voiceHive.orElseThrow(KeyNotFoundException::new);
+    }
+
+    public Page<VoiceHive> findAll(Pageable request) {
+        return voiceHiveRepository.findAll(request);
     }
 }

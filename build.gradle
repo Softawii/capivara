@@ -39,7 +39,6 @@ dependencies {
 
     implementation("com.github.Softawii:curupira:v0.3.0")
     implementation("com.github.Softawii:curupira:v0.3.0:all")
-    implementation("com.github.minndevelopment:emoji-java:master-SNAPSHOT")
 }
 
 tasks.register('deploy') {

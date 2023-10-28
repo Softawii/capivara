@@ -3,6 +3,8 @@ package com.softawii.capivara.services;
 import com.softawii.capivara.entity.VoiceDrone;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.repository.VoiceDroneRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
@@ -41,5 +43,9 @@ public class VoiceDroneService {
 
     public VoiceDrone findByChatId(Long snowflakeId) throws KeyNotFoundException {
         return voiceDroneRepository.findByChatId(snowflakeId);
+    }
+
+    public Page<VoiceDrone> findAll(Pageable request) {
+        return voiceDroneRepository.findAll(request);
     }
 }

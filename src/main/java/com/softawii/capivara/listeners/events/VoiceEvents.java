@@ -4,6 +4,7 @@ import com.softawii.capivara.core.DroneManager;
 import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
@@ -27,10 +28,15 @@ public class VoiceEvents extends ListenerAdapter {
     private final DroneManager droneManager;
 
     private final Logger LOGGER = LogManager.getLogger(VoiceEvents.class);
+    private final JDA    jda;
 
-    public VoiceEvents(VoiceManager voiceManager, DroneManager droneManager) {
+    public VoiceEvents(JDA jda, VoiceManager voiceManager, DroneManager droneManager) {
         this.voiceManager = voiceManager;
         this.droneManager = droneManager;
+        this.jda = jda;
+        this.droneManager.checkEmptyDrones();
+        this.voiceManager.checkRemovedHives();
+        this.jda.addEventListener(this);
     }
 
     //region Voice Events
