@@ -15,6 +15,9 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -131,27 +134,38 @@ public class VoiceManager {
     }
 
     public void checkRemovedHives() {
-        this.voiceHiveService.findAll().forEach(voiceHive -> {
-            Category category = this.jda.getCategoryById(voiceHive.getCategoryId());
-            if (category == null) {
+        Pageable request = PageRequest.of(0, 100);
+        Page<VoiceHive> page = this.voiceHiveService.findAll(request);
+
+        while (page.hasContent()) {
+            LOGGER.debug("Checking page: {}", request.getPageNumber());
+            page.forEach(this::checkIfHiveIsStillValid);
+            request = request.next();
+            page = this.voiceHiveService.findAll(request);
+        }
+    }
+
+    public void checkIfHiveIsStillValid(VoiceHive voiceHive) {
+        LOGGER.info("Checking if hive is still valid: {}", voiceHive.getCategoryId());
+        Category category = this.jda.getCategoryById(voiceHive.getCategoryId());
+        if (category == null) {
+            try {
+                LOGGER.info("Deleting removed hive 1: {}", voiceHive.getCategoryId());
+                voiceHiveService.destroy(voiceHive.getCategoryId());
+            } catch (KeyNotFoundException e) {
+                LOGGER.debug("Key not found, ignoring...");
+            }
+        } else {
+            VoiceChannel channel = this.jda.getVoiceChannelById(voiceHive.getVoiceId());
+
+            if(channel == null || channel.getParentCategoryIdLong() != voiceHive.getCategoryId()) {
                 try {
-                    LOGGER.info("Deleting removed hive 1: {}", voiceHive.getCategoryId());
+                    LOGGER.info("Deleting removed hive 2: {}", voiceHive.getCategoryId());
                     voiceHiveService.destroy(voiceHive.getCategoryId());
                 } catch (KeyNotFoundException e) {
                     LOGGER.debug("Key not found, ignoring...");
                 }
-            } else {
-                VoiceChannel channel = this.jda.getVoiceChannelById(voiceHive.getVoiceId());
-
-                if(channel == null || channel.getParentCategoryIdLong() != voiceHive.getCategoryId()) {
-                    try {
-                        LOGGER.info("Deleting removed hive 2: {}", voiceHive.getCategoryId());
-                        voiceHiveService.destroy(voiceHive.getCategoryId());
-                    } catch (KeyNotFoundException e) {
-                        LOGGER.debug("Key not found, ignoring...");
-                    }
-                }
             }
-        });
+        }
     }
 }
