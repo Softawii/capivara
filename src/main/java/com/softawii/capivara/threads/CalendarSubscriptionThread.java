@@ -1,12 +1,7 @@
 package com.softawii.capivara.threads;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
-import com.softawii.capivara.core.CalendarManager;
 import com.softawii.capivara.entity.Calendar;
 import com.softawii.capivara.services.CalendarService;
 import net.dv8tion.jda.api.JDA;
@@ -14,14 +9,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.init.Jackson2RepositoryPopulatorFactoryBean;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.List;
-import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -45,10 +36,12 @@ public class CalendarSubscriptionThread implements Runnable {
     private final BlockingQueue<String> queue;
     private final ScheduledExecutorService scheduler;
     private final JDA jda;
+    private final com.google.api.services.calendar.Calendar googleCalendarService;
     private final CalendarService calendarService;
 
-    public CalendarSubscriptionThread(JDA jda, CalendarService calendarService) {
+    public CalendarSubscriptionThread(JDA jda, CalendarService calendarService, com.google.api.services.calendar.Calendar googleCalendarService) {
         this.jda = jda;
+        this.googleCalendarService = googleCalendarService;
         this.queue = new LinkedBlockingQueue<>();
         this.scheduler = Executors.newScheduledThreadPool(1);
         this.calendarService = calendarService;
@@ -69,14 +62,13 @@ public class CalendarSubscriptionThread implements Runnable {
         }
     }
 
-    private void subscribe(Calendar calendar) throws GeneralSecurityException, IOException {
-        NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        GsonFactory factory = GsonFactory.getDefaultInstance();
-
-        com.google.api.services.calendar.Calendar service = new com.google.api.services.calendar.Calendar.Builder(httpTransport, factory, null).setApplicationName("Capivara").build();
+    private void subscribe(Calendar calendar) throws IOException {
         String pageToken = null;
         do {
-            Events events = service.events().list(calendar.getGoogleCalendarId()).setPageToken(pageToken).execute();
+            Events events = googleCalendarService.events()
+                    .list(calendar.getGoogleCalendarId())
+                    .setPageToken(pageToken)
+                    .execute();
             List<Event> items = events.getItems();
             for (Event event : items) {
                 LOGGER.info(event.getSummary());

@@ -1,5 +1,9 @@
 package com.softawii.capivara.config;
 
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.calendar.Calendar;
 import com.softawii.capivara.utils.CapivaraExceptionHandler;
 import com.softawii.curupira.core.Curupira;
 import net.dv8tion.jda.api.JDA;
@@ -39,6 +43,9 @@ public class SpringConfig {
     private final        Environment env;
     @Value("${token}")
     private              String      discordToken;
+
+    @Value("${google.calendar.api_token}")
+    private String googleCalendarApiToken;
 
     public SpringConfig(Environment env) {
         this.env = env;
@@ -125,5 +132,23 @@ public class SpringConfig {
     @Bean
     public PersistenceExceptionTranslationPostProcessor exceptionTranslation() {
         return new PersistenceExceptionTranslationPostProcessor();
+    }
+
+    @Bean
+    public Calendar googleCalendar() {
+        NetHttpTransport httpTransport;
+        try {
+            httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize GoogleNetHttpTransport", e);
+        }
+        GsonFactory factory = GsonFactory.getDefaultInstance();
+
+        Calendar service = new Calendar.Builder(httpTransport, factory, null)
+                .setApplicationName("Capivara")
+                .setGoogleClientRequestInitializer(request -> request.set("key", googleCalendarApiToken))
+                .build();
+
+        return service;
     }
 }
