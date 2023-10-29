@@ -1,6 +1,7 @@
 package com.softawii.capivara.services;
 
 import com.softawii.capivara.entity.Calendar;
+import com.softawii.capivara.exceptions.DuplicatedKeyException;
 import com.softawii.capivara.repository.CalendarRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,10 +26,10 @@ public class CalendarService {
         return repository.findById(calendarKey);
     }
 
-    public void create(Calendar calendar) {
+    public void create(Calendar calendar) throws DuplicatedKeyException {
         if (repository.existsById(calendar.getCalendarKey())) {
             // TODO: create new exception
-            throw new RuntimeException("Calendar already exists with this name and guild");
+            throw new DuplicatedKeyException("Calendar already exists with this name and guild, use update instead");
         }
         repository.save(calendar);
     }

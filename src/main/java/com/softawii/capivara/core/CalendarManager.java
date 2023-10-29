@@ -1,6 +1,7 @@
 package com.softawii.capivara.core;
 
 import com.softawii.capivara.entity.Calendar;
+import com.softawii.capivara.exceptions.DuplicatedKeyException;
 import com.softawii.capivara.services.CalendarService;
 import com.softawii.capivara.threads.CalendarSubscriptionThread;
 import net.dv8tion.jda.api.JDA;
@@ -24,7 +25,7 @@ public class CalendarManager {
         this.subscriber = subscriber;
     }
 
-    public void createCalendar(String googleCalendarId, String name, GuildChannelUnion channel, Role role) {
+    public void createCalendar(String googleCalendarId, String name, GuildChannelUnion channel, Role role) throws DuplicatedKeyException {
         Long guildId = channel.getGuild().getIdLong();
         Long channelId = channel.getIdLong();
         Long roleId = role != null ? role.getIdLong() : null;

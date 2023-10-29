@@ -3,6 +3,7 @@ package com.softawii.capivara.threads;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.Events;
 import com.softawii.capivara.entity.Calendar;
+import com.softawii.capivara.entity.internal.CalendarSubscriber;
 import com.softawii.capivara.services.CalendarService;
 import net.dv8tion.jda.api.JDA;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +39,7 @@ public class CalendarSubscriptionThread implements Runnable {
     private final JDA jda;
     private final com.google.api.services.calendar.Calendar googleCalendarService;
     private final CalendarService calendarService;
+//    private final HashMap<String, >
 
     public CalendarSubscriptionThread(JDA jda, CalendarService calendarService, com.google.api.services.calendar.Calendar googleCalendarService) {
         this.jda = jda;
@@ -45,36 +47,26 @@ public class CalendarSubscriptionThread implements Runnable {
         this.queue = new LinkedBlockingQueue<>();
         this.scheduler = Executors.newScheduledThreadPool(1);
         this.calendarService = calendarService;
+
+        startupSubscriber();
+
+        Thread thread = new Thread(this);
+        thread.start();
+        LOGGER.info("CalendarSubscriptionThread started");
     }
 
-    public void niceName() {
+    private void startupSubscriber() {
         PageRequest request = PageRequest.of(0, 100);
         Page<Calendar> calendarPage = this.calendarService.findAll(request);
         while (calendarPage.hasContent()) {
-            calendarPage.forEach(calendar -> {
-                Calendar.CalendarKey calendarKey = calendar.getCalendarKey();
-                String name = calendarKey.getCalendarName();
-                Long guildId = calendarKey.getGuildId();
-            });
-
+            calendarPage.forEach(this::subscribe);
             request = request.next();
             calendarPage = this.calendarService.findAll(request);
         }
     }
 
-    private void subscribe(Calendar calendar) throws IOException {
-        String pageToken = null;
-        do {
-            Events events = googleCalendarService.events()
-                    .list(calendar.getGoogleCalendarId())
-                    .setPageToken(pageToken)
-                    .execute();
-            List<Event> items = events.getItems();
-            for (Event event : items) {
-                LOGGER.info(event.getSummary());
-            }
-            pageToken = events.getNextPageToken();
-        } while (pageToken != null);
+    private void subscribe(Calendar calendar) {
+        new CalendarSubscriber(calendar.getGoogleCalendarId(), this.googleCalendarService, calendar.getCalendarKey());
     }
 
     @Override
