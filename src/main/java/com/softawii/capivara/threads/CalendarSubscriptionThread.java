@@ -1,10 +1,9 @@
 package com.softawii.capivara.threads;
 
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.Events;
 import com.softawii.capivara.entity.Calendar;
 import com.softawii.capivara.entity.internal.CalendarSubscriber;
 import com.softawii.capivara.services.CalendarService;
+import com.softawii.capivara.services.GoogleCalendarService;
 import net.dv8tion.jda.api.JDA;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,12 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.*;
 
 @Component
 public class CalendarSubscriptionThread implements Runnable {
@@ -36,23 +32,31 @@ public class CalendarSubscriptionThread implements Runnable {
     private final Logger LOGGER = LogManager.getLogger(CalendarSubscriptionThread.class);
     private final BlockingQueue<String> queue;
     private final ScheduledExecutorService scheduler;
-    private final JDA jda;
-    private final com.google.api.services.calendar.Calendar googleCalendarService;
-    private final CalendarService calendarService;
-//    private final HashMap<String, >
+    private final JDA                      jda;
+    private final GoogleCalendarService    googleCalendarService;
+    private final CalendarService          calendarService;
+    private final Map<String, CalendarSubscriber> subscribers;
 
-    public CalendarSubscriptionThread(JDA jda, CalendarService calendarService, com.google.api.services.calendar.Calendar googleCalendarService) {
+    public CalendarSubscriptionThread(JDA jda, CalendarService calendarService, GoogleCalendarService googleCalendarService) {
         this.jda = jda;
         this.googleCalendarService = googleCalendarService;
         this.queue = new LinkedBlockingQueue<>();
-        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.calendarService = calendarService;
-
-        startupSubscriber();
-
-        Thread thread = new Thread(this);
-        thread.start();
+        this.subscribers = new HashMap<>();
+        this.setup();
         LOGGER.info("CalendarSubscriptionThread started");
+    }
+
+    private void setup() {
+        startupSubscriber();
+        this.scheduler.scheduleAtFixedRate(() -> {
+            LOGGER.info("Updating calendar events");
+            this.subscribers.values().forEach(CalendarSubscriber::update);
+        }, 0, 1, TimeUnit.MINUTES);
+
+        Thread thread = new Thread(this, "CalendarSubscriptionThread");
+        thread.start();
     }
 
     private void startupSubscriber() {
@@ -65,8 +69,27 @@ public class CalendarSubscriptionThread implements Runnable {
         }
     }
 
-    private void subscribe(Calendar calendar) {
-        new CalendarSubscriber(calendar.getGoogleCalendarId(), this.googleCalendarService, calendar.getCalendarKey());
+    public void subscribe(Calendar calendar) {
+        CalendarSubscriber subscriber = this.subscribers.get(calendar.getGoogleCalendarId());
+        if (subscriber == null) {
+            subscriber = new CalendarSubscriber(calendar.getGoogleCalendarId(), this.googleCalendarService, jda);
+            this.subscribers.put(calendar.getGoogleCalendarId(), subscriber);
+        }
+
+        subscriber.subscribe(calendar);
+    }
+
+    public void unsubscribe(Calendar calendar) {
+        CalendarSubscriber subscriber = this.subscribers.get(calendar.getGoogleCalendarId());
+        if (subscriber == null) {
+            throw new RuntimeException("There is no subscription available");
+        }
+
+        subscriber.unsubscribe(calendar);
+        if (!subscriber.isThereAnyConsumer()) {
+            subscriber.purge();
+            this.subscribers.remove(calendar.getGoogleCalendarId());
+        }
     }
 
     @Override

@@ -31,6 +31,7 @@ public class CalendarManager {
         Long roleId = role != null ? role.getIdLong() : null;
         Calendar calendar = new Calendar(guildId, googleCalendarId, name, channelId, roleId);
 
-        service.create(calendar);
+        this.service.create(calendar);
+        this.subscriber.subscribe(calendar);
     }
 }
