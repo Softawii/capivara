@@ -87,6 +87,9 @@ public class CalendarSubscriber {
         this.jda = jda;
         this.events = new HashMap<>();
         this.consumers = new ArrayList<>();
+
+        // Forcing Get Event Info
+        this.update();
     }
 
     public void subscribe(Calendar consumer) {
@@ -137,7 +140,7 @@ public class CalendarSubscriber {
         }
     }
 
-    public void update() {
+    public synchronized void update() {
         LOGGER.info("Updating calendar events for calendar '{}'", this.googleCalendarId);
         List<Event> events = this.googleCalendarService.getEvents(this.googleCalendarId, true, true);
         if (!events.isEmpty()) {
@@ -145,7 +148,7 @@ public class CalendarSubscriber {
         }
     }
 
-    protected void dispatchMessage(MessageEmbed embed) {
+    protected synchronized void dispatchMessage(MessageEmbed embed) {
         // TODO: bulk request
         // TODO: automatic delete wrapper after dispatch?
         //  - maybe a list of wrappers to remove and a faster schedule?

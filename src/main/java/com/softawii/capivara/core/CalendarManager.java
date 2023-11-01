@@ -3,7 +3,7 @@ package com.softawii.capivara.core;
 import com.softawii.capivara.entity.Calendar;
 import com.softawii.capivara.exceptions.DuplicatedKeyException;
 import com.softawii.capivara.services.CalendarService;
-import com.softawii.capivara.threads.CalendarSubscriptionThread;
+import com.softawii.capivara.threads.CalendarSubscriptionManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
@@ -17,9 +17,9 @@ public class CalendarManager {
     private final Logger LOGGER = LogManager.getLogger(CalendarManager.class);
     private final JDA jda;
     private final CalendarService service;
-    private final CalendarSubscriptionThread subscriber;
+    private final CalendarSubscriptionManager subscriber;
 
-    public CalendarManager(JDA jda, CalendarService service, CalendarSubscriptionThread subscriber) {
+    public CalendarManager(JDA jda, CalendarService service, CalendarSubscriptionManager subscriber) {
         this.jda = jda;
         this.service = service;
         this.subscriber = subscriber;

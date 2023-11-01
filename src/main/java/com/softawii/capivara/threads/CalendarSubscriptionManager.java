@@ -16,31 +16,18 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 @Component
-public class CalendarSubscriptionThread implements Runnable {
+public class CalendarSubscriptionManager {
 
-    /**
-     * The queue of events to be processed, in order.
-     * No need to synchronize, as it is a thread-safe queue.
-     * @see java.util.concurrent.BlockingQueue
-     *
-     * Enqueue is made by any thread, dequeue is made by the thread that created the queue.
-     * @see java.util.concurrent.BlockingQueue#put
-     * @see java.util.concurrent.BlockingQueue#take
-     *
-     * If there is no event to be processed, the thread will wait until there is one.
-     */
-    private final Logger LOGGER = LogManager.getLogger(CalendarSubscriptionThread.class);
-    private final BlockingQueue<String> queue;
+    private final Logger LOGGER = LogManager.getLogger(CalendarSubscriptionManager.class);
     private final ScheduledExecutorService scheduler;
     private final JDA                      jda;
     private final GoogleCalendarService    googleCalendarService;
     private final CalendarService          calendarService;
     private final Map<String, CalendarSubscriber> subscribers;
 
-    public CalendarSubscriptionThread(JDA jda, CalendarService calendarService, GoogleCalendarService googleCalendarService) {
+    public CalendarSubscriptionManager(JDA jda, CalendarService calendarService, GoogleCalendarService googleCalendarService) {
         this.jda = jda;
         this.googleCalendarService = googleCalendarService;
-        this.queue = new LinkedBlockingQueue<>();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
         this.calendarService = calendarService;
         this.subscribers = new HashMap<>();
@@ -54,9 +41,6 @@ public class CalendarSubscriptionThread implements Runnable {
             LOGGER.info("Updating calendar events");
             this.subscribers.values().forEach(CalendarSubscriber::update);
         }, 0, 1, TimeUnit.MINUTES);
-
-        Thread thread = new Thread(this, "CalendarSubscriptionThread");
-        thread.start();
     }
 
     private void startupSubscriber() {
@@ -89,19 +73,6 @@ public class CalendarSubscriptionThread implements Runnable {
         if (!subscriber.isThereAnyConsumer()) {
             subscriber.purge();
             this.subscribers.remove(calendar.getGoogleCalendarId());
-        }
-    }
-
-    @Override
-    public void run() {
-        while (true) {
-            try {
-                String event = queue.take();
-                // Process the event
-            } catch (InterruptedException e) {
-                // The thread was interrupted, just exit
-                return;
-            }
         }
     }
 }
