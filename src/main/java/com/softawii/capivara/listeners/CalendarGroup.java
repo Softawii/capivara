@@ -13,6 +13,8 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @IGroup(name = "calendar", description = "Calendar events", hidden = false)
 @Component
 public class CalendarGroup {
@@ -50,8 +52,17 @@ public class CalendarGroup {
     }
 
     @ICommand(name = "list", description = "List all events from a Google Calendar")
+    @IArgument(name = "name", description = "The name to use for the calendar", required = false)
     public static void list(SlashCommandInteractionEvent event) {
-        event.reply("Not implemented yet").queue();
+        String name = event.getOption("name") != null ? event.getOption("name").getAsString() : null;
+
+        if(name == null) {
+            List<String> calendarNames = calendarManager.getCalendarNames(event.getGuild().getIdLong());
+            event.reply("Available calendars: " + String.join(", ", calendarNames)).queue();
+        }
+        else {
+            event.reply("Not implemented yet").queue();
+        }
     }
 
     @ICommand(name = "update", description = "Update configuration of a calendar", permissions = {Permission.ADMINISTRATOR})

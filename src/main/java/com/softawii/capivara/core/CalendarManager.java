@@ -11,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class CalendarManager {
 
@@ -33,5 +35,13 @@ public class CalendarManager {
 
         this.service.create(calendar);
         this.subscriber.subscribe(calendar);
+    }
+
+    public Calendar getCalendar(String name, Long guildId) {
+        return this.service.findByNameAndGuildId(name, guildId);
+    }
+
+    public List<String> getCalendarNames(Long guildId) {
+        return this.service.getCalendarNames(guildId);
     }
 }

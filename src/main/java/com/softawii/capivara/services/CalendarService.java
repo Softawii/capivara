@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -48,5 +49,13 @@ public class CalendarService {
 
     public void exists(Calendar.CalendarKey calendarKey) {
         repository.existsById(calendarKey);
+    }
+
+    public Calendar findByNameAndGuildId(String name, Long guildId) {
+        return repository.findByCalendarKey(new Calendar.CalendarKey(guildId, name));
+    }
+
+    public List<String> getCalendarNames(Long guildId) {
+        return repository.findAllByCalendarKeyGuildId(guildId).stream().map(Calendar::getCalendarKey).map(Calendar.CalendarKey::getCalendarName).toList();
     }
 }
