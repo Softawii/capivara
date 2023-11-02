@@ -13,7 +13,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class CalendarSubscriptionManager {
@@ -53,7 +55,7 @@ public class CalendarSubscriptionManager {
         }
     }
 
-    public void subscribe(Calendar calendar) {
+    public synchronized void subscribe(Calendar calendar) {
         CalendarSubscriber subscriber = this.subscribers.get(calendar.getGoogleCalendarId());
         if (subscriber == null) {
             subscriber = new CalendarSubscriber(calendar.getGoogleCalendarId(), this.googleCalendarService, jda);
@@ -63,7 +65,7 @@ public class CalendarSubscriptionManager {
         subscriber.subscribe(calendar);
     }
 
-    public void unsubscribe(Calendar calendar) {
+    public synchronized void unsubscribe(Calendar calendar) {
         CalendarSubscriber subscriber = this.subscribers.get(calendar.getGoogleCalendarId());
         if (subscriber == null) {
             throw new RuntimeException("There is no subscription available");

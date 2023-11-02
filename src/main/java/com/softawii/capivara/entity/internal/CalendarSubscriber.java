@@ -27,13 +27,19 @@ public class CalendarSubscriber {
 
     private class EventWrapper extends TimerTask {
         private static final Logger LOGGER = LogManager.getLogger(EventWrapper.class);
-        private final        Event  event;
-        private final        Timer  timer;
+        private Event  event;
+        private Timer  timer;
 
         public EventWrapper(Event event) {
             this.event = event;
-            this.timer = new Timer("EventWrapper-" + event.getId());
             schedule();
+        }
+
+        public boolean startChanged(Event event) {
+            return !this.event.getStart().equals(event.getStart());
+        }
+        public void setEvent(Event event) {
+            this.event = event;
         }
 
         private void schedule() {
@@ -49,13 +55,16 @@ public class CalendarSubscriber {
             }
 
             Date scheduled = new Date(dateStart.getValue());
+            this.timer = new Timer("EventWrapper-" + event.getId());
             this.timer.schedule(this, scheduled);
             LOGGER.info("Event scheduled: " + this.event.getSummary() + ", date: " + scheduled);
         }
 
         public void purge() {
-            this.timer.cancel();
-            this.timer.purge();
+            if(this.timer != null) {
+                this.timer.cancel();
+                this.timer.purge();
+            }
         }
 
         @Override
@@ -92,13 +101,13 @@ public class CalendarSubscriber {
         this.update();
     }
 
-    public void subscribe(Calendar consumer) {
+    public synchronized void subscribe(Calendar consumer) {
         if (!this.consumers.contains(consumer)) {
             this.consumers.add(consumer);
         }
     }
 
-    public void unsubscribe(Calendar consumer) {
+    public synchronized void unsubscribe(Calendar consumer) {
         this.consumers.remove(consumer);
     }
 
@@ -106,7 +115,7 @@ public class CalendarSubscriber {
         return !this.consumers.isEmpty();
     }
 
-    public void purge() {
+    public synchronized void purge() {
         this.events.values().forEach(EventWrapper::purge);
         this.events.clear();
     }
@@ -133,9 +142,15 @@ public class CalendarSubscriber {
                 this.events.put(eventId, new EventWrapper(event));
                 LOGGER.info("Event added: " + event.getSummary());
             } else {
-                eventWrapper.purge();
-                this.events.put(eventId, new EventWrapper(event));
-                LOGGER.info("Event updated: " + event.getSummary());
+                if(eventWrapper.startChanged(event)) {
+                    LOGGER.info("Event updated: " + event.getSummary());
+                    eventWrapper.purge();
+                    this.events.put(eventId, new EventWrapper(event));
+                    LOGGER.info("Event re-added: " + event.getSummary());
+                } else {
+                    eventWrapper.setEvent(event);
+                    LOGGER.info("Event updated (not change in hour): " + event.getSummary());
+                }
             }
         }
     }
