@@ -41,23 +41,19 @@ dependencies {
 }
 
 tasks.register('deploy') {
-    jar {
-        enabled = false
-    }
-    shadowJar {
+    optimizedJitJarAll {
         archiveFileName = "CapivaraBot.jar"
     }
-    dependsOn 'shadowJar'
+    dependsOn 'optimizedJitJarAll'
+    group = 'Softawii'
 }
 
-tasks.register('homolog') {
-    jar {
-        enabled = false
-    }
-    shadowJar {
+tasks.register('deployHomolog') {
+    optimizedJitJarAll {
         archiveFileName = "CapivaraBotHomolog.jar"
     }
-    dependsOn 'shadowJar'
+    dependsOn 'optimizedJitJarAll'
+    group = 'Softawii'
 }
 
 application {
