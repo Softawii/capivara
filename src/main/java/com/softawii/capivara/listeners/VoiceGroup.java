@@ -7,7 +7,7 @@ import com.softawii.capivara.exceptions.*;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
 import com.softawii.curupira.exceptions.MissingPermissionsException;
-import jakarta.inject.Singleton;
+import io.micronaut.context.annotation.Context;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 @IGroup(name = "Voice", description = "Voice")
+@Context
 public class VoiceGroup {
 
     private static final Logger LOGGER = LogManager.getLogger(VoiceGroup.class);
@@ -140,7 +141,7 @@ public class VoiceGroup {
     }
 
     @ISubGroup(name = "Dynamic", description = "Dynamic")
-    @Singleton
+    @Context
     public static class Dynamic extends ListenerAdapter {
 
         public static final long   inviteDeadline      = 1000L * 10L * 60L; // 600000 ms = 10 minutes

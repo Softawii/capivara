@@ -8,7 +8,7 @@ import com.softawii.capivara.exceptions.UrlException;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
 import com.softawii.curupira.core.Curupira;
-import jakarta.inject.Singleton;
+import io.micronaut.context.annotation.Context;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 @IGroup(name = "echo", description = "Echo Group")
-@Singleton
+@Context
 public class EchoGroup {
 
     public static final String buttonEditMessage = "echo-edit-message";

@@ -39,7 +39,7 @@ public class VoiceHiveService {
 
     public VoiceHive update(VoiceHive voiceHive) throws KeyNotFoundException {
         if (!voiceHiveRepository.existsById(voiceHive.getCategoryId())) throw new KeyNotFoundException();
-        return voiceHiveRepository.save(voiceHive);
+        return voiceHiveRepository.update(voiceHive);
     }
 
     public boolean existsByCategoryId(long SnowflakeId) {
