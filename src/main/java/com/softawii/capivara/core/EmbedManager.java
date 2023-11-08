@@ -3,16 +3,16 @@ package com.softawii.capivara.core;
 import com.softawii.capivara.exceptions.FieldLengthException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.exceptions.UrlException;
+import jakarta.inject.Singleton;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
+@Singleton
 public class EmbedManager {
 
     private Map<String, EmbedHandler> embeds;

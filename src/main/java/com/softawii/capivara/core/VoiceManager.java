@@ -5,6 +5,9 @@ import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.services.VoiceHiveService;
 import com.softawii.capivara.utils.Utils;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Singleton;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
@@ -15,15 +18,11 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Objects;
 
-@Component
+@Singleton
 public class VoiceManager {
 
     public static final String configModal_idle      = "%OWNER% Channel";
@@ -134,11 +133,11 @@ public class VoiceManager {
     }
 
     public void checkRemovedHives() {
-        Pageable request = PageRequest.of(0, 100);
+        Pageable request = Pageable.from(0, 100);
         Page<VoiceHive> page = this.voiceHiveService.findAll(request);
 
-        while (page.hasContent()) {
-            LOGGER.debug("Checking page: {}", request.getPageNumber());
+        while (!page.isEmpty()) {
+            LOGGER.debug("Checking page: {}", request.getNumber());
             page.forEach(this::checkIfHiveIsStillValid);
             request = request.next();
             page = this.voiceHiveService.findAll(request);

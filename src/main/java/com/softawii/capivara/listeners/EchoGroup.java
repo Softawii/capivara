@@ -8,6 +8,7 @@ import com.softawii.capivara.exceptions.UrlException;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
 import com.softawii.curupira.core.Curupira;
+import jakarta.inject.Singleton;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
@@ -29,8 +30,6 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 @IGroup(name = "echo", description = "Echo Group")
-@Component
+@Singleton
 public class EchoGroup {
 
     public static final String buttonEditMessage = "echo-edit-message";
@@ -73,13 +72,8 @@ public class EchoGroup {
     private static EmbedManager embedManager;
     private static Curupira     curupira;
 
-    @Autowired
-    public void setCurupira(Curupira curupira) {
+    public EchoGroup(Curupira curupira, EmbedManager embedManager) {
         EchoGroup.curupira = curupira;
-    }
-
-    @Autowired
-    public void setEmbedManager(EmbedManager embedManager) {
         EchoGroup.embedManager = embedManager;
     }
 

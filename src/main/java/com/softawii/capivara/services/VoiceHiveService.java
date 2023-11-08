@@ -4,14 +4,14 @@ import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.repository.VoiceHiveRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
+@Singleton
 public class VoiceHiveService {
 
     private final VoiceHiveRepository voiceHiveRepository;

@@ -3,13 +3,13 @@ package com.softawii.capivara.services;
 import com.softawii.capivara.entity.VoiceDrone;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.repository.VoiceDroneRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Singleton;
 
 import javax.management.openmbean.KeyAlreadyExistsException;
 
-@Service
+@Singleton
 public class VoiceDroneService {
 
     private final VoiceDroneRepository voiceDroneRepository;

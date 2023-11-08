@@ -11,6 +11,9 @@ import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.capivara.services.VoiceHiveService;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.exceptions.MissingPermissionsException;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Singleton;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
@@ -31,10 +34,6 @@ import net.dv8tion.jda.api.requests.RestAction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Component
+@Singleton
 public class DroneManager {
 
     private final Logger            LOGGER = LogManager.getLogger(VoiceManager.class);
@@ -518,11 +517,11 @@ public class DroneManager {
 
     public void checkEmptyDrones() {
         LOGGER.debug("Checking current hives and drones...");
-        Pageable request = PageRequest.of(0, 100);
+        Pageable request = Pageable.from(0, 100);
         Page<VoiceDrone> page = this.voiceDroneService.findAll(request);
 
-        while (page.hasContent()) {
-            LOGGER.debug("Checking page: {}", request.getPageNumber());
+        while (!page.isEmpty()) {
+            LOGGER.debug("Checking page: {}", request.getNumber());
             page.forEach(this::checkIfDroneIsValid);
             request = request.next();
             page = this.voiceDroneService.findAll(request);

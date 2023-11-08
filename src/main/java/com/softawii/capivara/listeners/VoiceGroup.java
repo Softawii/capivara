@@ -7,6 +7,7 @@ import com.softawii.capivara.exceptions.*;
 import com.softawii.capivara.utils.Utils;
 import com.softawii.curupira.annotations.*;
 import com.softawii.curupira.exceptions.MissingPermissionsException;
+import jakarta.inject.Singleton;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -27,8 +28,6 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.util.Collections;
@@ -141,7 +140,7 @@ public class VoiceGroup {
     }
 
     @ISubGroup(name = "Dynamic", description = "Dynamic")
-    @Component
+    @Singleton
     public static class Dynamic extends ListenerAdapter {
 
         public static final long   inviteDeadline      = 1000L * 10L * 60L; // 600000 ms = 10 minutes
@@ -156,13 +155,8 @@ public class VoiceGroup {
         private static      VoiceManager voiceManager;
         private static      DroneManager droneManager;
 
-        @Autowired
-        public void setVoiceManager(VoiceManager voiceManager) {
+        public Dynamic(VoiceManager voiceManager, DroneManager droneManager) {
             Dynamic.voiceManager = voiceManager;
-        }
-
-        @Autowired
-        public void setDroneManager(DroneManager droneManager) {
             Dynamic.droneManager = droneManager;
         }
 
