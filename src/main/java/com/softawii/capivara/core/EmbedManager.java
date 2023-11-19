@@ -119,6 +119,10 @@ public class EmbedManager {
             this.message = message;
         }
 
+        public EmbedBuilder getBuilder() {
+            return builder;
+        }
+
         public MessageEmbed build() {
             EmbedBuilder builder = new EmbedBuilder(this.builder);
 

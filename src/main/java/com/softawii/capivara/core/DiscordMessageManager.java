@@ -3,6 +3,7 @@ package com.softawii.capivara.core;
 
 import com.softawii.capivara.entity.DiscordMessage;
 import com.softawii.capivara.entity.HateStats;
+import com.softawii.capivara.entity.HateUser;
 import com.softawii.capivara.exceptions.FieldLengthException;
 import com.softawii.capivara.services.DiscordMessageService;
 import net.dv8tion.jda.api.JDA;
@@ -15,6 +16,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
+
+import java.awt.*;
+import java.util.List;
 
 @Component
 public class DiscordMessageManager extends ListenerAdapter {
@@ -69,7 +73,17 @@ public class DiscordMessageManager extends ListenerAdapter {
         handler.addField(new MessageEmbed.Field("Total hate messages", stats.getHateCount().toString(), false));
         handler.addField(new MessageEmbed.Field("Hate percentage", String.format("%.2f", stats.getHate()) + "%", false));
 
-        // TODO: Add Top 10 users with more hate messages
+        // TODO: Add Top 5 users with more hate
+        List<HateUser> haters = service.getMostHatedUsersByGuildId(guildId, 5);
+
+        StringBuilder sb = new StringBuilder();
+        for(int i = 1; i <= haters.size(); i++) {
+            HateUser user = haters.get(i - 1);
+            sb.append(i).append(". ").append(user.getUser().getAsMention()).append(" - ").append(String.format("%.2f", user.getHate())).append("%\n");
+        }
+
+        handler.addField(new MessageEmbed.Field("Top 5 users with more hate", sb.toString(), false));
+        handler.getBuilder().setColor(new Color(200, 72, 63));
 
         return handler.build();
     }
