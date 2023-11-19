@@ -2,6 +2,7 @@ package com.softawii.capivara.core;
 
 
 import com.softawii.capivara.entity.DiscordMessage;
+import com.softawii.capivara.entity.HateGuild;
 import com.softawii.capivara.entity.HateStats;
 import com.softawii.capivara.entity.HateUser;
 import com.softawii.capivara.exceptions.FieldLengthException;
@@ -83,6 +84,51 @@ public class DiscordMessageManager extends ListenerAdapter {
 
         handler.addField(new MessageEmbed.Field("Top 5 users with more hate messages", sb.toString(), false));
         handler.getBuilder().setColor(new Color(200, 72, 63));
+
+        return handler.build();
+    }
+
+    public MessageEmbed getStatsByGuildIdAndUserId(Long guildId, Long userId) throws FieldLengthException {
+        HateUser user = service.getHateStatsByGuildIdAndUserId(guildId, userId);
+
+        EmbedManager.EmbedHandler handler = new EmbedManager.EmbedHandler();
+
+        if(user != null) {
+            handler.setTitle("Stats of " + user.getUser().getName());
+            handler.setDescription("Hate stats of this user");
+            handler.addField(new MessageEmbed.Field("Total evaluated messages", user.getMessageCount().toString(), false));
+            handler.addField(new MessageEmbed.Field("Total hate messages", user.getHateCount().toString(), false));
+            handler.addField(new MessageEmbed.Field("Hate percentage", String.format("%.2f", user.getHate()) + "%", false));
+            handler.getBuilder().setColor(new Color(243, 60, 99));
+        } else {
+            handler.setTitle("User not found");
+            handler.setDescription("This user has no hate messages");
+            handler.getBuilder().setColor(new Color(243, 60, 99));
+        }
+
+        return handler.build();
+    }
+
+    public MessageEmbed getGlobalStats() throws FieldLengthException {
+        HateStats stats = service.getGlobalStats();
+
+        EmbedManager.EmbedHandler handler = new EmbedManager.EmbedHandler();
+        handler.setTitle("Global stats");
+        handler.setDescription("Hate stats of all servers");
+        handler.addField(new MessageEmbed.Field("Total evaluated messages", stats.getMessageCount().toString(), false));
+        handler.addField(new MessageEmbed.Field("Total hate messages", stats.getHateCount().toString(), false));
+        handler.addField(new MessageEmbed.Field("Hate percentage", String.format("%.2f", stats.getHate()) + "%", false));
+        handler.getBuilder().setColor(new Color(200, 72, 63));
+
+        List<HateGuild> haters = service.getMostHatefulGuilds();
+
+        StringBuilder sb = new StringBuilder();
+        for(int i = 1; i <= haters.size(); i++) {
+            HateGuild guild = haters.get(i - 1);
+            sb.append(i).append(". ").append(guild.getGuild().getName()).append(" - ").append(guild.getStats().getHateCount()).append(" hate messages\n");
+        }
+
+        handler.addField(new MessageEmbed.Field("Top 10 servers with more hate messages", sb.toString(), false));
 
         return handler.build();
     }

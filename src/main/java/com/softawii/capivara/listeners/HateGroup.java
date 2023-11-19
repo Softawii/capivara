@@ -3,11 +3,14 @@ package com.softawii.capivara.listeners;
 import com.softawii.capivara.core.DiscordMessageManager;
 import com.softawii.capivara.exceptions.FieldLengthException;
 import com.softawii.capivara.services.DiscordMessageService;
+import com.softawii.curupira.annotations.IArgument;
 import com.softawii.curupira.annotations.ICommand;
 import com.softawii.curupira.annotations.IGroup;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -41,8 +44,17 @@ public class HateGroup {
     }
 
     @ICommand(name = "user", description = "Hate overview by user", permissions = {Permission.ADMINISTRATOR})
+    @IArgument(name = "user",
+            description = "User to kick",
+            required = true, type = OptionType.USER)
     public static void user(SlashCommandInteractionEvent event) {
-
+        User evaluate = event.getOption("user").getAsUser();
+        try {
+            MessageEmbed embed = manager.getStatsByGuildIdAndUserId(event.getGuild().getIdLong(), evaluate.getIdLong());
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+        } catch (FieldLengthException e) {
+            event.reply("Error: " + e.getMessage()).setEphemeral(true).queue();
+        }
     }
 
     @ICommand(name = "global", description = "Hate overview", permissions = {Permission.ADMINISTRATOR})
@@ -52,6 +64,14 @@ public class HateGroup {
 
         if(!Arrays.asList(owners).contains(userId)) {
             event.reply("You are not allowed to use this command.").setEphemeral(true).queue();
+            return;
+        }
+
+        try {
+            MessageEmbed embed = manager.getGlobalStats();
+            event.replyEmbeds(embed).setEphemeral(false).queue();
+        } catch (FieldLengthException e) {
+            event.reply("Error: " + e.getMessage()).setEphemeral(true).queue();
         }
     }
 }
