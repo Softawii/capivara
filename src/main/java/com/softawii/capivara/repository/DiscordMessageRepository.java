@@ -32,7 +32,7 @@ public interface DiscordMessageRepository extends JpaRepository<DiscordMessage, 
         from DISCORDMESSAGE
         where CHECKED = true and GUILDID = :guildId
         group by USERID
-        order by hate desc
+        order by HATECOUNT desc
         limit :limit
     """, nativeQuery = true)
     List<Tuple> getMostHatedUsersByGuildId(@Param("guildId") Long guildId, @Param("limit") Integer limit);
