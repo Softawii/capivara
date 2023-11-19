@@ -2,9 +2,12 @@ package com.softawii.capivara.core;
 
 
 import com.softawii.capivara.entity.DiscordMessage;
+import com.softawii.capivara.entity.HateStats;
+import com.softawii.capivara.exceptions.FieldLengthException;
 import com.softawii.capivara.services.DiscordMessageService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -54,5 +57,20 @@ public class DiscordMessageManager extends ListenerAdapter {
         if(!event.isFromGuild()) return;
 
         saveMessage(event.getMessage());
+    }
+
+    public MessageEmbed getStatsByGuildId(Long guildId) throws FieldLengthException {
+        HateStats stats = service.statsByServer(guildId);
+
+        EmbedManager.EmbedHandler handler = new EmbedManager.EmbedHandler();
+        handler.setTitle("Stats");
+        handler.setDescription("Hate stats of this server");
+        handler.addField(new MessageEmbed.Field("Total evaluated messages", stats.getMessageCount().toString(), false));
+        handler.addField(new MessageEmbed.Field("Total hate messages", stats.getHateCount().toString(), false));
+        handler.addField(new MessageEmbed.Field("Hate percentage", String.format("%.2f", stats.getHate()) + "%", false));
+
+        // TODO: Add Top 10 users with more hate messages
+
+        return handler.build();
     }
 }
