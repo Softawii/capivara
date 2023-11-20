@@ -10,12 +10,16 @@ import com.softawii.capivara.services.DiscordMessageService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -44,8 +48,8 @@ public class DiscordMessageManager extends ListenerAdapter {
             isHateOpenai = existingMessage.isHateOpenai();
             checked = existingMessage.isChecked();
         }
-
-        this.service.save(new DiscordMessage(message, checked, isHate, isHateOpenai));
+        DiscordMessage discordMessage = new DiscordMessage(message, checked, isHate, isHateOpenai);
+        if(!discordMessage.getContent().isEmpty()) this.service.save(discordMessage);
     }
 
     @Override
@@ -88,9 +92,28 @@ public class DiscordMessageManager extends ListenerAdapter {
         return handler.build();
     }
 
-    public MessageEmbed getStatsByGuildIdAndUserId(Long guildId, Long userId) throws FieldLengthException {
-        HateUser user = service.getHateStatsByGuildIdAndUserId(guildId, userId);
+    public void getStatsByGuildIdAndUserId(SlashCommandInteractionEvent event, Long guildId, Long userId, int page) throws FieldLengthException {
+        List<DiscordMessage> messages = getDiscordMessagesByPage(guildId, userId, page);
+        EmbedManager.EmbedHandler handler = generateHandlerToHateUser(guildId, userId, page, messages);
 
+        event.replyEmbeds(handler.build()).addActionRow(
+                Button.primary("hate-stats:" + guildId + ":" + userId + ":" + (page - 1), "Previous page").withDisabled(page == 0),
+                Button.primary("hate-stats:" + guildId + ":" + userId + ":" + (page + 1), "Next page").withDisabled(messages.size() < 5)
+        ).setEphemeral(true).queue();
+    }
+
+    public void editStatsByGuildIdAndUserId(ButtonInteractionEvent event, Long guildId, Long userId, int page) throws FieldLengthException {
+        List<DiscordMessage> messages = getDiscordMessagesByPage(guildId, userId, page);
+        EmbedManager.EmbedHandler handler = generateHandlerToHateUser(guildId, userId, page, messages);
+
+        event.editMessageEmbeds(handler.build()).setActionRow(
+                Button.primary("hate-stats:" + guildId + ":" + userId + ":" + (page - 1), "Previous page").withDisabled(page == 0),
+                Button.primary("hate-stats:" + guildId + ":" + userId + ":" + (page + 1), "Next page").withDisabled(messages.size() < 5)
+        ).queue();
+    }
+
+    public EmbedManager.EmbedHandler generateHandlerToHateUser(Long guildId, Long userId, int page, List<DiscordMessage> messages) throws FieldLengthException {
+        HateUser user = service.getHateStatsByGuildIdAndUserId(guildId, userId);
         EmbedManager.EmbedHandler handler = new EmbedManager.EmbedHandler();
 
         if(user != null) {
@@ -106,7 +129,20 @@ public class DiscordMessageManager extends ListenerAdapter {
             handler.getBuilder().setColor(new Color(243, 60, 99));
         }
 
-        return handler.build();
+        StringBuilder sb = new StringBuilder();
+        for(DiscordMessage message : messages) {
+            sb.append(message.isHate() ? "🤬" : "😀").append(" ").append(message.getContent()).append("\n");
+        }
+
+        handler.addField(new MessageEmbed.Field("Messages", sb.toString(), false));
+        handler.addField(new MessageEmbed.Field("Page", String.valueOf(page + 1), false));
+
+        return handler;
+    }
+
+    public List<DiscordMessage> getDiscordMessagesByPage(Long guildId, Long userId, int page) {
+        Pageable pageable = Pageable.ofSize(5).withPage(page);
+        return service.getDiscordMessageByGuildIdAndUserIdAndCheckedIsTrue(guildId, userId, pageable).toList();
     }
 
     public MessageEmbed getGlobalStats() throws FieldLengthException {

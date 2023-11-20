@@ -1,6 +1,8 @@
 package com.softawii.capivara.repository;
 
 import com.softawii.capivara.entity.DiscordMessage;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -73,4 +75,6 @@ public interface DiscordMessageRepository extends JpaRepository<DiscordMessage, 
         where CHECKED = true
     """, nativeQuery = true)
     Tuple getGlobalStats();
+
+    Page<DiscordMessage> getDiscordMessageByGuildIdAndUserIdAndCheckedIsTrue(Long guildId, Long userId, Pageable request);
 }

@@ -47,7 +47,7 @@ public class DiscordMessage {
         this.userId = message.getAuthor().getIdLong();
         this.guildId = message.getGuild().getIdLong();
         this.channelId = message.getChannel().getIdLong();
-        this.content = message.getContentDisplay();
+        this.content = message.getContentRaw();
         this.timeCreated = message.getTimeCreated();
         this.timeEdited = message.isEdited() ? message.getTimeEdited() : message.getTimeCreated();
         this.checked = false;
