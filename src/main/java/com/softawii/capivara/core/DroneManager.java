@@ -39,6 +39,7 @@ import org.springframework.stereotype.Component;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -325,7 +326,9 @@ public class DroneManager {
         builder.setTitle("⚙️ Control Panel - " + voiceChannel.getName());
         builder.setDescription("Here, you can control your private voiceChannel.");
         // Fields to Show
-        builder.addField("Owner", voiceChannel.getGuild().getMemberById(drone.getOwnerId()).getNickname(), true);
+        Member ownerMember = voiceChannel.getGuild().getMemberById(drone.getOwnerId());
+        String owner = Objects.requireNonNullElse(ownerMember.getNickname(), ownerMember.getEffectiveName());
+        builder.addField("Owner", owner, true);
         builder.addField("User Limit", voiceChannel.getUserLimit() == 0 ? "No Limits" : String.valueOf(voiceChannel.getUserLimit()), true);
         builder.addField("Visible", isVisible(voiceChannel) ? "Yes" : "No", true);
         builder.addField("Connectable", canConnect(voiceChannel) ? "Yes" : "No", true);
