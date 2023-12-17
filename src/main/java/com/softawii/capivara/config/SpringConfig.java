@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -92,7 +93,7 @@ public class SpringConfig {
     }
 
     @Bean
-    public Curupira curupira(JDA jda, CapivaraExceptionHandler exceptionHandler) {
+    public Curupira curupira(JDA jda, @Autowired(required = false) CapivaraExceptionHandler exceptionHandler) {
         String  pkg      = "com.softawii.capivara.listeners";
         String  resetEnv = env.getProperty("curupira.reset", "false");
         boolean reset    = Boolean.parseBoolean(resetEnv);
