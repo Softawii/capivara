@@ -77,23 +77,27 @@ public class SpringConfig {
     }
 
     @Bean
-    public Curupira curupira(JDA jda) {
-        String  pkg      = "com.softawii.capivara.listeners";
-        String  resetEnv = env.getProperty("curupira.reset", "false");
-        boolean reset    = Boolean.parseBoolean(resetEnv);
-        LOGGER.info("curupira.reset: " + reset);
-
-
-        CapivaraExceptionHandler exceptionHandler = null;
-        String                   logChannelId     = env.getProperty("log.channel.id");
-        String                   logDirectory     = env.getProperty("log_directory");
+    public CapivaraExceptionHandler capivaraExceptionHandler() {
+        String logChannelId = env.getProperty("log.channel.id");
+        String logDirectory = env.getProperty("log_directory");
         if (logChannelId != null) {
             Path logPath = null;
             if (logDirectory != null) {
                 logPath = Path.of(logDirectory);
             }
-            exceptionHandler = new CapivaraExceptionHandler(logChannelId, logPath);
+            return new CapivaraExceptionHandler(logChannelId, logPath);
         }
+
+        return null;
+    }
+
+    @Bean
+    public Curupira curupira(JDA jda, CapivaraExceptionHandler exceptionHandler) {
+        String  pkg      = "com.softawii.capivara.listeners";
+        String  resetEnv = env.getProperty("curupira.reset", "false");
+        boolean reset    = Boolean.parseBoolean(resetEnv);
+        LOGGER.info("curupira.reset: " + reset);
+
         return new Curupira(jda, reset, exceptionHandler, pkg);
     }
 
