@@ -14,7 +14,7 @@ RUN cd /tmp && \
 FROM docker.io/eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
-COPY --from=builder /app .
+COPY --from=builder /app .a
 
 ENV JAVA_ARGS="-Xmx300M"
 ENV LOG_DIRECTORY="/app/logs"
