@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -77,23 +78,27 @@ public class SpringConfig {
     }
 
     @Bean
-    public Curupira curupira(JDA jda) {
-        String  pkg      = "com.softawii.capivara.listeners";
-        String  resetEnv = env.getProperty("curupira.reset", "false");
-        boolean reset    = Boolean.parseBoolean(resetEnv);
-        LOGGER.info("curupira.reset: " + reset);
-
-
-        CapivaraExceptionHandler exceptionHandler = null;
-        String                   logChannelId     = env.getProperty("log.channel.id");
-        String                   logDirectory     = env.getProperty("log_directory");
+    public CapivaraExceptionHandler capivaraExceptionHandler() {
+        String logChannelId = env.getProperty("log.channel.id");
+        String logDirectory = env.getProperty("log_directory");
         if (logChannelId != null) {
             Path logPath = null;
             if (logDirectory != null) {
                 logPath = Path.of(logDirectory);
             }
-            exceptionHandler = new CapivaraExceptionHandler(logChannelId, logPath);
+            return new CapivaraExceptionHandler(logChannelId, logPath);
         }
+
+        return null;
+    }
+
+    @Bean
+    public Curupira curupira(JDA jda, @Autowired(required = false) CapivaraExceptionHandler exceptionHandler) {
+        String  pkg      = "com.softawii.capivara.listeners";
+        String  resetEnv = env.getProperty("curupira.reset", "false");
+        boolean reset    = Boolean.parseBoolean(resetEnv);
+        LOGGER.info("curupira.reset: " + reset);
+
         return new Curupira(jda, reset, exceptionHandler, pkg);
     }
 

@@ -4,12 +4,14 @@ import com.softawii.capivara.core.DroneManager;
 import com.softawii.capivara.core.VoiceManager;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
+import com.softawii.capivara.utils.CapivaraExceptionHandler;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
 import net.dv8tion.jda.api.events.channel.update.GenericChannelUpdateEvent;
@@ -28,15 +30,15 @@ public class VoiceEvents extends ListenerAdapter {
     private final DroneManager droneManager;
 
     private final Logger LOGGER = LogManager.getLogger(VoiceEvents.class);
-    private final JDA    jda;
+    private final CapivaraExceptionHandler exceptionHandler;
 
-    public VoiceEvents(JDA jda, VoiceManager voiceManager, DroneManager droneManager) {
+    public VoiceEvents(JDA jda, VoiceManager voiceManager, DroneManager droneManager, CapivaraExceptionHandler exceptionHandler) {
         this.voiceManager = voiceManager;
         this.droneManager = droneManager;
-        this.jda = jda;
+        this.exceptionHandler = exceptionHandler;
         this.droneManager.checkEmptyDrones();
         this.voiceManager.checkRemovedHives();
-        this.jda.addEventListener(this);
+        jda.addEventListener(this);
     }
 
     //region Voice Events
@@ -69,6 +71,7 @@ public class VoiceEvents extends ListenerAdapter {
             }
         } catch (Exception e) {
             LOGGER.error("Error on onGuildVoiceUpdate", e);
+            handleException(e, event);
         }
     }
 
@@ -114,6 +117,7 @@ public class VoiceEvents extends ListenerAdapter {
             }
         } catch (Exception e) {
             LOGGER.error("Error on ChannelDeleteEvent", e);
+            handleException(e, event);
         }
     }
 
@@ -141,6 +145,7 @@ public class VoiceEvents extends ListenerAdapter {
             }
         } catch (Exception e) {
             LOGGER.error("Error on ChannelUpdateParentEvent", e);
+            handleException(e, event);
         }
     }
 
@@ -157,10 +162,12 @@ public class VoiceEvents extends ListenerAdapter {
                 } catch (KeyNotFoundException e) {
                     // Not  Found...
                     LOGGER.debug(method + " : error : " + e.getMessage());
+                    handleException(e, event);
                 }
             }
         } catch (Exception e) {
             LOGGER.error("Error on " + method, e);
+            handleException(e, event);
         }
     }
 
@@ -175,14 +182,20 @@ public class VoiceEvents extends ListenerAdapter {
                 } catch (KeyNotFoundException e) {
                     // Not  Found...
                     LOGGER.debug("onGenericChannelUpdate : error : " + e.getMessage());
+                    handleException(e, event);
                 }
             }
         } catch (Exception e) {
             LOGGER.error("Error on GenericChannelUpdateEvent", e);
+            handleException(e, event);
         }
     }
-
-
     //endregion
+
+    private void handleException(Exception exception, Event event) {
+        if (exceptionHandler != null) {
+            exceptionHandler.handle(exception, event);
+        }
+    }
 
 }

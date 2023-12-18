@@ -5,6 +5,9 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.events.Event;
+import net.dv8tion.jda.api.events.channel.GenericChannelEvent;
+import net.dv8tion.jda.api.events.guild.GenericGuildEvent;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -66,6 +69,62 @@ public class CapivaraExceptionHandler implements ExceptionHandler {
                 channel.sendMessage(getStackTrace(e)).submit();
             }
         }
+    }
+
+    public void handle(Throwable throwable, Event event) {
+        InputStream logFileBytes = null;
+        if (logDirectory != null) {
+            Path logFile = logDirectory.resolve("capivara.log");
+            if (Files.isDirectory(logDirectory) && Files.exists(logFile) && Files.isRegularFile(logFile)) {
+                try {
+                    logFileBytes = Files.newInputStream(logFile);
+                } catch (IOException e) {
+                    LOGGER.warn(e.getMessage(), e);
+                }
+            }
+        }
+        JDA         jda     = event.getJDA();
+        TextChannel channel = jda.getTextChannelById(channelId);
+        if (channel != null) {
+            String       stackTrace         = getStackTrace(throwable);
+            String       now                = OffsetDateTime.now(ZoneId.of("America/Sao_Paulo")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            String       stackTraceFileName = String.format("capivara-stacktrace-%s.log", now);
+            String       logFileName        = String.format("capivara-log-%s.log", now);
+            MessageEmbed interactionContext = getContext(event);
+            try {
+                MessageCreateAction messageAction = channel.sendFiles(FileUpload.fromData(stackTrace.getBytes(StandardCharsets.UTF_8), stackTraceFileName)).setEmbeds(interactionContext);
+                if (logFileBytes != null) {
+                    messageAction = messageAction.addFiles(FileUpload.fromData(logFileBytes, logFileName));
+                }
+                messageAction.submit();
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn(e.getMessage(), e);
+                channel.sendMessage(getStackTrace(e)).submit();
+            }
+        }
+    }
+
+    private MessageEmbed getContext(Event event) {
+        EmbedBuilder builder = new EmbedBuilder();
+        builder.setColor(Color.RED)
+                .setTitle("Unhandled Exception");
+
+        if (event instanceof GenericChannelEvent channelEvent) {
+            if (channelEvent.isFromGuild()) {
+                builder.addField("Guild ID", channelEvent.getGuild().getId(), true)
+                        .addField("Guild Name", channelEvent.getGuild().getName(), true)
+                        .addField("Guild Members", String.valueOf(channelEvent.getGuild().getMembers().size()), true);
+            }
+            builder.addField("Channel Type", channelEvent.getChannelType().toString(), true)
+                    .addField("Channel ID", channelEvent.getChannel().getId(), true)
+                    .addField("Channel Name", channelEvent.getChannel().getName(), true);
+        } else if (event instanceof GenericGuildEvent guildEvent) {
+            builder.addField("Guild ID", guildEvent.getGuild().getId(), true)
+                    .addField("Guild Name", guildEvent.getGuild().getName(), true)
+                    .addField("Guild Members", String.valueOf(guildEvent.getGuild().getMembers().size()), true);
+        }
+
+        return builder.build();
     }
 
     private String getStackTrace(Throwable throwable) {
