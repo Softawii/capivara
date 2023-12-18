@@ -21,3 +21,19 @@ jobs:
 
       - name: 'Build with Gradle'
         run: ./gradlew build --no-daemon
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out repository'
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5.0.0
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: |
+            APP_VERSION=${{github.ref_name}}
+          tags: eduardoferro/capivara:${{ github.sha }}
+          push: false
