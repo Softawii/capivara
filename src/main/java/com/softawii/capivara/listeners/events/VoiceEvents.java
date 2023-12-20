@@ -160,9 +160,8 @@ public class VoiceEvents extends ListenerAdapter {
                 try {
                     droneManager.createControlPanel(voice);
                 } catch (KeyNotFoundException e) {
-                    // Not  Found...
+                    // Not Found... ignoring
                     LOGGER.debug(method + " : error : " + e.getMessage());
-                    handleException(e, event);
                 }
             }
         } catch (Exception e) {
@@ -180,9 +179,8 @@ public class VoiceEvents extends ListenerAdapter {
                 try {
                     droneManager.createControlPanel(channel);
                 } catch (KeyNotFoundException e) {
-                    // Not  Found...
+                    // Not Found... ignoring
                     LOGGER.debug("onGenericChannelUpdate : error : " + e.getMessage());
-                    handleException(e, event);
                 }
             }
         } catch (Exception e) {
