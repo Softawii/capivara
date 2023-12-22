@@ -7,8 +7,8 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -36,7 +36,7 @@ import java.util.Properties;
 @PropertySource(value = "${spring.config.location}", ignoreResourceNotFound = true)
 public class SpringConfig {
 
-    private static final Logger      LOGGER = LogManager.getLogger(SpringConfig.class);
+    private static final Logger      LOGGER = LoggerFactory.getLogger(SpringConfig.class);
     private final        Environment env;
     @Value("${token}")
     private              String      discordToken;

@@ -24,9 +24,9 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +37,7 @@ import java.util.List;
 @IGroup(name = "Voice", description = "Voice")
 public class VoiceGroup {
 
-    private static final Logger LOGGER = LogManager.getLogger(VoiceGroup.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(VoiceGroup.class);
 
     @ICommand(name = "invite", description = "Invite user to your channel")
     @IArgument(name = "user",
