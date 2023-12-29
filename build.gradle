@@ -30,7 +30,7 @@ dependencies {
     implementation 'org.postgresql:postgresql:42.3.6'
 
     implementation 'org.slf4j:slf4j-api:1.7.36'
-    implementation('com.github.Softawii:curupira:bugfix~spring-reflection-SNAPSHOT:all') {
+    implementation('com.github.Softawii:curupira:591d1599c2:all') {
         exclude module: 'slf4j-api'
     }
 }

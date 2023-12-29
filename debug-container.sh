@@ -1,6 +1,6 @@
-DISCORD_TOKEN=""
+DISCORD_TOKEN="${DISCORD_TOKEN:-}"
 CURUPIRA_RESET=false
-LOG_CHANNEL_ID=""
+LOG_CHANNEL_ID="${LOG_CHANNEL_ID:-}"
 
 if [[ -z "${DISCORD_TOKEN}" ]] || [[ -z "${LOG_CHANNEL_ID}" ]] ; then
   echo 'Missing any of the required environment variable: DISCORD_TOKEN, LOG_CHANNEL_ID'
