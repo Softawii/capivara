@@ -65,7 +65,14 @@ public class SpringConfig {
     public JDA jda() {
         JDA jda;
         try {
-            JDABuilder builder = JDABuilder.create(discordToken, GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.GUILD_EMOJIS_AND_STICKERS, GatewayIntent.GUILD_PRESENCES);
+            JDABuilder builder = JDABuilder.create(
+                    discordToken,
+                    GatewayIntent.GUILD_MEMBERS,
+                    GatewayIntent.GUILD_VOICE_STATES,
+                    GatewayIntent.GUILD_EMOJIS_AND_STICKERS,
+                    GatewayIntent.GUILD_PRESENCES,
+                    GatewayIntent.GUILD_MESSAGES,
+                    GatewayIntent.MESSAGE_CONTENT);
             builder.setMemberCachePolicy(MemberCachePolicy.ALL);
             builder.enableCache(CacheFlag.EMOJI, CacheFlag.ROLE_TAGS, CacheFlag.MEMBER_OVERRIDES, CacheFlag.STICKER);
             jda = builder.build();
