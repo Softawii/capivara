@@ -1,10 +1,15 @@
 package com.softawii.capivara.listeners.events;
 
+import com.softawii.capivara.listeners.TwitterGroup;
 import com.softawii.capivara.services.TwitterTransformService;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
@@ -14,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
+@SuppressWarnings("unused")
 public class TwitterListener extends ListenerAdapter {
     private final Pattern twitterPattern;
     private final TwitterTransformService service;
@@ -27,21 +33,36 @@ public class TwitterListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) return;
-        if (!service.isEnabled(event.getGuild().getIdLong())) return;
 
         String rawMessage = event.getMessage().getContentRaw();
         User   author     = event.getAuthor();
         Optional<String> parsedMessage = parseMessage(rawMessage, author);
 
-        parsedMessage.ifPresent(message -> {
-            RestAction.allOf(
-                    event.getMessage()
-                            .delete(),
-                    event.getChannel()
-                            .sendMessage(message)
-                            .setSuppressedNotifications(true)
-            ).queue();
-        });
+        parsedMessage.ifPresent(message -> createTweetMessage(event.getGuild().getIdLong(), message, event.getMessage()));
+    }
+
+    @Override
+    public void onMessageUpdate(@NotNull MessageUpdateEvent event) {
+        if (event.getAuthor().isBot()) return;
+
+        String rawMessage = event.getMessage().getContentRaw();
+        User   author     = event.getAuthor();
+        Optional<String> parsedMessage = parseMessage(rawMessage, author);
+
+        parsedMessage.ifPresent(message -> createTweetMessage(event.getGuild().getIdLong(), message, event.getMessage()));
+    }
+
+    private void createTweetMessage(Long guildId, String replacementMessage, Message originalMessage) {
+        if (!service.isEnabled(guildId)) return;
+
+        MessageChannelUnion channel = originalMessage.getChannel();
+
+        RestAction.allOf(
+                originalMessage.delete(),
+                channel.sendMessage(replacementMessage)
+                        .addActionRow(Button.danger(String.format("%s:%s", TwitterGroup.deleteBotTwitterMessage, originalMessage.getAuthor().getId()), "Delete"))
+                        .setSuppressedNotifications(true)
+        ).queue();
     }
 
     private Optional<String> parseMessage(String twitterLink, User author) {
