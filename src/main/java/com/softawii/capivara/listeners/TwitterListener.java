@@ -1,21 +1,23 @@
 package com.softawii.capivara.listeners;
 
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
 public class TwitterListener extends ListenerAdapter {
-    private final String patternStrTwitter;
-    private final String patternStrX;
+    private final Pattern twitterPattern;
+
     public TwitterListener(JDA jda) {
-        this.patternStrTwitter = "https://twitter.com/(\\w+)/status/(\\d+)";
-        this.patternStrX = "https://x.com/(\\w+)/status/(\\d+)";
+        this.twitterPattern = Pattern.compile("https://(twitter|x)\\.com/(?<username>\\w+)/status/(?<postId>\\d+)");
         jda.addEventListener(this);
     }
 
@@ -23,31 +25,36 @@ public class TwitterListener extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         if (event.getAuthor().isBot()) return;
 
-        String message = event.getMessage().getContentRaw();
+        String rawMessage = event.getMessage().getContentRaw();
+        User   author     = event.getAuthor();
+        Optional<String> parsedMessage = parseMessage(rawMessage, author);
 
-        if (message.startsWith("https://twitter.com/")){
-            message = fixEmbedTwitter(message, patternStrTwitter);
-            if (message == null) return;
-            event.getMessage().reply(message).mentionRepliedUser(false).queue();
-        }
-
-        if (message.startsWith("https://x.com/")){
-            message = fixEmbedTwitter(message, patternStrX);
-            if (message == null) return;
-            event.getMessage().reply(message).mentionRepliedUser(false).queue();
-        }
-
+        parsedMessage.ifPresent(message -> {
+            RestAction.allOf(
+                    event.getMessage()
+                            .delete(),
+                    event.getChannel()
+                            .sendMessage(message)
+                            .setSuppressedNotifications(true)
+            ).queue();
+        });
     }
-    private static String fixEmbedTwitter(String url, String patternStr) {
-        Pattern pattern = Pattern.compile(patternStr);
-        Matcher matcher = pattern.matcher(url);
+
+    private Optional<String> parseMessage(String message, User author) {
+        Matcher matcher = this.twitterPattern.matcher(message);
 
         if (matcher.find()) {
-            String userName = matcher.group(1);
-            String remainingUrl = matcher.group(2);
+            String twitterUsername = matcher.group("username");
+            String twitterPostId = matcher.group("postId");
 
-            return String.format("https://fxtwitter.com/%s/status/%s", userName, remainingUrl);
+            String result = String.format(
+                    """
+                    Autor: %s
+                    [Postagem](https://fxtwitter.com/%s/status/%s)
+                    """, author.getAsMention(), twitterUsername, twitterPostId);
+            return Optional.of(result);
         }
-        return null;
+
+        return Optional.empty();
     }
 }
