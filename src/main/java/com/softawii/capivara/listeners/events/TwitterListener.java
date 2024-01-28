@@ -9,7 +9,6 @@ import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.requests.RestAction;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
@@ -26,7 +25,7 @@ public class TwitterListener extends ListenerAdapter {
 
     public TwitterListener(JDA jda, TwitterTransformService service) {
         this.service = service;
-        this.twitterPattern = Pattern.compile("^https://(twitter|x)\\.com/(?<username>\\w+)/status/(?<postId>\\d+)$");
+        this.twitterPattern = Pattern.compile("^https://(twitter|x)\\.com/(?<username>\\w+)/status/(?<postId>\\d+)([-a-zA-Z0-9()@:%_+.~#?&/=]*)$"); // https://stackoverflow.com/a/17773849
         jda.addEventListener(this);
     }
 
@@ -60,7 +59,7 @@ public class TwitterListener extends ListenerAdapter {
         RestAction.allOf(
                 originalMessage.delete(),
                 channel.sendMessage(replacementMessage)
-                        .addActionRow(Button.danger(String.format("%s:%s", TwitterGroup.deleteBotTwitterMessage, originalMessage.getAuthor().getId()), "Delete"))
+                        .addActionRow(TwitterGroup.generateDeleteButton(originalMessage.getAuthor().getIdLong()))
                         .setSuppressedNotifications(true)
         ).queue();
     }
