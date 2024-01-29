@@ -1,7 +1,7 @@
 package com.softawii.capivara.listeners.events;
 
 import com.softawii.capivara.listeners.TwitterGroup;
-import com.softawii.capivara.services.TwitterTransformService;
+import com.softawii.capivara.services.TwitterParserConfigService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -20,10 +20,10 @@ import java.util.regex.Pattern;
 @Component
 @SuppressWarnings("unused")
 public class TwitterListener extends ListenerAdapter {
-    private final Pattern twitterPattern;
-    private final TwitterTransformService service;
+    private final Pattern                    twitterPattern;
+    private final TwitterParserConfigService service;
 
-    public TwitterListener(JDA jda, TwitterTransformService service) {
+    public TwitterListener(JDA jda, TwitterParserConfigService service) {
         this.service = service;
         this.twitterPattern = Pattern.compile("^https://(twitter|x)\\.com/(?<username>\\w+)/status/(?<postId>\\d+)([-a-zA-Z0-9()@:%_+.~#?&/=]*)$"); // https://stackoverflow.com/a/17773849
         jda.addEventListener(this);

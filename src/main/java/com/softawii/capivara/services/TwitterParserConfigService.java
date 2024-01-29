@@ -1,15 +1,15 @@
 package com.softawii.capivara.services;
 
-import com.softawii.capivara.entity.TwitterTransform;
-import com.softawii.capivara.repository.TwitterTransformRepository;
+import com.softawii.capivara.entity.TwitterParserConfig;
+import com.softawii.capivara.repository.TwitterParserConfigRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class TwitterTransformService {
+public class TwitterParserConfigService {
 
-    private final TwitterTransformRepository repository;
+    private final TwitterParserConfigRepository repository;
 
-    public TwitterTransformService(TwitterTransformRepository repository) {
+    public TwitterParserConfigService(TwitterParserConfigRepository repository) {
         this.repository = repository;
     }
 
@@ -18,7 +18,7 @@ public class TwitterTransformService {
     }
 
     public void enable(Long guildId) {
-        repository.save(new TwitterTransform(guildId));
+        repository.save(new TwitterParserConfig(guildId));
     }
 
     public void disable(Long guildId) {

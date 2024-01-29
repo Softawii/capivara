@@ -5,15 +5,15 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Entity
-public class TwitterTransform {
+public class TwitterParserConfig {
     @Id
     @Column(unique = true, nullable = false)
     private Long guildId;
 
-    public TwitterTransform() {
+    public TwitterParserConfig() {
     }
 
-    public TwitterTransform(Long guildId) {
+    public TwitterParserConfig(Long guildId) {
         this.guildId = guildId;
     }
 

@@ -1,6 +1,6 @@
 package com.softawii.capivara.listeners;
 
-import com.softawii.capivara.services.TwitterTransformService;
+import com.softawii.capivara.services.TwitterParserConfigService;
 import com.softawii.curupira.annotations.IButton;
 import com.softawii.curupira.annotations.ICommand;
 import com.softawii.curupira.annotations.IGroup;
@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class TwitterGroup {
 
-    public static final String                  deleteBotTwitterMessage = "twitter-bot-message-delete";
-    private static      TwitterTransformService service;
+    public static final String                     deleteBotTwitterMessage = "twitter-bot-message-delete";
+    private static      TwitterParserConfigService service;
 
     @Autowired
     @SuppressWarnings("unused")
-    public void setCurupira(TwitterTransformService service) {
+    public void setCurupira(TwitterParserConfigService service) {
         TwitterGroup.service = service;
     }
 
@@ -56,7 +56,7 @@ public class TwitterGroup {
     @IButton(id = deleteBotTwitterMessage)
     @SuppressWarnings("unused")
     public static void delete(ButtonInteractionEvent event) {
-        // Format: ButtonID:Owner:MessageID
+        // Format: ButtonID:Owner
         String ownerId      = event.getComponentId().split(":")[1];
         String messageOwner = event.getMember().getId();
 
