@@ -28,9 +28,9 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.requests.RestAction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,7 +47,7 @@ import java.util.regex.Pattern;
 @Component
 public class DroneManager {
 
-    private final Logger            LOGGER = LogManager.getLogger(VoiceManager.class);
+    private final Logger            LOGGER = LoggerFactory.getLogger(VoiceManager.class);
     private final VoiceDroneService voiceDroneService;
     private final VoiceHiveService  voiceHiveService;
     private final JDA jda;

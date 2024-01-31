@@ -18,9 +18,9 @@ import net.dv8tion.jda.api.events.channel.update.GenericChannelUpdateEvent;
 import net.dv8tion.jda.api.events.guild.override.GenericPermissionOverrideEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -29,7 +29,7 @@ public class VoiceEvents extends ListenerAdapter {
     private final VoiceManager voiceManager;
     private final DroneManager droneManager;
 
-    private final Logger LOGGER = LogManager.getLogger(VoiceEvents.class);
+    private final Logger                   LOGGER = LoggerFactory.getLogger(VoiceEvents.class);
     private final CapivaraExceptionHandler exceptionHandler;
 
     public VoiceEvents(JDA jda, VoiceManager voiceManager, DroneManager droneManager, CapivaraExceptionHandler exceptionHandler) {

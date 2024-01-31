@@ -18,7 +18,6 @@ COPY --from=builder /app .
 
 ENV JAVA_ARGS="-Xmx300M"
 ENV LOG_DIRECTORY="/app/logs"
-ENV SPRING_CONFIG_LOCATION="/app/main.properties"
 ENV DISCORD_TOKEN="invalid"
 ENV CURUPIRA_RESET="true"
 ENV LOG_CHANNEL_ID="invalid"
@@ -30,9 +29,8 @@ ENV DATABASE_PASSWORD="database-password"
 
 ENTRYPOINT java ${JAVA_ARGS} -jar CapivaraBot.jar \
     --token=${DISCORD_TOKEN} \
-    --spring.config.location=file:${SPRING_CONFIG_LOCATION} \
     --curupira.reset=${CURUPIRA_RESET} \
-    --log.directory=${LOG_DIRECTORY} \
+    --log_directory=${LOG_DIRECTORY} \
     --log.channel.id=${LOG_CHANNEL_ID} \
     --spring.datasource.driverClassName=${DATABASE_DRIVER} \
     --spring.jpa.database-platform=${DATABASE_DIALECT} \
