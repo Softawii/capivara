@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 public class TwitterListener extends ListenerAdapter {
     private final Pattern                    twitterPattern;
     private final TwitterParserConfigService service;
+    private static final char invisibleChar = '⠀'; // https://www.compart.com/en/unicode/U+2800
 
     public TwitterListener(JDA jda, TwitterParserConfigService service) {
         this.service = service;
@@ -70,13 +71,10 @@ public class TwitterListener extends ListenerAdapter {
         if (matcher.find()) {
             String twitterUsername = matcher.group("username");
             String twitterPostId = matcher.group("postId");
-
             String result = String.format(
                     """
-                    Autor: %s
-                    Link original: `%s`
-                    [Postagem](https://fxtwitter.com/%s/status/%s)
-                    """, author.getAsMention(), twitterLink, twitterUsername, twitterPostId);
+                    Autor: %s | [Link original](<%s>) [%c](https://fxtwitter.com/%s/status/%s)
+                    """, author.getAsMention(), twitterLink, invisibleChar, twitterUsername, twitterPostId);
             return Optional.of(result);
         }
 
