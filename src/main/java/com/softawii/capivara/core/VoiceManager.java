@@ -13,8 +13,8 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.interactions.modals.ModalMapping;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,8 +34,8 @@ public class VoiceManager {
     public static final String configModal_fieldStreaming = "set-streaming";
     public static final String configModal_createText = "set-text";
     private final VoiceHiveService voiceHiveService;
-    private final JDA jda;
-    private final Logger           LOGGER = LogManager.getLogger(VoiceManager.class);
+    private final JDA    jda;
+    private final Logger LOGGER = LoggerFactory.getLogger(VoiceManager.class);
 
     public VoiceManager(JDA jda, VoiceHiveService voiceHiveService) {
         this.voiceHiveService = voiceHiveService;

@@ -27,8 +27,8 @@ import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +68,7 @@ public class EchoGroup {
     private static final String modalEditField    = "echo-edit-field-modal";
 
     //endregion
-    private static final Logger LOGGER = LogManager.getLogger(EchoGroup.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EchoGroup.class);
 
     private static EmbedManager embedManager;
     private static Curupira     curupira;
