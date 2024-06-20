@@ -1,4 +1,4 @@
-FROM docker.io/eclipse-temurin:17-jdk-alpine as builder
+FROM docker.io/eclipse-temurin:21-jdk-alpine as builder
 
 WORKDIR /app
 ADD . /tmp
@@ -11,10 +11,10 @@ RUN cd /tmp && \
     mv build/libs/CapivaraBot.jar /app && \
     rm -rf /tmp/*
 
-FROM docker.io/eclipse-temurin:17-jre-alpine
+FROM docker.io/eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
-COPY --from=builder /app .
+COPY --from=builder /app .a
 
 ENV JAVA_ARGS="-Xmx300M"
 ENV LOG_DIRECTORY="/app/logs"
