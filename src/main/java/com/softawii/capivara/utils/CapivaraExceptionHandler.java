@@ -1,6 +1,8 @@
 package com.softawii.capivara.utils;
 
 import com.softawii.curupira.core.ExceptionHandler;
+import com.softawii.curupira.exceptions.InvalidChannelTypeException;
+import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -8,6 +10,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.channel.GenericChannelEvent;
 import net.dv8tion.jda.api.events.guild.GenericGuildEvent;
+import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -39,6 +42,17 @@ public class CapivaraExceptionHandler implements ExceptionHandler {
 
     @Override
     public void handle(Throwable throwable, Interaction interaction) {
+        if (interaction instanceof GenericCommandInteractionEvent event) {
+            if (throwable instanceof MissingPermissionsException) {
+                event.reply("You don't have permission to execute this command!").setEphemeral(true).queue();
+                return;
+            }
+            else if(throwable instanceof InvalidChannelTypeException) {
+                event.reply("You can't execute this command in this channel!").setEphemeral(true).queue();
+                return;
+            }
+        }
+
         InputStream logFileBytes = null;
         if (logDirectory != null) {
             Path logFile = logDirectory.resolve("capivara.log");
