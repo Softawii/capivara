@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
@@ -399,6 +400,10 @@ public class DroneManager {
         voiceDroneService.update(drone);
     }
 
+    public boolean hasValidActivities(Member member) {
+        return member.getActivities().stream().anyMatch(activity -> activity.getType() == Activity.ActivityType.STREAMING || activity.getType() == Activity.ActivityType.PLAYING);
+    }
+
     private String getDroneName(Member member, VoiceHive hive) {
         String droneName = VoiceManager.configModal_idle;
         String username  = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
@@ -553,4 +558,37 @@ public class DroneManager {
             if(ownerOpt.isEmpty()) this.checkToDeleteTemporary(channel, null, false);
         }
     }
+
+    public boolean isUserOwner(Member member, AudioChannelUnion channel) {
+        try {
+            VoiceDrone voiceDrone = this.voiceDroneService.find(channel.getIdLong());
+            return voiceDrone.getOwnerId().equals(member.getIdLong());
+        } catch (KeyNotFoundException e) {
+            return false;
+        }
+    }
+
+    public void tryRenameDrone(Member member, AudioChannelUnion channel) {
+        try {
+            if(!isUserOwner(member, channel)) return; // not the owner or not a dynamic channel
+
+            // getting drone hive settings
+            long parentCategoryIdLong = channel.getParentCategoryIdLong();
+            VoiceHive hive = voiceHiveService.find(parentCategoryIdLong);
+
+            // renaming the channel
+            if(hasValidActivities(member)) {
+                String name = getDroneName(member, hive);
+                if(name.equals(channel.getName())) return; // no need to rename
+
+                LOGGER.info("Renaming channel: {}, New: {}", channel.getIdLong(), name);
+                channel.getManager().setName(name).queue();
+            } else {
+                LOGGER.debug("User has no valid activities, ignoring... {}", member.getIdLong());
+            }
+        } catch (KeyNotFoundException e) {
+            LOGGER.debug("Key not found, ignoring...");
+        }
+    }
+
 }
