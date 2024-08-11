@@ -6,17 +6,20 @@ import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
 import com.softawii.capivara.utils.CapivaraExceptionHandler;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
 import net.dv8tion.jda.api.events.channel.update.GenericChannelUpdateEvent;
 import net.dv8tion.jda.api.events.guild.override.GenericPermissionOverrideEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
+import net.dv8tion.jda.api.events.user.update.UserUpdateActivitiesEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -189,6 +192,28 @@ public class VoiceEvents extends ListenerAdapter {
         }
     }
     //endregion
+
+
+    @Override
+    public void onUserUpdateActivities(UserUpdateActivitiesEvent event) {
+        // 1. Check if the user is in a voice channel
+        Member member = event.getMember();
+
+        // 2. Check if user is the owner of the voice channel
+        GuildVoiceState state = member.getVoiceState();
+
+        if (state == null || !state.inAudioChannel()) return;
+
+        AudioChannelUnion channel = state.getChannel();
+
+        if(channel == null) return;
+
+        // 3. Rename the voice channel
+
+        if(droneManager.isUserOwner(member, channel)) {
+            // String name = droneManager.get
+        }
+    }
 
     private void handleException(Exception exception, Event event) {
         if (exceptionHandler != null) {

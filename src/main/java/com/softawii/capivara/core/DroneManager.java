@@ -553,4 +553,30 @@ public class DroneManager {
             if(ownerOpt.isEmpty()) this.checkToDeleteTemporary(channel, null, false);
         }
     }
+
+    public boolean isUserOwner(Member member, AudioChannelUnion channel) {
+        try {
+            VoiceDrone voiceDrone = this.voiceDroneService.find(channel.getIdLong());
+            return voiceDrone.getOwnerId().equals(member.getIdLong());
+        } catch (KeyNotFoundException e) {
+            return false;
+        }
+    }
+
+    public void renameDrone(Member member, AudioChannelUnion channel) {
+        long snowflakeId = channel.getParentCategoryIdLong();
+
+        try {
+            if(!isUserOwner(member, channel)) return; // not the owner or not a dynamic channel
+
+            // Checking if the current category is a dynamic category
+            VoiceDrone drone = voiceDroneService.find(snowflakeId);
+            String name = getDroneName(member, drone)
+
+
+        } catch (KeyNotFoundException e) {
+            LOGGER.debug("Key not found, ignoring...");
+        }
+    }
+
 }
