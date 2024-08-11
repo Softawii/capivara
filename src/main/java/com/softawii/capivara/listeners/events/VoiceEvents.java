@@ -209,10 +209,7 @@ public class VoiceEvents extends ListenerAdapter {
         if(channel == null) return;
 
         // 3. Rename the voice channel
-
-        if(droneManager.isUserOwner(member, channel)) {
-            // String name = droneManager.get
-        }
+        droneManager.tryRenameDrone(member, channel);
     }
 
     private void handleException(Exception exception, Event event) {

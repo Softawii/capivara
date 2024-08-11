@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
@@ -563,17 +564,21 @@ public class DroneManager {
         }
     }
 
-    public void renameDrone(Member member, AudioChannelUnion channel) {
-        long snowflakeId = channel.getParentCategoryIdLong();
-
+    public void tryRenameDrone(Member member, AudioChannelUnion channel) {
         try {
             if(!isUserOwner(member, channel)) return; // not the owner or not a dynamic channel
 
-            // Checking if the current category is a dynamic category
-            VoiceDrone drone = voiceDroneService.find(snowflakeId);
-            String name = getDroneName(member, drone)
+            // getting drone hive settings
+            long parentCategoryIdLong = channel.getParentCategoryIdLong();
+            VoiceHive hive = voiceHiveService.find(parentCategoryIdLong);
+            String name = getDroneName(member, hive);
 
+            LOGGER.info("Renaming channel: {}, New: {}", channel.getIdLong(), name);
 
+            // TODO: Check if the name is different
+
+            // renaming the channel
+            channel.getManager().setName(name).queue();
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");
         }
