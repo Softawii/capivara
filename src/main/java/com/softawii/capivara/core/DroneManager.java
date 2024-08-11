@@ -400,6 +400,10 @@ public class DroneManager {
         voiceDroneService.update(drone);
     }
 
+    public boolean hasValidActivities(Member member) {
+        return member.getActivities().stream().anyMatch(activity -> activity.getType() == Activity.ActivityType.STREAMING || activity.getType() == Activity.ActivityType.PLAYING);
+    }
+
     private String getDroneName(Member member, VoiceHive hive) {
         String droneName = VoiceManager.configModal_idle;
         String username  = member.getNickname() == null ? member.getEffectiveName() : member.getNickname();
@@ -571,14 +575,17 @@ public class DroneManager {
             // getting drone hive settings
             long parentCategoryIdLong = channel.getParentCategoryIdLong();
             VoiceHive hive = voiceHiveService.find(parentCategoryIdLong);
-            String name = getDroneName(member, hive);
-
-            LOGGER.info("Renaming channel: {}, New: {}", channel.getIdLong(), name);
-
-            // TODO: Check if the name is different
 
             // renaming the channel
-            channel.getManager().setName(name).queue();
+            if(hasValidActivities(member)) {
+                String name = getDroneName(member, hive);
+                if(name.equals(channel.getName())) return; // no need to rename
+
+                LOGGER.info("Renaming channel: {}, New: {}", channel.getIdLong(), name);
+                channel.getManager().setName(name).queue();
+            } else {
+                LOGGER.debug("User has no valid activities, ignoring... {}", member.getIdLong());
+            }
         } catch (KeyNotFoundException e) {
             LOGGER.debug("Key not found, ignoring...");
         }
