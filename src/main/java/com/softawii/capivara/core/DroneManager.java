@@ -1,6 +1,6 @@
 package com.softawii.capivara.core;
 
-import com.softawii.capivara.controller.VoiceDynamicController;
+import com.softawii.capivara.controller.VoiceMasterController;
 import com.softawii.capivara.entity.VoiceDrone;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.*;
@@ -227,7 +227,7 @@ public class DroneManager {
             } else if (member == null || member.getIdLong() == drone.getOwnerId()) {
                 // Election Mode!
                 MessageEmbed embed = claimChat();
-                Button       claim = Button.success(VoiceDynamicController.droneClaim, "Claim");
+                Button       claim = Button.success(VoiceMasterController.droneClaim, "Claim");
 
                 Message claimMessage;
                 if (textChannel != null) {
@@ -344,10 +344,10 @@ public class DroneManager {
         // region Buttons
         // General Config
 
-        Button    config     = Button.primary(VoiceDynamicController.droneConfigButton, "🔧 Settings");
-        Button    visibility = Button.secondary(VoiceDynamicController.droneHideShow, isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
-        Button    connect    = Button.secondary(VoiceDynamicController.dronePublicPrivate, canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
-        Button    permanent  = Button.danger(VoiceDynamicController.dronePermTemp, drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
+        Button    config     = Button.primary(VoiceMasterController.droneConfigButton, "🔧 Settings");
+        Button    visibility = Button.secondary(VoiceMasterController.droneHideShow, isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
+        Button    connect    = Button.secondary(VoiceMasterController.dronePublicPrivate, canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
+        Button    permanent  = Button.danger(VoiceMasterController.dronePermTemp, drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
         ActionRow general    = ActionRow.of(config, visibility, connect, permanent);
         // endregion
 

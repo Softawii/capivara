@@ -14,18 +14,19 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.interactions.DiscordLocale;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 
 @Component
-@DiscordController(value = "drone", description = "Voice Drone Controller")
-public class VoiceDroneController {
+@DiscordController(value = "agent", description = "Voice Agent Controller", resource = "voice", locales = DiscordLocale.PORTUGUESE_BRAZILIAN)
+public class VoiceAgentController {
     private final DroneManager droneManager;
     public static final long inviteDeadline = 1000L * 10L * 60L;
 
-    public VoiceDroneController(DroneManager droneManager) {
+    public VoiceAgentController(DroneManager droneManager) {
         this.droneManager = droneManager;
     }
 
@@ -48,7 +49,7 @@ public class VoiceDroneController {
             invited.getUser().openPrivateChannel().queue(chn -> chn.sendMessage(name + "invited you to join in a channel!\n" + q.getUrl()).queue());
         });
 
-        return new TextLocaleResponse("drone.invite.response", invited.getEffectiveName());
+        return new TextLocaleResponse("agent.invite.response", invited.getEffectiveName());
     }
 
     @DiscordCommand(name = "kick", description = "Kick a user from a channel", ephemeral = true)
@@ -60,12 +61,12 @@ public class VoiceDroneController {
             AudioChannel to_kick_channel = kicked.getVoiceState().getChannel();
             if (to_kick_channel.getIdLong() == channel.getIdLong()) {
                 guild.moveVoiceMember(kicked, null).queue();
-                return new TextLocaleResponse("drone.kick.response", kicked.getEffectiveName());
+                return new TextLocaleResponse("agent.kick.response", kicked.getEffectiveName());
             } else {
-                return new TextLocaleResponse("drone.kick.response.error.not_in_channel", kicked.getEffectiveName());
+                return new TextLocaleResponse("agent.error.not_in_your_channel", kicked.getEffectiveName());
             }
         } else {
-            return new TextLocaleResponse("drone.kick.response.error.not_in_channel", kicked.getEffectiveName());
+            return new TextLocaleResponse("agent.error.not_in_channel", kicked.getEffectiveName());
         }
     }
 }

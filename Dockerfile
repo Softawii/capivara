@@ -11,7 +11,7 @@ RUN cd /tmp && \
     mv build/libs/CapivaraBot.jar /app && \
     rm -rf /tmp/*
 
-FROM docker.io/eclipse-temurin:17-jre-alpine
+FROM docker.io/eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 COPY --from=builder /app .

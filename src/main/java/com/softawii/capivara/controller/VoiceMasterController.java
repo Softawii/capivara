@@ -35,8 +35,8 @@ import java.awt.*;
 import java.util.List;
 
 @Component
-@DiscordController(parent = "voice", value = "dynamic", description = "Voice Controller", permissions = Permission.ADMINISTRATOR)
-public class VoiceDynamicController {
+@DiscordController(parent = "voice", value = "master", description = "Voice Controller", permissions = Permission.ADMINISTRATOR, resource = "voice", locales = DiscordLocale.PORTUGUESE_BRAZILIAN)
+public class VoiceMasterController {
 
     public static final String configModal         = "voice-dynamic-config-modal";
     public static final String generateConfigModal = "voice-dynamic-generate-config-modal";
@@ -50,7 +50,7 @@ public class VoiceDynamicController {
     private final VoiceManager voiceManager;
     private final DroneManager droneManager;
 
-    public VoiceDynamicController(VoiceManager voiceManager, DroneManager droneManager) {
+    public VoiceMasterController(VoiceManager voiceManager, DroneManager droneManager) {
         this.voiceManager = voiceManager;
         this.droneManager = droneManager;
     }
@@ -58,7 +58,8 @@ public class VoiceDynamicController {
     @DiscordCommand(name = "set", description = "set a category for dynamic voice channels")
     public void set(
             SlashCommandInteractionEvent event, Guild guild, LocalizationManager localization,
-            @LocaleType DiscordLocale locale, @DiscordParameter(name = "category", description = "Category to add dynamic channel") GuildChannelUnion channel) throws ExistingDynamicCategoryException, InvalidChannelTypeException {
+            @LocaleType DiscordLocale locale, @DiscordParameter(name = "category", description = "Category to add dynamic channel") GuildChannelUnion channel
+    ) throws ExistingDynamicCategoryException, InvalidChannelTypeException {
 
         if(channel.getType() != ChannelType.CATEGORY) {
             throw new InvalidChannelTypeException();
@@ -69,8 +70,8 @@ public class VoiceDynamicController {
         VoiceChannel hiveChannel = guild.getVoiceChannelById(hive.getVoiceId());
 
         // Getting callback texts
-        String title = localization.getLocalizedString("voice.dynamic.set.success", locale);
-        String description = localization.getLocalizedString("voice.dynamic.set.success.description", locale, hiveChannel.getAsMention());
+        String title = localization.getLocalizedString("voice.master.set.success.title", locale);
+        String description = localization.getLocalizedString("voice.master.set.success.description", locale, hiveChannel.getAsMention(), category.getAsMention());
 
         MessageEmbed embed = Utils.simpleEmbed(title, description, Color.GREEN);
 
@@ -92,20 +93,20 @@ public class VoiceDynamicController {
         Category category = channel.asCategory();
         this.voiceManager.unsetDynamicCategory(category);
 
-        return new TextLocaleResponse("voice.dynamic.unset.success");
+        return new TextLocaleResponse("voice.master.unset.success", category.getAsMention());
     }
 
     @DiscordCommand(name = "config", description = "config a dynamic voice channel", ephemeral = true)
     public Modal config(
             SlashCommandInteractionEvent event, Guild guild, LocalizationManager localization,
-            @LocaleType DiscordLocale locale, @DiscordParameter(name = "channel", description = "Channel to config") GuildChannelUnion channel) throws InvalidChannelTypeException, KeyNotFoundException {
+            @LocaleType DiscordLocale locale, @DiscordParameter(name = "category", description = "Category to config") GuildChannelUnion channel) throws InvalidChannelTypeException, KeyNotFoundException {
 
-        if(channel.getType() != ChannelType.VOICE) {
+        if(channel.getType() != ChannelType.CATEGORY) {
             throw new InvalidChannelTypeException();
         }
 
         Category category = channel.asCategory();
-        Modal configModal = voiceManager.getConfigModal(category, VoiceDynamicController.configModal);
+        Modal configModal = voiceManager.getConfigModal(category, VoiceMasterController.configModal);
 
         if (configModal == null) {
             throw new KeyNotFoundException();
@@ -134,22 +135,22 @@ public class VoiceDynamicController {
         }
         String message = sb.toString();
 
-        String title = localization.getLocalizedString("voice.dynamic.list.title", locale);
+        String title = localization.getLocalizedString("voice.master.list.title", locale);
         return Utils.simpleEmbed(title, message, Color.GREEN);
     }
 
     @DiscordButton(name = generateConfigModal, ephemeral = true)
     public Modal generateConfigModal(
             ButtonInteractionEvent event,
-            LocalizationManager localization, @LocaleType DiscordLocale locale,
-            @DiscordParameter(name = "category", description = "Category to add dynamic channel") GuildChannelUnion channel) throws KeyNotFoundException, InvalidChannelTypeException {
+            Guild guild) throws KeyNotFoundException, InvalidChannelTypeException {
+        String channelId = event.getComponentId().split(":")[1];
+        Category category = guild.getCategoryById(channelId);
 
-        if(channel.getType() != ChannelType.CATEGORY) {
+        if(category == null) {
             throw new InvalidChannelTypeException();
         }
 
-        Category category = channel.asCategory();
-        Modal configModal = voiceManager.getConfigModal(category, VoiceDynamicController.generateConfigModal);
+        Modal configModal = voiceManager.getConfigModal(category, VoiceMasterController.configModal);
 
         if (configModal == null) {
             throw new KeyNotFoundException();
@@ -200,7 +201,7 @@ public class VoiceDynamicController {
             ModalInteractionEvent event) throws InvalidInputException {
 
         droneManager.updateDrone(event);
-        return new TextLocaleResponse("voice.dynamic.drone.config.success");
+        return new TextLocaleResponse("voice.master.drone.config.success");
     }
 
     @DiscordButton(name = droneHideShow, ephemeral = true)
@@ -209,7 +210,7 @@ public class VoiceDynamicController {
 
         MessageChannelUnion channel = event.getChannel();
         droneManager.toggleDroneVisibility(guild, channel, member);
-        return new TextLocaleResponse("voice.dynamic.drone.hide-show.success");
+        return new TextLocaleResponse("voice.agent.hide-show.success");
     }
 
     @DiscordButton(name = dronePublicPrivate, ephemeral = true)
@@ -218,7 +219,7 @@ public class VoiceDynamicController {
 
         MessageChannelUnion channel = event.getChannel();
         droneManager.toggleDronePublicPrivate(guild, channel, member);
-        return new TextLocaleResponse("voice.dynamic.drone.public-private.success");
+        return new TextLocaleResponse("voice.agent.public-private.success");
     }
 
     @DiscordButton(name = dronePermTemp, ephemeral = true)
@@ -227,7 +228,7 @@ public class VoiceDynamicController {
 
         MessageChannelUnion channel = event.getChannel();
         droneManager.toggleDronePermTemp(guild, channel, member);
-        return new TextLocaleResponse("voice.dynamic.drone.perm-temp.success");
+        return new TextLocaleResponse("voice.agent.perm-temp.success");
     }
 
     @DiscordButton(name = droneClaim, ephemeral = true)
@@ -236,6 +237,6 @@ public class VoiceDynamicController {
 
         MessageChannelUnion channel = event.getChannel();
         droneManager.claimDrone(guild, channel, member);
-        return new TextLocaleResponse("voice.dynamic.drone.claim.success");
+        return new TextLocaleResponse("voice.master.claim.success");
     }
 }

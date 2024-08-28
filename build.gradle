@@ -37,8 +37,8 @@ dependencies {
         exclude module: 'opus-java'
     }
 
-    implementation("com.github.Softawii:curupira:v1.0.0-alpha")
-    implementation("com.github.Softawii:curupira:v1.0.0-alpha")
+    implementation("com.github.Softawii:curupira:v1.0.0-alpha.2")
+    implementation("com.github.Softawii:curupira:v1.0.0-alpha.2:all")
 }
 
 tasks.register('deploy') {
