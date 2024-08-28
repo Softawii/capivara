@@ -1,8 +1,8 @@
 package com.softawii.capivara.utils;
 
-import com.softawii.curupira.core.ExceptionHandler;
-import com.softawii.curupira.exceptions.InvalidChannelTypeException;
-import com.softawii.curupira.exceptions.MissingPermissionsException;
+
+import com.softawii.curupira.v2.annotations.DiscordException;
+import com.softawii.curupira.v2.annotations.DiscordExceptions;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 import java.awt.*;
 import java.io.IOException;
@@ -29,7 +30,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
-public class CapivaraExceptionHandler implements ExceptionHandler {
+
+@DiscordExceptions
+public class CapivaraExceptionHandler {
 
     private final Logger LOGGER = LogManager.getLogger(CapivaraExceptionHandler.class);
     private       String channelId;
@@ -40,19 +43,8 @@ public class CapivaraExceptionHandler implements ExceptionHandler {
         this.logDirectory = logDirectory;
     }
 
-    @Override
+    @DiscordException(Throwable.class)
     public void handle(Throwable throwable, Interaction interaction) {
-        if (interaction instanceof GenericCommandInteractionEvent event) {
-            if (throwable instanceof MissingPermissionsException) {
-                event.reply("You don't have permission to execute this command!").setEphemeral(true).queue();
-                return;
-            }
-            else if(throwable instanceof InvalidChannelTypeException) {
-                event.reply("You can't execute this command in this channel!").setEphemeral(true).queue();
-                return;
-            }
-        }
-
         InputStream logFileBytes = null;
         if (logDirectory != null) {
             Path logFile = logDirectory.resolve("capivara.log");

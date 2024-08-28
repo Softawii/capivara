@@ -1,7 +1,8 @@
 package com.softawii.capivara.config;
 
 import com.softawii.capivara.utils.CapivaraExceptionHandler;
-import com.softawii.curupira.core.Curupira;
+import com.softawii.curupira.v2.core.CurupiraBoot;
+import com.softawii.curupira.v2.integration.ContextProvider;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -100,15 +101,14 @@ public class SpringConfig {
     }
 
     @Bean
-    public Curupira curupira(JDA jda, @Autowired(required = false) CapivaraExceptionHandler exceptionHandler) {
+    public CurupiraBoot curupira(JDA jda, ContextProvider context) {
         String  pkg      = "com.softawii.capivara.listeners";
         String  resetEnv = env.getProperty("curupira.reset", "false");
         boolean reset    = Boolean.parseBoolean(resetEnv);
         LOGGER.info("curupira.reset: " + reset);
 
-        return new Curupira(jda, reset, exceptionHandler, pkg);
+        return new CurupiraBoot(jda, context, reset, pkg);
     }
-
 
     Properties additionalProperties() {
         Properties properties = new Properties();
