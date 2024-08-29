@@ -37,7 +37,7 @@ podman run -d \
     -e DATABASE_PASSWORD=${DATABASE_PASSWORD:-sa} \
     -e JAVA_ARGS=${JAVA_ARGS:--Xmx200M} \
     --cpus 0.5 \
-    --memory 300M \
+    --memory 400M \
     --name $CONTAINER_NAME \
     --restart always \
     --network slirp4netns:allow_host_loopback=true \

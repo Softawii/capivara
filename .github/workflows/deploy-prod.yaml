@@ -69,4 +69,4 @@ jobs:
           key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
           script: |
             cd /home/${{ secrets.SSH_USERNAME }}/capivara
-            DISCORD_TOKEN='${{ secrets.DISCORD_BOT_TOKEN }}' LOG_CHANNEL_ID='${{ secrets.DISCORD_LOG_CHANNEL_ID }}' CURUPIRA_RESET='true' DATABASE_DRIVER='org.postgresql.Driver' DATABASE_DIALECT='org.hibernate.dialect.PostgreSQL95Dialect' DATABASE_URL='jdbc:postgresql://host.containers.internal:5432/capivara' DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}' DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' JAVA_ARGS='-Xmx250M' /bin/bash start-container.sh docker.io/eduardoferro/capivara:${{ github.sha }}
+            DISCORD_TOKEN='${{ secrets.DISCORD_BOT_TOKEN }}' LOG_CHANNEL_ID='${{ secrets.DISCORD_LOG_CHANNEL_ID }}' CURUPIRA_RESET='true' DATABASE_DRIVER='org.postgresql.Driver' DATABASE_DIALECT='org.hibernate.dialect.PostgreSQL95Dialect' DATABASE_URL='jdbc:postgresql://host.containers.internal:5432/capivara' DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}' DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' JAVA_ARGS='-Xmx350M' /bin/bash start-container.sh docker.io/eduardoferro/capivara:${{ github.sha }}

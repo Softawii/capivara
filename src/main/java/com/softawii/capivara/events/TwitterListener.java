@@ -1,6 +1,6 @@
-package com.softawii.capivara.listeners.events;
+package com.softawii.capivara.events;
 
-import com.softawii.capivara.listeners.TwitterGroup;
+import com.softawii.capivara.controller.SocialTwitterGroup;
 import com.softawii.capivara.services.TwitterParserConfigService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
@@ -60,7 +60,7 @@ public class TwitterListener extends ListenerAdapter {
         RestAction.allOf(
                 originalMessage.delete(),
                 channel.sendMessage(replacementMessage)
-                        .addActionRow(TwitterGroup.generateDeleteButton(originalMessage.getAuthor().getIdLong()))
+                        .addActionRow(SocialTwitterGroup.generateDeleteButton(originalMessage.getAuthor().getIdLong()))
                         .setSuppressedNotifications(true)
         ).queue();
     }

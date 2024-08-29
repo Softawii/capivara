@@ -1,16 +1,12 @@
 package com.softawii.capivara.core;
 
+import com.softawii.capivara.controller.VoiceMasterController;
 import com.softawii.capivara.entity.VoiceDrone;
 import com.softawii.capivara.entity.VoiceHive;
-import com.softawii.capivara.exceptions.InvalidInputException;
-import com.softawii.capivara.exceptions.KeyNotFoundException;
-import com.softawii.capivara.exceptions.NotInTheDroneException;
-import com.softawii.capivara.exceptions.OwnerInTheChannelException;
-import com.softawii.capivara.listeners.VoiceGroup;
+import com.softawii.capivara.exceptions.*;
 import com.softawii.capivara.services.VoiceDroneService;
 import com.softawii.capivara.services.VoiceHiveService;
 import com.softawii.capivara.utils.Utils;
-import com.softawii.curupira.exceptions.MissingPermissionsException;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
@@ -231,7 +227,7 @@ public class DroneManager {
             } else if (member == null || member.getIdLong() == drone.getOwnerId()) {
                 // Election Mode!
                 MessageEmbed embed = claimChat();
-                Button       claim = Button.success(VoiceGroup.Dynamic.droneClaim, "Claim");
+                Button       claim = Button.success(VoiceMasterController.droneClaim, "Claim");
 
                 Message claimMessage;
                 if (textChannel != null) {
@@ -348,10 +344,10 @@ public class DroneManager {
         // region Buttons
         // General Config
 
-        Button    config     = Button.primary(VoiceGroup.Dynamic.droneConfig, "🔧 Settings");
-        Button    visibility = Button.secondary(VoiceGroup.Dynamic.droneHideShow, isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
-        Button    connect    = Button.secondary(VoiceGroup.Dynamic.dronePublicPrivate, canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
-        Button    permanent  = Button.danger(VoiceGroup.Dynamic.dronePermTemp, drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
+        Button    config     = Button.primary(VoiceMasterController.droneConfigButton, "🔧 Settings");
+        Button    visibility = Button.secondary(VoiceMasterController.droneHideShow, isVisible(voiceChannel) ? "👻 Hide" : "👀 Visible");
+        Button    connect    = Button.secondary(VoiceMasterController.dronePublicPrivate, canConnect(voiceChannel) ? "📢 Public" : "🔒 Private");
+        Button    permanent  = Button.danger(VoiceMasterController.dronePermTemp, drone.isPermanent() ? "⏳ Temporary" : "✨ Permanent");
         ActionRow general    = ActionRow.of(config, visibility, connect, permanent);
         // endregion
 
@@ -509,7 +505,7 @@ public class DroneManager {
         }
 
         if (!voiceChannel.getMembers().contains(member)) {
-            throw new NotInTheDroneException("You are not in the drone!");
+            throw new NotInTheDroneException();
         }
 
         if (textChannel != null) textChannel.getManager().removePermissionOverride(drone.getOwnerId()).submit();
