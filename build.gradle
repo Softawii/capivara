@@ -37,7 +37,7 @@ dependencies {
         exclude module: 'opus-java'
     }
 
-    implementation("com.github.Softawii:curupira:0344e086bb") {
+    implementation("com.github.Softawii:curupira:v1.0.0") {
         changing = true
     }
 }
