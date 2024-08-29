@@ -1,4 +1,4 @@
-FROM docker.io/eclipse-temurin:17-jdk-alpine as builder
+FROM docker.io/eclipse-temurin:21-jdk-alpine as builder
 
 WORKDIR /app
 ADD . /tmp
