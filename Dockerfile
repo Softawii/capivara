@@ -16,7 +16,7 @@ FROM docker.io/eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=builder /app .
 
-ENV JAVA_ARGS="-Xmx300M"
+ENV JAVA_ARGS="-Xmx350M"
 ENV LOG_DIRECTORY="/app/logs"
 ENV SPRING_CONFIG_LOCATION="/app/main.properties"
 ENV DISCORD_TOKEN="invalid"
