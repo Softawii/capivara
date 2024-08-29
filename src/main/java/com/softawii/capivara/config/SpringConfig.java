@@ -1,6 +1,6 @@
 package com.softawii.capivara.config;
 
-import com.softawii.capivara.utils.CapivaraExceptionHandler;
+import com.softawii.capivara.controller.MainExceptionController;
 import com.softawii.curupira.v2.core.CurupiraBoot;
 import com.softawii.curupira.v2.integration.ContextProvider;
 import net.dv8tion.jda.api.JDA;
@@ -10,7 +10,6 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -86,7 +85,7 @@ public class SpringConfig {
     }
 
     @Bean
-    public CapivaraExceptionHandler capivaraExceptionHandler() {
+    public MainExceptionController capivaraExceptionHandler() {
         String logChannelId = env.getProperty("log.channel.id");
         String logDirectory = env.getProperty("log_directory");
         if (logChannelId != null) {
@@ -94,7 +93,7 @@ public class SpringConfig {
             if (logDirectory != null) {
                 logPath = Path.of(logDirectory);
             }
-            return new CapivaraExceptionHandler(logChannelId, logPath);
+            return new MainExceptionController(logChannelId, logPath);
         }
 
         return null;

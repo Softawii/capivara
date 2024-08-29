@@ -1,4 +1,4 @@
-package com.softawii.capivara.listeners.events;
+package com.softawii.capivara.events;
 
 import com.softawii.capivara.controller.SocialTwitterGroup;
 import com.softawii.capivara.services.TwitterParserConfigService;

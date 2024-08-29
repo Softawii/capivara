@@ -1,4 +1,4 @@
-package com.softawii.capivara.utils;
+package com.softawii.capivara.controller;
 
 
 import com.softawii.curupira.v2.annotations.DiscordException;
@@ -10,7 +10,6 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.channel.GenericChannelEvent;
 import net.dv8tion.jda.api.events.guild.GenericGuildEvent;
-import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
@@ -30,15 +29,14 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
-
 @DiscordExceptions
-public class CapivaraExceptionHandler {
+public class MainExceptionController {
 
-    private final Logger LOGGER = LogManager.getLogger(CapivaraExceptionHandler.class);
+    private final Logger LOGGER = LogManager.getLogger(MainExceptionController.class);
     private       String channelId;
     private       Path   logDirectory;
 
-    public CapivaraExceptionHandler(String channelId, Path logDirectory) {
+    public MainExceptionController(String channelId, Path logDirectory) {
         this.channelId = channelId;
         this.logDirectory = logDirectory;
     }
