@@ -52,7 +52,8 @@ public class SpringConfig {
         em.setPackagesToScan("com.softawii.capivara.entity",
                              "com.softawii.capivara.repository",
                              "com.softawii.capivara.services",
-                             "com.softawii.capivara.listeners.events");
+                             "com.softawii.capivara.events",
+                             "com.softawii.capivara.controller");
 
         JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);
@@ -101,7 +102,7 @@ public class SpringConfig {
 
     @Bean
     public CurupiraBoot curupira(JDA jda, ContextProvider context) {
-        String  pkg      = "com.softawii.capivara.listeners";
+        String  pkg      = "com.softawii.capivara.controller";
         String  resetEnv = env.getProperty("curupira.reset", "false");
         boolean reset    = Boolean.parseBoolean(resetEnv);
         LOGGER.info("curupira.reset: " + reset);

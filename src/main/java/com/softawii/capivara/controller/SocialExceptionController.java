@@ -8,7 +8,9 @@ import com.softawii.curupira.v2.localization.LocalizationManager;
 import net.dv8tion.jda.api.interactions.DiscordLocale;
 import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
+import org.springframework.stereotype.Component;
 
+@Component
 @DiscordExceptions(classes = SocialTwitterGroup.class)
 public class SocialExceptionController {
 
