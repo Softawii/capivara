@@ -94,7 +94,11 @@ public class VoiceExceptionController {
     }
 
     @DiscordException(Throwable.class)
-    public void throwable(Throwable throwable, Interaction interaction) {
+    public void throwable(Throwable throwable, Interaction interaction, LocalizationManager localization, @LocaleType DiscordLocale locale) {
+        if(interaction instanceof IReplyCallback callback) {
+            callback.reply(localization.getLocalizedString("voice.error.generic", locale)).setEphemeral(true).queue();
+        }
+
         mainExceptionController.handle(throwable, interaction);
     }
 
