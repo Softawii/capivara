@@ -2,6 +2,7 @@ package com.softawii.capivara.services;
 
 import com.softawii.capivara.entity.TwitterParserConfig;
 import com.softawii.capivara.repository.TwitterParserConfigRepository;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,6 +23,10 @@ public class TwitterParserConfigService {
     }
 
     public void disable(Long guildId) {
-        repository.deleteById(guildId);
+        try {
+            repository.deleteById(guildId);
+        } catch(EmptyResultDataAccessException e) {
+            // Nothing
+        }
     }
 }

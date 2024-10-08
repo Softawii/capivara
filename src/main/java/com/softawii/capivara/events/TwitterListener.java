@@ -1,6 +1,7 @@
 package com.softawii.capivara.events;
 
 import com.softawii.capivara.controller.SocialTwitterGroup;
+import com.softawii.capivara.metrics.SocialMetrics;
 import com.softawii.capivara.services.TwitterParserConfigService;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
@@ -20,13 +21,15 @@ import java.util.regex.Pattern;
 @Component
 @SuppressWarnings("unused")
 public class TwitterListener extends ListenerAdapter {
+    private final SocialMetrics metrics;
     private final Pattern                    twitterPattern;
     private final TwitterParserConfigService service;
     private static final char invisibleChar = '⠀'; // https://www.compart.com/en/unicode/U+2800
 
-    public TwitterListener(JDA jda, TwitterParserConfigService service) {
-        this.service = service;
+    public TwitterListener(JDA jda, TwitterParserConfigService service, SocialMetrics metrics) {
         this.twitterPattern = Pattern.compile("^https://(twitter|x)\\.com/(?<username>\\w+)/status/(?<postId>\\d+)([-a-zA-Z0-9()@:%_+.~#?&/=]*)$"); // https://stackoverflow.com/a/17773849
+        this.service = service;
+        this.metrics = metrics;
         jda.addEventListener(this);
     }
 
@@ -63,6 +66,8 @@ public class TwitterListener extends ListenerAdapter {
                         .addActionRow(SocialTwitterGroup.generateDeleteButton(originalMessage.getAuthor().getIdLong()))
                         .setSuppressedNotifications(true)
         ).queue();
+
+        this.metrics.newTwitterParse();
     }
 
     private Optional<String> parseMessage(String twitterLink, User author) {

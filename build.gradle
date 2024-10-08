@@ -40,6 +40,16 @@ dependencies {
     implementation("com.github.Softawii:curupira:v1.0.0") {
         changing = true
     }
+
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.10.13'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave:1.0.12'
+    implementation ('org.springframework.boot:spring-boot-starter-actuator:2.7.0') {
+        exclude module: 'spring-boot-starter-logging'
+    }
+
+    implementation ('org.springframework.boot:spring-boot-starter-web:2.7.0') {
+        exclude module: 'spring-boot-starter-logging'
+    }
 }
 
 tasks.register('deploy') {

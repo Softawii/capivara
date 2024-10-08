@@ -33,20 +33,20 @@ public class SocialTwitterGroup {
 
     @DiscordCommand(name = "enable", description = "Enable the automatic Twitter link transformation service")
     public TextLocaleResponse enable(Guild guild) {
-        service.enable(guild.getIdLong());
+        this.service.enable(guild.getIdLong());
         return new TextLocaleResponse("social.twitter.enable.response", guild.getName());
     }
 
     @DiscordCommand(name = "disable", description = "Disable the automatic Twitter link transformation service")
     public TextLocaleResponse disable(Guild guild) {
-        service.disable(guild.getIdLong());
+        this.service.disable(guild.getIdLong());
         return new TextLocaleResponse("social.twitter.disable.response", guild.getName());
     }
 
     @DiscordButton(name = deleteBotTwitterMessage, ephemeral = true)
     public TextLocaleResponse delete(ButtonInteractionEvent event, @RequestInfo Member member) throws MissingPermissionsException {
         // Format: ButtonID:Owner
-        String ownerId      = event.getComponentId().split(":")[1];
+        String ownerId = event.getComponentId().split(":")[1];
         String messageOwner = member.getId();
 
         MessageChannelUnion channel = event.getChannel();
@@ -56,7 +56,7 @@ public class SocialTwitterGroup {
         }
 
         channel.deleteMessageById(event.getMessageId()).queue();
-        return new TextLocaleResponse("twitter.delete.response");
-    }
 
+        return new TextLocaleResponse("social.twitter.delete.response");
+    }
 }
