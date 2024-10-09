@@ -9,14 +9,20 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SocialMetrics {
 
     // General Count
-    private final AtomicLong parseCount;
+    private final AtomicLong parseTwitterCount;
+    private final AtomicLong parseBskyCount;
 
     public SocialMetrics(MeterRegistry registry) {
         // Injected
-        this.parseCount = registry.gauge("social.twitter.parse", new AtomicLong(0L));
+        this.parseTwitterCount = registry.gauge("social.twitter.parse", new AtomicLong(0L));
+        this.parseBskyCount = registry.gauge("social.bsky.parse", new AtomicLong(0L));
     }
 
     public void newTwitterParse() {
-        this.parseCount.addAndGet(1L);
+        this.parseTwitterCount.addAndGet(1L);
+    }
+
+    public void newBskyParse() {
+        this.parseBskyCount.addAndGet(1L);
     }
 }

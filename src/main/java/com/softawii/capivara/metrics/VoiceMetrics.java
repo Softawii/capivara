@@ -1,5 +1,6 @@
 package com.softawii.capivara.metrics;
 
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ public class VoiceMetrics {
 
     public VoiceMetrics(MeterRegistry registry) {
         this.registry = registry;
+
         this.agentCount = this.registry.gauge("voice.agents.active", new AtomicLong(0L));
         this.agentAdd = this.registry.gauge("voice.agents.add", new AtomicLong(0L));
         this.agentRemove = this.registry.gauge("voice.agents.remove", new AtomicLong(0L));

@@ -1,7 +1,7 @@
 package com.softawii.capivara.controller;
 
 import com.softawii.capivara.exceptions.MissingPermissionsException;
-import com.softawii.capivara.services.TwitterParserConfigService;
+import com.softawii.capivara.services.SocialParserConfigService;
 import com.softawii.curupira.v2.annotations.DiscordController;
 import com.softawii.curupira.v2.annotations.RequestInfo;
 import com.softawii.curupira.v2.annotations.commands.DiscordCommand;
@@ -19,44 +19,22 @@ import org.springframework.stereotype.Component;
 @Component
 @DiscordController(parent = "social", value = "twitter", description = "Twitter Controller", permissions = Permission.ADMINISTRATOR,
         resource = "social", locales = DiscordLocale.PORTUGUESE_BRAZILIAN)
-public class SocialTwitterGroup {
-    public static final String deleteBotTwitterMessage = "twitter-bot-message-delete";
-    private final TwitterParserConfigService service;
+public class SocialTwitterController {
+    private final SocialParserConfigService service;
 
-    public SocialTwitterGroup(TwitterParserConfigService service) {
+    public SocialTwitterController(SocialParserConfigService service) {
         this.service = service;
-    }
-
-    public static Button generateDeleteButton(long authorId) {
-        return Button.danger(String.format("%s:%s", deleteBotTwitterMessage, authorId), "Apagar");
     }
 
     @DiscordCommand(name = "enable", description = "Enable the automatic Twitter link transformation service")
     public TextLocaleResponse enable(Guild guild) {
-        this.service.enable(guild.getIdLong());
+        this.service.changeTwitter(guild.getIdLong(), true);
         return new TextLocaleResponse("social.twitter.enable.response", guild.getName());
     }
 
     @DiscordCommand(name = "disable", description = "Disable the automatic Twitter link transformation service")
     public TextLocaleResponse disable(Guild guild) {
-        this.service.disable(guild.getIdLong());
+        this.service.changeTwitter(guild.getIdLong(), false);
         return new TextLocaleResponse("social.twitter.disable.response", guild.getName());
-    }
-
-    @DiscordButton(name = deleteBotTwitterMessage, ephemeral = true)
-    public TextLocaleResponse delete(ButtonInteractionEvent event, @RequestInfo Member member) throws MissingPermissionsException {
-        // Format: ButtonID:Owner
-        String ownerId = event.getComponentId().split(":")[1];
-        String messageOwner = member.getId();
-
-        MessageChannelUnion channel = event.getChannel();
-
-        if (!messageOwner.equals(ownerId)) {
-            throw new MissingPermissionsException();
-        }
-
-        channel.deleteMessageById(event.getMessageId()).queue();
-
-        return new TextLocaleResponse("social.twitter.delete.response");
     }
 }

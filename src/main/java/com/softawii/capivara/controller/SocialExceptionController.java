@@ -11,7 +11,7 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import org.springframework.stereotype.Component;
 
 @Component
-@DiscordExceptions(classes = SocialTwitterGroup.class)
+@DiscordExceptions(classes = { SocialTwitterController.class, SocialExceptionController.class })
 public class SocialExceptionController {
 
     private final MainExceptionController mainExceptionController;
