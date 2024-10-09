@@ -3,6 +3,7 @@ package com.softawii.capivara.services;
 import com.softawii.capivara.entity.VoiceHive;
 import com.softawii.capivara.exceptions.ExistingDynamicCategoryException;
 import com.softawii.capivara.exceptions.KeyNotFoundException;
+import com.softawii.capivara.metrics.VoiceMetrics;
 import com.softawii.capivara.repository.VoiceHiveRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,22 +16,35 @@ import java.util.Optional;
 public class VoiceHiveService {
 
     private final VoiceHiveRepository voiceHiveRepository;
+    private final VoiceMetrics metrics;
 
-    public VoiceHiveService(VoiceHiveRepository voiceHiveRepository) {
+    public VoiceHiveService(VoiceHiveRepository voiceHiveRepository, VoiceMetrics metrics) {
         this.voiceHiveRepository = voiceHiveRepository;
+        this.metrics = metrics;
+        this.metrics.masterCount(count());
     }
 
     public VoiceHive create(VoiceHive voiceHive) throws ExistingDynamicCategoryException {
         if (voiceHiveRepository.existsById(voiceHive.getCategoryId())) throw new ExistingDynamicCategoryException();
-        return voiceHiveRepository.save(voiceHive);
+        VoiceHive hive = voiceHiveRepository.save(voiceHive);
+
+        this.metrics.masterCreated();
+        this.metrics.masterCount(count());
+
+        return hive;
     }
 
     public void destroy(Long SnowflakeId) throws KeyNotFoundException {
         Optional<VoiceHive> voiceHive = voiceHiveRepository.findById(SnowflakeId);
         if (voiceHive.isEmpty()) throw new KeyNotFoundException();
-
-        // voiceHiveRepository
         voiceHiveRepository.deleteById(SnowflakeId);
+
+        this.metrics.masterDestroyed();
+        this.metrics.masterCount(count());
+    }
+
+    public Long count() {
+        return this.voiceHiveRepository.count();
     }
 
     public List<VoiceHive> findAllByGuildId(Long SnowflakeId) {
@@ -39,6 +53,7 @@ public class VoiceHiveService {
 
     public VoiceHive update(VoiceHive voiceHive) throws KeyNotFoundException {
         if (!voiceHiveRepository.existsById(voiceHive.getCategoryId())) throw new KeyNotFoundException();
+        this.metrics.masterUpdate();
         return voiceHiveRepository.save(voiceHive);
     }
 
