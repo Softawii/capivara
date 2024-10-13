@@ -41,6 +41,7 @@ podman run -d \
     --name $CONTAINER_NAME \
     --restart always \
     --network slirp4netns:allow_host_loopback=true \
+    --network metrics \
     $CONTAINER_REPOSITORY || { echo 'Failed to start container failed'; exit 1; }
 
 
