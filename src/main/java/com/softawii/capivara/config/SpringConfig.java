@@ -86,21 +86,6 @@ public class SpringConfig {
     }
 
     @Bean
-    public MainExceptionController capivaraExceptionHandler() {
-        String logChannelId = env.getProperty("log.channel.id");
-        String logDirectory = env.getProperty("log_directory");
-        if (logChannelId != null) {
-            Path logPath = null;
-            if (logDirectory != null) {
-                logPath = Path.of(logDirectory);
-            }
-            return new MainExceptionController(logChannelId, logPath);
-        }
-
-        return null;
-    }
-
-    @Bean
     public CurupiraBoot curupira(JDA jda, ContextProvider context) {
         String  pkg      = "com.softawii.capivara.controller";
         String  resetEnv = env.getProperty("curupira.reset", "false");
