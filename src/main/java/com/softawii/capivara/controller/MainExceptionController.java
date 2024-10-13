@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.awt.*;
@@ -29,6 +30,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
+@Component
 @DiscordExceptions
 public class MainExceptionController {
 
@@ -36,9 +38,10 @@ public class MainExceptionController {
     private       String channelId;
     private       Path   logDirectory;
 
-    public MainExceptionController(String channelId, Path logDirectory) {
+    public MainExceptionController(@Value("${log.channel.id:#{null}}") String channelId,
+                                   @Value("${log_directory:#{null}}") String logDirectory) {
         this.channelId = channelId;
-        this.logDirectory = logDirectory;
+        if(logDirectory != null) this.logDirectory = Path.of(logDirectory);
     }
 
     @DiscordException(Throwable.class)

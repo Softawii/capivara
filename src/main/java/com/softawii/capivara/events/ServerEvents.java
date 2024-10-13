@@ -16,7 +16,6 @@ public class ServerEvents extends ListenerAdapter {
     public ServerEvents(JDA jda, ServerMetrics metrics) {
         this.metrics = metrics;
         this.jda = jda;
-
         jda.addEventListener(this);
 
         this.metrics.guildCount(jda.getGuilds().size());
