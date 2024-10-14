@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationArguments;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -38,8 +39,6 @@ public class SpringConfig {
 
     private static final Logger      LOGGER = LogManager.getLogger(SpringConfig.class);
     private final        Environment env;
-    @Value("${token}")
-    private              String      discordToken;
 
     public SpringConfig(Environment env) {
         this.env = env;
@@ -63,7 +62,9 @@ public class SpringConfig {
     }
 
     @Bean
-    public JDA jda() {
+    public JDA jda(ApplicationArguments args) {
+        String discordToken = args.getOptionValues("token").get(0);
+
         JDA jda;
         try {
             JDABuilder builder = JDABuilder.create(

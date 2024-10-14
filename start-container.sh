@@ -11,7 +11,7 @@ if [[ -z "${DISCORD_TOKEN}" ]] || [[ -z "${LOG_CHANNEL_ID}" ]] ; then
   exit 1
 fi
 
-CONTAINER_NAME="capivara_bot"
+CONTAINER_NAME="capivarabot"
 OLD_CONTAINER_ID=$(podman ps --all --quiet --filter "name=$CONTAINER_NAME")
 
 if [[ -z "${OLD_CONTAINER_ID}" ]]; then
@@ -40,7 +40,7 @@ podman run -d \
     --memory 400M \
     --name $CONTAINER_NAME \
     --restart always \
-    --network slirp4netns:allow_host_loopback=true \
+    --network metrics \
     $CONTAINER_REPOSITORY || { echo 'Failed to start container failed'; exit 1; }
 
 
