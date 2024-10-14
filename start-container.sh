@@ -11,7 +11,7 @@ if [[ -z "${DISCORD_TOKEN}" ]] || [[ -z "${LOG_CHANNEL_ID}" ]] ; then
   exit 1
 fi
 
-CONTAINER_NAME="capivara_bot"
+CONTAINER_NAME="capivarabot"
 OLD_CONTAINER_ID=$(podman ps --all --quiet --filter "name=$CONTAINER_NAME")
 
 if [[ -z "${OLD_CONTAINER_ID}" ]]; then
