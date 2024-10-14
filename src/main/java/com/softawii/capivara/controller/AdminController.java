@@ -23,7 +23,7 @@ import java.awt.*;
 import java.util.List;
 
 @Component
-@DiscordController(value = "admin2", description = "hello!", guildId = 588123122805506052L, permissions = Permission.ADMINISTRATOR)
+@DiscordController(value = "admin", description = "hello!", guildId = 588123122805506052L, permissions = Permission.ADMINISTRATOR)
 public class AdminController {
 
     private static final int guildPageSize = 5;
