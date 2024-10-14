@@ -58,20 +58,10 @@ tasks.register('deploy') {
     jar {
         enabled = false
     }
-    shadowJar {
+    bootJar {
         archiveFileName = "CapivaraBot.jar"
     }
-    dependsOn 'shadowJar'
-}
-
-tasks.register('homolog') {
-    jar {
-        enabled = false
-    }
-    shadowJar {
-        archiveFileName = "CapivaraBotHomolog.jar"
-    }
-    dependsOn 'shadowJar'
+    dependsOn 'bootJar'
 }
 
 test {

@@ -42,7 +42,6 @@ podman run -d \
     --name $CONTAINER_NAME \
     --restart always \
     --network metrics \
-    --network capivara \
     $CONTAINER_REPOSITORY || { echo 'Failed to start container failed'; exit 1; }
 
 
