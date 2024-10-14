@@ -36,7 +36,6 @@ podman run -d \
     -e DATABASE_USERNAME=${DATABASE_USERNAME:-sa} \
     -e DATABASE_PASSWORD=${DATABASE_PASSWORD:-sa} \
     -e JAVA_ARGS=${JAVA_ARGS:--Xmx200M} \
-    -p 8080:8080 \
     --cpus 0.5 \
     --memory 400M \
     --name $CONTAINER_NAME \
