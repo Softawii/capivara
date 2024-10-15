@@ -37,7 +37,7 @@ dependencies {
         exclude module: 'opus-java'
     }
 
-    implementation("com.github.Softawii:curupira:v1.0.0") {
+    implementation("com.github.Softawii:curupira:v1.1.0") {
         exclude module: 'slf4j-simple'
         changing = true
     }
