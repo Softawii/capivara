@@ -1,0 +1,30 @@
+services:
+  capivarabot:
+    image: docker.io/eduardoferro/capivara:${CAPIVARA_IMAGE_TAG}
+    restart: unless-stopped
+    environment:
+      - JAVA_ARGS=${JAVA_ARGS}
+      - LOG_CHANNEL_ID=${LOG_CHANNEL_ID}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - CURUPIRA_RESET=${CURUPIRA_RESET}
+      - DATABASE_DRIVER=${DATABASE_DRIVER}
+      - DATABASE_DIALECT=${DATABASE_DIALECT}
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    networks:
+      - metrics_metrics
+      - database_database
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 400M
+    expose:
+      - 8080
+
+networks:
+  database_database:
+    external: true
+  metrics_metrics:
+    external: true
