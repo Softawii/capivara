@@ -16,6 +16,13 @@ jobs:
       - name: 'Check out repository'
         uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 'Install Python requests'
+        run: pip install requests
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3.2.0
         with:
@@ -32,12 +39,12 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: eduardoferro/capivara:${{ github.sha }},${{ github.event_name == 'release' && format('eduardoferro/capivara:latest,eduardoferro/capivara:{0}', github.ref_name) || '' }}
 
-      - name: 'Wait for SSH'
+      - name: 'Wait for host'
         run: |
           SLEEP=1
           TRIES=0
           MAX_TRIES=10
-          while ! nc -w5 -z $INSTANCE_IP 22; do
+          while ! nc -w5 -z $INSTANCE_IP 9443; do
             echo "SSH not available..."
             if [[ $TRIES -eq $MAX_TRIES ]]; then
               echo "Max tries reached, exiting"
@@ -45,28 +52,28 @@ jobs:
             fi
             ((TRIES += 1))
             sleep $SLEEP
-          done; echo "SSH ready!"
+          done; echo "Host ready!"
         env:
           INSTANCE_IP: ${{ secrets.INSTANCE_IP }}
 
-      - name: 'Push start-container.sh'
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.INSTANCE_IP }}
-          username: ${{ secrets.SSH_USERNAME }}
-          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          source: "./start-container.sh"
-          target: /home/${{ secrets.SSH_USERNAME }}/capivara/
-          strip_components: 1
-
-      - name: 'Start BOT'
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.INSTANCE_IP }}
-          username: ${{ secrets.SSH_USERNAME }}
-          passphrase: ${{ secrets.VM_SSH_PRIVATE_KEY_PASSPHRASE }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/${{ secrets.SSH_USERNAME }}/capivara
-            DISCORD_TOKEN='${{ secrets.DISCORD_BOT_TOKEN }}' LOG_CHANNEL_ID='${{ secrets.DISCORD_LOG_CHANNEL_ID }}' CURUPIRA_RESET='true' DATABASE_DRIVER='org.postgresql.Driver' DATABASE_DIALECT='org.hibernate.dialect.PostgreSQL95Dialect' DATABASE_URL='jdbc:postgresql://capivara_database:5432/capivara' DATABASE_USERNAME='${{ secrets.DATABASE_USERNAME }}' DATABASE_PASSWORD='${{ secrets.DATABASE_PASSWORD }}' JAVA_ARGS='-Xmx350M' /bin/bash start-container.sh docker.io/eduardoferro/capivara:${{ github.sha }}
+      - name: 'Deploy to Portainer'
+        working-directory: ./.ci
+        run: |
+          python3 ./deploy.py
+        env:
+          # Portainer
+          PORTAINER_HOST: ${{ secrets.PORTAINER_HOST }}
+          PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
+          PORTAINER_ACCESS_TOKEN: ${{ secrets.PORTAINER_ACCESS_TOKEN }}
+          # Image
+          CAPIVARA_IMAGE_TAG: ${{ github.sha }}
+          # Bot
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          LOG_CHANNEL_ID: ${{ secrets.DISCORD_LOG_CHANNEL_ID }}
+          CURUPIRA_RESET: 'true'
+          DATABASE_DRIVER: 'org.postgresql.Driver'
+          DATABASE_DIALECT: 'org.hibernate.dialect.PostgreSQL95Dialect'
+          DATABASE_URL: 'jdbc:postgresql://postgres:5432/capivara'
+          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          JAVA_ARGS: '-Xmx350M'
