@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.Event;
 import net.dv8tion.jda.api.events.channel.ChannelDeleteEvent;
 import net.dv8tion.jda.api.events.channel.update.ChannelUpdateParentEvent;
@@ -51,23 +52,23 @@ public class VoiceEvents extends ListenerAdapter {
     @Override
     public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
         try {
-            VoiceChannel joined = (VoiceChannel) event.getChannelJoined();
-            VoiceChannel left   = (VoiceChannel) event.getChannelLeft();
-            Member       member = event.getMember();
+            AudioChannelUnion joined = event.getChannelJoined();
+            AudioChannelUnion left   = event.getChannelLeft();
+            Member member = event.getMember();
 
-            if (joined != null) {
+            if (joined != null && joined.getType() == ChannelType.VOICE) {
                 // Check to Delete!
-                droneManager.checkToCreateTemporary(joined, member);
+                droneManager.checkToCreateTemporary((VoiceChannel) joined, member);
                 // Check to Add Permissions!
-                droneManager.checkToChangeChatAccess(joined, member, true);
+                droneManager.checkToChangeChatAccess((VoiceChannel) joined, member, true);
                 // Check to Remove Claim Message!
-                droneManager.checkToRemoveClaimMessage(joined, member);
+                droneManager.checkToRemoveClaimMessage((VoiceChannel) joined, member);
             }
-            if (left != null) {
+            if (left != null && left.getType() == ChannelType.VOICE) {
                 // Check to Remove Permissions!
-                droneManager.checkToChangeChatAccess(left, member, false);
+                droneManager.checkToChangeChatAccess((VoiceChannel) left, member, false);
                 // Check to Delete!
-                droneManager.checkToDeleteTemporary(left, member, false);
+                droneManager.checkToDeleteTemporary((VoiceChannel) left, member, false);
             }
         } catch (Exception e) {
             LOGGER.error("Error on onGuildVoiceUpdate", e);
