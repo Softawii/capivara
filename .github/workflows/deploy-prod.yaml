@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   deploy:
-    environment: prod-aws-folclore
+    environment: prod-magalu-carioca
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out repository'
