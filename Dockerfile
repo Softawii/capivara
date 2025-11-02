@@ -1,4 +1,4 @@
-FROM docker.io/eclipse-temurin:21-jdk-alpine as builder
+FROM docker.io/eclipse-temurin:25-jdk-alpine as builder
 
 WORKDIR /app
 ADD . /tmp
@@ -11,18 +11,18 @@ RUN cd /tmp && \
     mv build/libs/CapivaraBot.jar /app && \
     rm -rf /tmp/*
 
-FROM docker.io/eclipse-temurin:21-jre-alpine
+FROM docker.io/eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 COPY --from=builder /app .
 
-ENV JAVA_ARGS="-Xmx350M"
+ENV JAVA_ARGS="-Xmx300M -XX:+UseCompactObjectHeaders"
 ENV LOG_DIRECTORY="/app/logs"
 ENV DISCORD_TOKEN="invalid"
 ENV CURUPIRA_RESET="true"
 ENV LOG_CHANNEL_ID="invalid"
 ENV DATABASE_DRIVER="org.postgresql.Driver"
-ENV DATABASE_DIALECT="org.hibernate.dialect.PostgreSQL95Dialect"
+ENV DATABASE_DIALECT="org.hibernate.dialect.PostgreSQLDialect"
 ENV DATABASE_URL="jdbc:postgresql://localhost:5432/capivara"
 ENV DATABASE_USERNAME="database-username"
 ENV DATABASE_PASSWORD="database-password"
