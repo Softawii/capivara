@@ -1,8 +1,7 @@
 plugins {
     id 'java'
     id 'application'
-    id 'org.springframework.boot' version '2.7.18'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'org.springframework.boot' version '3.5.7'
 }
 
 group 'com.softwaii.capivara'
@@ -14,7 +13,7 @@ repositories {
 }
 
 application {
-    mainClass = 'com.softawii.capivara.Main'
+    setMainClass('com.softawii.capivara.Main')
 }
 
 springBoot {
@@ -24,14 +23,14 @@ springBoot {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    implementation ('org.springframework.boot:spring-boot-starter-data-jpa:2.7.18') {
+    implementation ('org.springframework.boot:spring-boot-starter-data-jpa:3.5.7') {
         exclude module: 'spring-boot-starter-logging'
     }
 
     implementation 'javax.xml.bind:jaxb-api:2.3.1'
 
     implementation 'com.h2database:h2:2.1.212'
-    implementation 'org.postgresql:postgresql:42.3.6'
+    implementation 'org.postgresql:postgresql:42.7.8'
 
     implementation("net.dv8tion:JDA:5.1.0") {
         exclude module: 'opus-java'
@@ -39,27 +38,27 @@ dependencies {
 
     implementation("com.github.Softawii:curupira:v1.1.0") {
         exclude module: 'slf4j-simple'
-        changing = true
+        setChanging(true)
     }
-    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.24.1'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.25.2'
 
-    implementation 'io.micrometer:micrometer-registry-prometheus:1.10.13'
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave:1.0.12'
-    implementation ('org.springframework.boot:spring-boot-starter-actuator:2.7.0') {
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.15.5'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave:1.5.5'
+    implementation ('org.springframework.boot:spring-boot-starter-actuator:3.5.7') {
         exclude module: 'spring-boot-starter-logging'
     }
 
-    implementation ('org.springframework.boot:spring-boot-starter-web:2.7.0') {
+    implementation ('org.springframework.boot:spring-boot-starter-web:3.5.7') {
         exclude module: 'spring-boot-starter-logging'
     }
 }
 
 tasks.register('deploy') {
     jar {
-        enabled = false
+        setEnabled(false)
     }
     bootJar {
-        archiveFileName = "CapivaraBot.jar"
+        setArchiveFileName("CapivaraBot.jar")
     }
     dependsOn 'bootJar'
 }
@@ -68,5 +67,7 @@ test {
     useJUnitPlatform()
 }
 
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}

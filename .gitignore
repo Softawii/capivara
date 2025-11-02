@@ -107,3 +107,5 @@ build/*
 .idea/*
 
 *.db
+
+tos/
